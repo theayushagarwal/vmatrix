@@ -174,5 +174,29 @@
     "error": "No valid posts parsed",
     "timestamp": "2026-09-12T18:55:42.532093+00:00",
     "epoch": 1789239342.5320938
+  },
+  {
+    "handle": "bytebytego_",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No valid posts parsed",
+    "timestamp": "2026-09-12T19:37:51.754343+00:00",
+    "epoch": 1789241871.7543437
+  },
+  {
+    "handle": "codewithharry",
+    "niche": "AI & CODING",
+    "status": "success",
+    "error": null,
+    "timestamp": "2026-09-12T19:49:34.128436+00:00",
+    "epoch": 1789242574.1284359
+  },
+  {
+    "handle": "systemdesignhub",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No valid posts parsed",
+    "timestamp": "2026-09-12T19:49:54.527092+00:00",
+    "epoch": 1789242594.5270922
   }
 ]

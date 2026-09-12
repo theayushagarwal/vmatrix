@@ -1556,7 +1556,11 @@
         const caption = post.caption || 'No caption available.';
         const er = (post.engagement_rate || 0).toFixed(2);
         const postHandle = (post.handle || handle || '').replace(/^@/, '');
-        const postUrl = post.post_url || (post.shortcode ? `https://www.instagram.com/p/${post.shortcode}/` : `https://www.instagram.com/${postHandle}/`);
+        const isDummyShortcode = !post.shortcode || post.shortcode.startsWith('C_') || post.shortcode.startsWith('mock_') || (post.post_url && post.post_url.includes('/p/C_'));
+        const profileUrl = `https://www.instagram.com/${postHandle}/`;
+        const postUrl = isDummyShortcode 
+          ? profileUrl 
+          : (post.post_url || (post.shortcode ? `https://www.instagram.com/p/${post.shortcode}/` : profileUrl));
         const postDate = post.posted_at ? new Date(post.posted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
         const hasAnalysis = !!post.virality_analysis;
         const analysisScore = (post.virality_analysis && post.virality_analysis.virality_score) || 85;
@@ -1567,7 +1571,7 @@
             <div class="space-y-3">
               <div class="flex items-center justify-between gap-2 flex-wrap">
                 <!-- Direct Clickable Instagram Handle & Link -->
-                <a href="${postUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-pink-400 hover:text-pink-300 font-bold font-mono text-sm group" title="Open post on Instagram">
+                <a href="${profileUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-pink-400 hover:text-pink-300 font-bold font-mono text-sm group" title="Open @${postHandle} on Instagram">
                   <i class="fa-brands fa-instagram text-pink-500 group-hover:scale-110 transition-transform"></i>
                   <span>@${postHandle}</span>
                   <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-pink-400/80"></i>
@@ -1645,7 +1649,7 @@
               <!-- Direct Instagram Post Link Button -->
               <a href="${postUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-pink-500/50 text-slate-200 hover:text-pink-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all">
                 <i class="fa-brands fa-instagram text-pink-500"></i>
-                <span>Open Post on Instagram</span>
+                <span>${isDummyShortcode ? `View @${postHandle} on Instagram` : 'Open Post on Instagram'}</span>
                 <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
               </a>
 
@@ -1873,11 +1877,15 @@
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-800/60 font-mono">
-                  ${data.posts.map(p => `
+                  ${data.posts.map(p => {
+                    const cleanH = (p.handle || '').replace(/^@/, '');
+                    const isDummy = !p.shortcode || p.shortcode.startsWith('C_') || p.shortcode.startsWith('mock_') || (p.post_url && p.post_url.includes('/p/C_'));
+                    const itemUrl = isDummy ? `https://www.instagram.com/${cleanH}/` : (p.post_url || `https://www.instagram.com/p/${p.shortcode}/`);
+                    return `
                     <tr class="hover:bg-slate-900/40 transition-colors">
                       <td class="p-3.5 font-bold text-white">
                         <div class="flex items-center gap-2">
-                          <a href="${p.post_url || (p.shortcode ? `https://www.instagram.com/p/${p.shortcode}/` : `https://www.instagram.com/${(p.handle||'').replace(/^@/,'')}/`)}" target="_blank" rel="noopener noreferrer" class="text-pink-400 hover:text-pink-300 flex items-center gap-1.5 hover:underline" title="View on Instagram">
+                          <a href="${itemUrl}" target="_blank" rel="noopener noreferrer" class="text-pink-400 hover:text-pink-300 flex items-center gap-1.5 hover:underline" title="${isDummy ? 'Open Profile on Instagram' : 'View Post on Instagram'}">
                             <i class="fa-brands fa-instagram text-pink-500"></i>
                             <span>@${p.handle || 'unknown'}</span>
                             <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-75"></i>
@@ -1896,15 +1904,16 @@
                         `}
                       </td>
                       <td class="p-3.5 text-right whitespace-nowrap">
-                        <a href="${p.post_url || (p.shortcode ? `https://www.instagram.com/p/${p.shortcode}/` : `https://www.instagram.com/${(p.handle||'').replace(/^@/,'')}/`)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-pink-300 text-[11px] transition-colors inline-flex items-center gap-1 mr-1.5">
-                          <i class="fa-brands fa-instagram text-pink-500"></i> View
+                        <a href="${itemUrl}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-pink-300 text-[11px] transition-colors inline-flex items-center gap-1 mr-1.5">
+                          <i class="fa-brands fa-instagram text-pink-500"></i> ${isDummy ? 'Profile' : 'Post'}
                         </a>
                         <button onclick="setStudioTopic('Viral Adapt: ' + '${p.caption ? encodeURIComponent(p.caption.slice(0, 80)) : ''}'); switchTab('tab-studio')" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] transition-colors">
                           Adapt
                         </button>
                       </td>
                     </tr>
-                  `).join('')}
+                    `;
+                  }).join('')}
                 </tbody>
               </table>
             </div>

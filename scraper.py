@@ -241,7 +241,7 @@ class InstaScraper:
                 "niche": niche,
                 "handle": clean_h,
                 "shortcode": it["shortcode"],
-                "post_url": f"https://www.instagram.com/p/{it['shortcode']}/",
+                "post_url": f"https://www.instagram.com/{clean_h}/" if it["shortcode"].startswith("C_") else f"https://www.instagram.com/p/{it['shortcode']}/",
                 "media_url": it.get("media_url", ""),
                 "caption": it["caption"],
                 "likes": it["likes"],
