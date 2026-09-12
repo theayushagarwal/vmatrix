@@ -47,6 +47,7 @@ from core import (
     publish_to_instagram_carousel,
     publish_to_instagram_photo,
     audit_slide_images,
+    generate_post_caption,
     record_post,
     get_time_since_last_post,
 )
@@ -249,9 +250,13 @@ def run_autonomous_post(
 
     logger.info("[5/5] Uploading media to Cloudinary & publishing live to Instagram...")
     cloudinary_urls = upload_images_to_cloudinary(slide_paths)
-    logger.info("  ✓ Uploaded %d image(s) to Cloudinary CDN", len(cloudinary_urls))
-
-    caption = content_plan.get("caption", f"{series_name}\n\n#tech #coding #ai #programming #software")
+    logger.info("  📝 Generating 3-stage audited Instagram caption with niche hashtags & disclaimer...")
+    caption = generate_post_caption(
+        topic=series_name,
+        content_plan=content_plan,
+        format_type=pipeline_mode,
+    )
+    logger.info("  ✓ Generated caption (%d characters)", len(caption))
 
     if pipeline_mode == "photo":
         logger.info("📸 Publishing Single Photo to Instagram (@vmatrix.co)...")

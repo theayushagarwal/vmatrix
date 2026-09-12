@@ -146,6 +146,8 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
             },
             timeout=30,
         )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error creating item container (%d): %s", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json()["id"]
 
@@ -171,6 +173,8 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
             },
             timeout=30,
         )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error creating parent carousel container (%d): %s", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json()["id"]
 
@@ -190,6 +194,8 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
             },
             timeout=30,
         )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error publishing carousel (%d): %s", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json().get("id")
 
@@ -225,6 +231,8 @@ def publish_to_instagram_photo(image_url: str, caption: str) -> dict:
             },
             timeout=30,
         )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error creating photo container (%d): %s", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json()["id"]
 
@@ -244,6 +252,8 @@ def publish_to_instagram_photo(image_url: str, caption: str) -> dict:
             },
             timeout=30,
         )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error publishing media (%d): %s", resp.status_code, resp.text)
         resp.raise_for_status()
         return resp.json().get("id")
 

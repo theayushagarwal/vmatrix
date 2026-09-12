@@ -23,6 +23,11 @@ from .vision_inspector import (
     audit_slide_images,
     audit_cheatsheet_image,
 )
+from .caption import (
+    generate_caption,
+    generate_listicle_caption,
+    generate_post_caption,
+)
 from .funnel import (
     run_filtering_funnel,
     apply_stage1_blacklist,
@@ -54,6 +59,9 @@ __all__ = [
     "generate_carousel_content",
     "generate_cheatsheet_content",
     "generate_flow_carousel_content",
+    "generate_caption",
+    "generate_listicle_caption",
+    "generate_post_caption",
     "render_carousel_slides",
     "render_carousel_flow_slides",
     "render_infographic",
