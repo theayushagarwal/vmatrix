@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Slide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbfbfc;
+            --text-color: #0f172a;
+            --grid-color: rgba(99, 102, 241, 0.12);
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --title-color: #0f172a;
+        }
+        .dark-theme {
+            --bg-color: #070a13;
+            --text-color: #ffffff;
+            --grid-color: rgba(99, 102, 241, 0.08);
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --title-color: #ffffff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            width: 1080px;
+            height: 1350px;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px;
+            color: var(--text-color);
+            position: relative;
+        }
+        .color-strip { position: absolute; top: 0; left: 0; width: 100%; height: 15px; background: linear-gradient(90deg, #6366f1, #a855f7, #f43f5e); }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; }
+        .page-tag { font-size: 20px; font-weight: 800; color: #6366f1; letter-spacing: 3px; }
+        .slide-counter { background: rgba(15, 23, 42, 0.06); padding: 8px 22px; border-radius: 30px; font-weight: 700; font-size: 18px; }
+        .dark-theme .slide-counter { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        .slide-title { font-size: 64px; font-weight: 900; letter-spacing: -2px; margin-top: 20px; margin-bottom: 25px; color: var(--title-color); }
+        /* VS Code MacOS Window */
+        .editor-container {
+            background: #1e1e2e;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.4);
+            margin-bottom: auto;
+        }
+        .editor-top-bar {
+            background: #181825;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .mac-dots { display: flex; gap: 8px; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; }
+        .dot-red { background: #ff5f56; }
+        .dot-yellow { background: #ffbd2e; }
+        .dot-green { background: #27c93f; }
+        .filename-tab { font-family: 'Fira Code', monospace; color: #a6adc8; font-size: 16px; font-weight: 600; }
+        .editor-code-body {
+            padding: 30px;
+            font-family: 'Fira Code', monospace;
+            font-size: 21px;
+            line-height: 1.6;
+            color: #cdd6f4;
+            white-space: pre-wrap;
+            overflow-x: auto;
+        }
+        .footer { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid rgba(15,23,42,0.08); padding-top: 35px; }
+        .dark-theme .footer { border-top: 2px solid rgba(255,255,255,0.08); }
+        .brand-pill { font-size: 20px; font-weight: 700; color: var(--title-color); }
+        .swipe-btn { background: #0f172a; color: #fff; padding: 12px 28px; border-radius: 50px; font-weight: 700; font-size: 18px; }
+        .dark-theme .swipe-btn { background: #ffffff; color: #0f172a; }
+    </style>
+</head>
+<body class="{% if theme == 'DARK' %}dark-theme{% else %}light-theme{% endif %}">
+    <div class="color-strip"></div>
+    <header class="top-nav">
+        <div class="slide-counter">Page {{ slide_index | default(1) }} / {{ total_slides | default(5) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // CODE SNIPPET', true) }}</div>
+    </header>
+    <h2 class="slide-title">{{ title }}</h2>
+    <div class="editor-container">
+        <div class="editor-top-bar">
+            <div class="mac-dots">
+                <div class="dot dot-red"></div>
+                <div class="dot dot-yellow"></div>
+                <div class="dot dot-green"></div>
+            </div>
+            <div class="filename-tab">{{ filename | default("snippet.py") }}</div>
+            <div style="width: 50px;"></div>
+        </div>
+        <div class="editor-code-body"><code>{{ code_content }}</code></div>
+    </div>
+    <footer class="footer">
+        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="swipe-btn">{% if slide_index == total_slides %}SAVE POST{% else %}SWIPE LEFT →{% endif %}</div>
+    </footer>
+</body>
+</html>

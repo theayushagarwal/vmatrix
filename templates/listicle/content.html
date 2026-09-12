@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Listicle Content Slide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;550;600;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbfbfc;
+            --text-color: #334155;
+            --grid-color: rgba(99, 102, 241, 0.12);
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --title-color: #0f172a;
+            --desc-color: #1e293b;
+            --sub-color: #64748b;
+        }
+        .dark-theme {
+            --bg-color: #070a13;
+            --text-color: #cbd5e1;
+            --grid-color: rgba(99, 102, 241, 0.08);
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --title-color: #ffffff;
+            --desc-color: #cbd5e1;
+            --sub-color: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            width: 1080px;
+            height: 1350px;
+            background-color: var(--bg-color);
+            background-image:
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px;
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+        }
+        .color-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #f43f5e 100%);
+        }
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-tag {
+            font-size: 20px;
+            font-weight: 800;
+            color: #6366f1;
+            letter-spacing: 3px;
+        }
+        .slide-counter {
+            background: rgba(15, 23, 42, 0.06);
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .dark-theme .slide-counter {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        /* Content layout */
+        .content-main {
+            margin-top: auto;
+            margin-bottom: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+        .step-header-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .step-num-display {
+            font-size: 110px;
+            font-weight: 900;
+            line-height: 0.9;
+            letter-spacing: -4px;
+            background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .tool-logo-box {
+            width: 110px;
+            height: 110px;
+            border-radius: 28px;
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            padding: 16px;
+        }
+        .tool-logo-box img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        .slide-title {
+            font-size: 60px;
+            font-weight: 900;
+            line-height: 1.15;
+            color: var(--title-color);
+            letter-spacing: -2px;
+            max-width: 920px;
+        }
+        .desc-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            border-left: 6px solid #6366f1;
+            border-radius: 20px;
+            padding: 32px 36px;
+            font-size: 26px;
+            font-weight: 500;
+            line-height: 1.5;
+            color: var(--desc-color);
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.4);
+            max-width: 920px;
+        }
+        .light-theme .desc-card { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08); }
+        .meta-chips-row {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .benefit-chip {
+            background: rgba(16, 185, 129, 0.12);
+            color: #059669;
+            border: 1.5px solid rgba(16, 185, 129, 0.25);
+            font-size: 19px;
+            font-weight: 800;
+            padding: 8px 22px;
+            border-radius: 50px;
+        }
+        .dark-theme .benefit-chip { color: #34d399; }
+        .tag-chip {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            color: var(--title-color);
+            font-size: 19px;
+            font-weight: 700;
+            padding: 8px 20px;
+            border-radius: 50px;
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid var(--card-border);
+            padding-top: 35px;
+        }
+        .brand-pill {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--title-color);
+        }
+        .swipe-btn {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 12px 28px;
+            border-radius: 50px;
+        }
+        .dark-theme .swipe-btn { background: #ffffff; color: #0f172a; }
+    </style>
+</head>
+<body class="{% if theme == 'DARK' %}dark-theme{% else %}light-theme{% endif %}">
+    <div class="color-strip"></div>
+    <header class="top-nav">
+        <div class="slide-counter">Page {{ slide_index | default(2) }} / {{ total_slides | default(5) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // TOOL SHOWCASE', true) }}</div>
+    </header>
+    <main class="content-main">
+        <div class="step-header-row">
+            <span class="step-num-display">{{ step_num | default(("%02d" % (slide_index - 1 if slide_index is defined and slide_index > 1 else 1)), true) }}</span>
+            {% if tool_logo or logo_url or domain %}
+            <div class="tool-logo-box">
+                <img src="{{ tool_logo | default(logo_url, true) | default((domain | logo), true) }}" alt="{{ tool_name | default(title, true) }}" onerror="this.parentElement.innerHTML='<b style=\'font-size:32px;\'>{{ (tool_name | default(title, true))[:2] | upper }}</b>'">
+            </div>
+            {% endif %}
+        </div>
+        <h2 class="slide-title">{{ title | default(headline, true) }}</h2>
+        <div class="desc-card">
+            {{ description }}
+        </div>
+        <div class="meta-chips-row">
+            {% if tool_name %}
+            <div class="tag-chip">⚙️ {{ tool_name }}</div>
+            {% endif %}
+            {% if key_benefit %}
+            <div class="benefit-chip">⚡ {{ key_benefit }}</div>
+            {% endif %}
+        </div>
+    </main>
+    <footer class="footer">
+        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="swipe-btn">{% if slide_index == total_slides %}SAVE POST{% else %}SWIPE LEFT &rarr;{% endif %}</div>
+    </footer>
+</body>
+</html>

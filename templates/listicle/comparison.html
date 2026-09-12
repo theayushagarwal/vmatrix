@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Comparison Slide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbfbfc;
+            --text-color: #334155;
+            --grid-color: rgba(99, 102, 241, 0.12);
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --title-color: #0f172a;
+            --desc-color: #1e293b;
+        }
+        .dark-theme {
+            --bg-color: #070a13;
+            --text-color: #e2e8f0;
+            --grid-color: rgba(99, 102, 241, 0.08);
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --title-color: #ffffff;
+            --desc-color: #cbd5e1;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            width: 1080px;
+            height: 1350px;
+            background-color: var(--bg-color);
+            background-image: linear-gradient(to right, var(--grid-color) 1px, transparent 1px), linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px;
+            color: var(--text-color);
+            position: relative;
+        }
+        .color-strip { position: absolute; top: 0; left: 0; width: 100%; height: 15px; background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #f43f5e 100%); }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; }
+        .page-tag { font-size: 20px; font-weight: 800; color: #6366f1; letter-spacing: 3px; }
+        .slide-counter { background: rgba(15, 23, 42, 0.06); padding: 8px 22px; border-radius: 30px; font-weight: 700; font-size: 18px; }
+        .dark-theme .slide-counter { background: rgba(255, 255, 255, 0.08); color: #fff; }
+        .slide-title { font-size: 64px; font-weight: 900; color: var(--title-color); letter-spacing: -2px; margin-top: 20px; }
+        /* Split Cards Container */
+        .comparison-cards { display: flex; flex-direction: column; gap: 25px; margin-top: 30px; margin-bottom: auto; }
+        .tool-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            border-radius: 24px;
+            padding: 30px 35px;
+            display: flex;
+            align-items: center;
+            gap: 30px;
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        .paid-card { border-left: 8px solid #f43f5e; }
+        .free-card { border-left: 8px solid #10b981; }
+        .logo-box { width: 90px; height: 90px; border-radius: 20px; background: rgba(15, 23, 42, 0.05); display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; }
+        .dark-theme .logo-box { background: rgba(255, 255, 255, 0.08); }
+        .logo-box img { max-width: 75%; max-height: 75%; object-fit: contain; }
+        .tool-info { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .tool-header-row { display: flex; justify-content: space-between; align-items: center; }
+        .tool-name { font-size: 36px; font-weight: 900; color: var(--title-color); }
+        .price-badge { font-size: 18px; font-weight: 800; padding: 6px 16px; border-radius: 20px; }
+        .paid-badge { background: rgba(244, 63, 94, 0.15); color: #f43f5e; }
+        .free-badge { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+        .tool-desc { font-size: 22px; line-height: 1.45; color: var(--desc-color); font-weight: 500; }
+        .footer { display: flex; justify-content: space-between; align-items: center; border-top: 2px solid var(--card-border); padding-top: 35px; }
+        .brand-pill { font-size: 20px; font-weight: 700; color: var(--title-color); }
+        .swipe-btn { background: #0f172a; color: #fff; font-size: 18px; font-weight: 700; padding: 12px 28px; border-radius: 50px; }
+        .dark-theme .swipe-btn { background: #ffffff; color: #0f172a; }
+    </style>
+</head>
+<body class="{% if theme == 'DARK' %}dark-theme{% else %}light-theme{% endif %}">
+    <div class="color-strip"></div>
+    <header class="top-nav">
+        <div class="slide-counter">Page {{ slide_index | default(1) }} / {{ total_slides | default(5) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // TOOL SHOWDOWN', true) }}</div>
+    </header>
+    <h2 class="slide-title">{{ title }}</h2>
+    <div class="comparison-cards">
+        <!-- Paid Tool -->
+        <div class="tool-card paid-card">
+            <div class="logo-box">
+                <img src="{{ paid_logo }}" alt="{{ paid_tool }}" onerror="this.parentElement.innerHTML='<span style=\'font-weight:900;font-size:24px;\'>{{ paid_tool[:2] }}</span>'">
+            </div>
+            <div class="tool-info">
+                <div class="tool-header-row">
+                    <span class="tool-name">{{ paid_tool }}</span>
+                    <span class="price-badge paid-badge">{{ paid_price | default('$$$ PAID', true) }}</span>
+                </div>
+                <p class="tool-desc">{{ paid_desc }}</p>
+            </div>
+        </div>
+        <!-- Free / Open Source Alternative -->
+        <div class="tool-card free-card">
+            <div class="logo-box">
+                <img src="{{ free_logo }}" alt="{{ free_tool }}" onerror="this.parentElement.innerHTML='<span style=\'font-weight:900;font-size:24px;\'>{{ free_tool[:2] }}</span>'">
+            </div>
+            <div class="tool-info">
+                <div class="tool-header-row">
+                    <span class="tool-name">{{ free_tool }}</span>
+                    <span class="price-badge free-badge">{{ free_price | default('FREE / OSS', true) }}</span>
+                </div>
+                <p class="tool-desc">{{ free_desc }}</p>
+            </div>
+        </div>
+    </div>
+    <footer class="footer">
+        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="swipe-btn">{% if slide_index == total_slides %}SAVE POST{% else %}SWIPE LEFT →{% endif %}</div>
+    </footer>
+</body>
+</html>

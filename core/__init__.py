@@ -11,8 +11,15 @@ from .renderer import (
     render_rich_flow_slides,
     render_cheatsheet_slide,
     render_infographic,
+    render_comparison_slide,
+    render_code_slide,
+    render_listicle_slides,
     get_logo_url,
     get_favicon_url,
+)
+from .logo_resolver import (
+    resolve_logo,
+    resolve_logo_url,
 )
 from .publisher import (
     upload_images_to_cloudinary,
@@ -92,6 +99,11 @@ __all__ = [
     "render_rich_flow_slides",
     "render_cheatsheet_slide",
     "render_infographic",
+    "render_comparison_slide",
+    "render_code_slide",
+    "render_listicle_slides",
+    "resolve_logo",
+    "resolve_logo_url",
     "get_logo_url",
     "get_favicon_url",
     "upload_images_to_cloudinary",

@@ -31,6 +31,7 @@ import os
 import json
 import urllib.request
 from functools import lru_cache
+from .logo_resolver import resolve_logo, resolve_logo_url
 
 @lru_cache(maxsize=256)
 def resolve_brandfetch_logo(clean_domain: str) -> str | None:
@@ -120,6 +121,7 @@ def _get_jinja_env() -> Environment:
     )
     env.filters["favicon"] = get_favicon_url
     env.filters["logo"] = get_logo_url
+    env.filters["resolve_logo"] = resolve_logo_url
     env.filters["title_gradient"] = format_title_gradient
     return env
 
@@ -148,16 +150,25 @@ def _render_html_batch(
             page = context.new_page()
 
             for html_content, output_path, img_format in html_items:
-                page.set_content(html_content, wait_until="load", timeout=20000)
-                page.wait_for_timeout(350)  # allow web fonts / favicons / gradients to settle
+                temp_html = output_path.parent / f"_temp_{output_path.stem}.html"
+                temp_html.write_text(html_content, encoding="utf-8")
+                try:
+                    page.goto(temp_html.absolute().as_uri(), wait_until="load", timeout=20000)
+                    try:
+                        page.wait_for_load_state("networkidle", timeout=3000)
+                    except Exception:
+                        pass
+                    page.wait_for_timeout(600)  # allow web fonts / favicons / gradients to settle
 
-                if img_format.lower() in ("jpg", "jpeg"):
-                    page.screenshot(path=str(output_path), type="jpeg", quality=95)
-                else:
-                    page.screenshot(path=str(output_path), type="png")
+                    if img_format.lower() in ("jpg", "jpeg"):
+                        page.screenshot(path=str(output_path), type="jpeg", quality=95)
+                    else:
+                        page.screenshot(path=str(output_path), type="png")
 
-                validate_slide_image(output_path, *EXPECTED_PNG_SIZE)
-                saved_paths.append(output_path)
+                    validate_slide_image(output_path, *EXPECTED_PNG_SIZE)
+                    saved_paths.append(output_path)
+                finally:
+                    temp_html.unlink(missing_ok=True)
         finally:
             browser.close()
 
@@ -401,3 +412,198 @@ def render_infographic(data: dict, output_dir: Path, image_format: str = "jpeg")
     out_path = output_dir / f"infographic.{ext}"
     results = _render_html_batch([(html, out_path, image_format)])
     return results[0]
+
+
+def render_comparison_slide(comparison_data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
+    """
+    Renders Paid vs. Free Comparison Slide using templates/listicle/comparison.html.
+    Resolves official logos via 4-Tier logo resolver. Enforces pure white theme.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    env = _get_jinja_env()
+    template = env.get_template("comparison.html")
+
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+    out_path = output_dir / f"comparison.{ext}"
+
+    paid_tool = comparison_data.get("paid_tool", "Proprietary Tool")
+    paid_logo = comparison_data.get("paid_logo") or resolve_logo_url(
+        paid_tool,
+        domain=comparison_data.get("paid_domain", ""),
+        output_dir=output_dir,
+        suffix="paid",
+    )
+
+    free_tool = comparison_data.get("free_tool", "Open Source Alternative")
+    free_logo = comparison_data.get("free_logo") or resolve_logo_url(
+        free_tool,
+        domain=comparison_data.get("free_domain", ""),
+        output_dir=output_dir,
+        suffix="free",
+    )
+
+    theme = comparison_data.get("theme", "LIGHT")
+    html = template.render(
+        title=comparison_data.get("title", f"{paid_tool} vs. {free_tool}"),
+        slide_index=comparison_data.get("slide_index", 1),
+        total_slides=comparison_data.get("total_slides", 1),
+        brand_tag=comparison_data.get("brand_tag", "VELTRIXAI // TOOL SHOWDOWN"),
+        brand_handle=comparison_data.get("brand_handle", "@veltrixai_official"),
+        theme=theme,
+        paid_tool=paid_tool,
+        paid_price=comparison_data.get("paid_price", "$$$ PAID"),
+        paid_desc=comparison_data.get("paid_desc", ""),
+        paid_logo=paid_logo,
+        free_tool=free_tool,
+        free_price=comparison_data.get("free_price", "FREE / OSS"),
+        free_desc=comparison_data.get("free_desc", ""),
+        free_logo=free_logo,
+    )
+    results = _render_html_batch([(html, out_path, image_format)])
+    return results[0]
+
+
+def render_code_slide(code_data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
+    """
+    Renders VS Code Terminal / Editor slide using templates/listicle/listicle_code.html.
+    Authentic dark macOS window on clean white background.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    env = _get_jinja_env()
+    template = env.get_template("listicle_code.html")
+
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+    out_path = output_dir / f"code_slide.{ext}"
+
+    theme = code_data.get("theme", "LIGHT")
+    html = template.render(
+        title=code_data.get("title", "Command & Script Snippet"),
+        slide_index=code_data.get("slide_index", 1),
+        total_slides=code_data.get("total_slides", 1),
+        brand_tag=code_data.get("brand_tag", "VELTRIXAI // CODE SNIPPET"),
+        brand_handle=code_data.get("brand_handle", "@veltrixai_official"),
+        theme=theme,
+        filename=code_data.get("filename", "snippet.py"),
+        code_content=code_data.get("code_content", "# Put code here"),
+    )
+    results = _render_html_batch([(html, out_path, image_format)])
+    return results[0]
+
+
+def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
+    """
+    Renders a multi-slide listicle using the 5 templates:
+    1. cover.html
+    2. content.html
+    3. comparison.html
+    4. listicle_code.html
+    5. outro.html
+    Enforces pure white aesthetic by default (theme="LIGHT").
+    Returns list of saved slide image paths.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    env = _get_jinja_env()
+    slides = listicle_data.get("slides", [])
+    total_slides = len(slides)
+    theme = listicle_data.get("theme", "LIGHT")
+    brand_handle = listicle_data.get("brand_handle", "@veltrixai_official")
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+
+    html_items: list[tuple[str, Path, str]] = []
+    for idx, slide in enumerate(slides, start=1):
+        s_type = slide.get("type", "content").lower()
+        s_theme = slide.get("theme", theme)
+
+        if s_type == "cover":
+            tpl = env.get_template("cover.html")
+            html = tpl.render(
+                title=slide.get("title", listicle_data.get("title", "Curated Tech Guide")),
+                cover_title=slide.get("cover_title", listicle_data.get("title", "Curated Tech Guide")),
+                subtitle=slide.get("subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
+                cover_subtitle=slide.get("cover_subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
+                series_title=slide.get("series_title", listicle_data.get("series_title", "TECH GUIDE")),
+                brand_tag=slide.get("brand_tag", listicle_data.get("brand_tag", "VELTRIXAI // CURATED GUIDE")),
+                brand_handle=brand_handle,
+                theme=s_theme,
+                slide_index=idx,
+                total_slides=total_slides,
+                items=slide.get("items", listicle_data.get("tools", [])),
+                tools=slide.get("tools", listicle_data.get("tools", [])),
+            )
+        elif s_type in ("comparison", "vs"):
+            tpl = env.get_template("comparison.html")
+            paid_tool = slide.get("paid_tool", "Paid Tool")
+            free_tool = slide.get("free_tool", "Free Tool")
+            html = tpl.render(
+                title=slide.get("title", f"{paid_tool} vs. {free_tool}"),
+                paid_tool=paid_tool,
+                paid_price=slide.get("paid_price", "$$$ PAID"),
+                paid_desc=slide.get("paid_desc", ""),
+                paid_logo=slide.get("paid_logo") or resolve_logo_url(paid_tool, domain=slide.get("paid_domain", ""), output_dir=output_dir, suffix=f"p_{idx}"),
+                free_tool=free_tool,
+                free_price=slide.get("free_price", "FREE / OSS"),
+                free_desc=slide.get("free_desc", ""),
+                free_logo=slide.get("free_logo") or resolve_logo_url(free_tool, domain=slide.get("free_domain", ""), output_dir=output_dir, suffix=f"f_{idx}"),
+                brand_tag=slide.get("brand_tag", "VELTRIXAI // TOOL SHOWDOWN"),
+                brand_handle=brand_handle,
+                theme=s_theme,
+                slide_index=idx,
+                total_slides=total_slides,
+            )
+        elif s_type in ("code", "terminal"):
+            tpl = env.get_template("listicle_code.html")
+            html = tpl.render(
+                title=slide.get("title", "Code Snippet"),
+                filename=slide.get("filename", "main.py"),
+                code_content=slide.get("code_content", "# Code snippet"),
+                brand_tag=slide.get("brand_tag", "VELTRIXAI // CODE SNIPPET"),
+                brand_handle=brand_handle,
+                theme=s_theme,
+                slide_index=idx,
+                total_slides=total_slides,
+            )
+        elif s_type == "outro":
+            tpl = env.get_template("outro.html")
+            html = tpl.render(
+                title=slide.get("title", "Want The Complete Source Repo?"),
+                cta_keyword=slide.get("cta_keyword", listicle_data.get("cta_keyword", "GUIDE")),
+                action_text=slide.get("action_text", ""),
+                brand_tag=slide.get("brand_tag", "VELTRIXAI // ACTION REQUIRED"),
+                brand_handle=brand_handle,
+                theme=s_theme,
+                slide_index=idx,
+                total_slides=total_slides,
+            )
+        else:  # standard "content" slide
+            tpl = env.get_template("content.html")
+            tool_name = slide.get("tool_name") or slide.get("name", "")
+            domain = slide.get("domain", "")
+            tool_logo = slide.get("tool_logo") or slide.get("logo_url")
+            if not tool_logo and tool_name:
+                tool_logo = resolve_logo_url(tool_name, domain=domain, output_dir=output_dir, suffix=f"c_{idx}")
+            html = tpl.render(
+                title=slide.get("title", tool_name),
+                headline=slide.get("headline", ""),
+                description=slide.get("description", ""),
+                step_num=slide.get("step_num", f"{idx:02d}"),
+                tool_name=tool_name,
+                tool_logo=tool_logo,
+                key_benefit=slide.get("key_benefit", ""),
+                brand_tag=slide.get("brand_tag", "VELTRIXAI // TOOL SHOWCASE"),
+                brand_handle=brand_handle,
+                theme=s_theme,
+                slide_index=idx,
+                total_slides=total_slides,
+            )
+
+        out_path = output_dir / f"slide_{idx}.{ext}"
+        html_items.append((html, out_path, image_format))
+
+    return _render_html_batch(html_items)
+

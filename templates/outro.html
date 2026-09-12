@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Listicle Outro Slide</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;550;600;700;800;900&family=Fira+Code:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #fbfbfc;
+            --text-color: #334155;
+            --grid-color: rgba(99, 102, 241, 0.12);
+            --card-bg: #ffffff;
+            --card-border: #e2e8f0;
+            --title-color: #0f172a;
+            --desc-color: #1e293b;
+            --sub-color: #64748b;
+        }
+        .dark-theme {
+            --bg-color: #070a13;
+            --text-color: #cbd5e1;
+            --grid-color: rgba(99, 102, 241, 0.08);
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --title-color: #ffffff;
+            --desc-color: #cbd5e1;
+            --sub-color: #94a3b8;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Outfit', sans-serif;
+            width: 1080px;
+            height: 1350px;
+            background-color: var(--bg-color);
+            background-image:
+                linear-gradient(to right, var(--grid-color) 1px, transparent 1px),
+                linear-gradient(to bottom, var(--grid-color) 1px, transparent 1px);
+            background-size: 25px 25px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 80px;
+            color: var(--text-color);
+            position: relative;
+            overflow: hidden;
+        }
+        .color-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 15px;
+            background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #f43f5e 100%);
+        }
+        .top-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .page-tag {
+            font-size: 20px;
+            font-weight: 800;
+            color: #6366f1;
+            letter-spacing: 3px;
+        }
+        .slide-counter {
+            background: rgba(15, 23, 42, 0.06);
+            padding: 8px 22px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 18px;
+        }
+        .dark-theme .slide-counter {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+        /* Outro main */
+        .outro-main {
+            margin-top: auto;
+            margin-bottom: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 36px;
+        }
+        .outro-title {
+            font-size: 72px;
+            font-weight: 900;
+            line-height: 1.1;
+            color: var(--title-color);
+            letter-spacing: -2px;
+            max-width: 920px;
+        }
+        .cta-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15), 0 8px 32px rgba(99, 102, 241, 0.18), 0 2px 8px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+        .light-theme .cta-card { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08); }
+        .cta-prompt-label {
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            color: #6366f1;
+            text-transform: uppercase;
+        }
+        .cta-word-box {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(244, 63, 94, 0.1) 100%);
+            border: 2px dashed #6366f1;
+            border-radius: 18px;
+            padding: 16px 28px;
+            width: fit-content;
+        }
+        .cta-word {
+            font-size: 50px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #f97316 0%, #db2777 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 2px;
+        }
+        .action-desc {
+            font-size: 26px;
+            line-height: 1.5;
+            font-weight: 500;
+            color: var(--desc-color);
+        }
+        .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 2px solid var(--card-border);
+            padding-top: 35px;
+        }
+        .brand-pill {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--title-color);
+        }
+        .swipe-btn {
+            background: #0f172a;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 700;
+            padding: 12px 32px;
+            border-radius: 50px;
+        }
+        .dark-theme .swipe-btn { background: #ffffff; color: #0f172a; }
+    </style>
+</head>
+<body class="{% if theme == 'DARK' %}dark-theme{% else %}light-theme{% endif %}">
+    <div class="color-strip"></div>
+    <header class="top-nav">
+        <div class="slide-counter">Page {{ slide_index | default(total_slides | default(5)) }} / {{ total_slides | default(5) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // ACTION REQUIRED', true) }}</div>
+    </header>
+    <main class="outro-main">
+        <h2 class="outro-title">{{ title | default('Want The Complete Source Repo & Blueprint?', true) }}</h2>
+        <div class="cta-card">
+            <div class="cta-prompt-label">COMMENT BELOW &darr;</div>
+            <div class="cta-word-box">
+                <span class="cta-word">&ldquo;{{ cta_keyword | default('FLOW', true) }}&rdquo;</span>
+            </div>
+            <p class="action-desc">
+                {{ action_text | default(('Drop "' ~ (cta_keyword | default('FLOW', true)) ~ '" in the comments and I will send the direct repo link and guide straight to your DM!'), true) }}
+            </p>
+        </div>
+    </main>
+    <footer class="footer">
+        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="swipe-btn">SAVE POST</div>
+    </footer>
+</body>
+</html>
