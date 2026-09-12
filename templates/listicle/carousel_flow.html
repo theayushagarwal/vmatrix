@@ -372,7 +372,7 @@
             {% if tools %}
             <div class="cover-tech-row">
                 {% for tool in tools %}
-                <span class="tech-tag">{{ tool }}</span>
+                <span class="tech-tag">{% if tool is mapping %}{{ tool.name }}{% else %}{{ tool }}{% endif %}</span>
                 {% endfor %}
             </div>
             {% endif %}
