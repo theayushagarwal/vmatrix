@@ -45,6 +45,11 @@ from core import (
     approve_and_publish_post,
     reject_queued_post,
     process_auto_publish_timeouts,
+    fetch_posts_from_supabase,
+    fetch_top_performing_posts_from_supabase,
+    audit_published_posts_insights,
+    get_top_performing_topics,
+    calculate_topic_resonance_boost,
 )
 
 load_dotenv()
@@ -418,12 +423,13 @@ generate_clicked = st.button("✨ Generate Carousel", type="primary", use_contai
 
 st.markdown("---")
 
-tab_queue, tab_content, tab_preview, tab_publish = st.tabs(
+tab_queue, tab_content, tab_preview, tab_publish, tab_analytics = st.tabs(
     [
         "⏱️ 30-Min Approval Queue",
         "📋 Content Generation",
         "🖼️ Visual Carousel Preview",
         "🚀 Live Publishing",
+        "📈 Analytics & Supabase Feedback",
     ]
 )
 
@@ -853,4 +859,150 @@ with tab_publish:
                         st.success(f"🎉 Enqueued! Check the **⏱️ 30-Min Approval Queue** tab to review countdown and slides (ID: `{q_item['id']}`).")
                     except Exception as e:
                         st.error(f"Failed to queue post: {e}")
+
+# ---------------------------------------------------------------------------
+# Tab 4: Analytics & Supabase Feedback Loop
+# ---------------------------------------------------------------------------
+with tab_analytics:
+    st.markdown("### 📈 Post-Publishing Analytics & Supabase Feedback Loop")
+    st.markdown(
+        "Fetches live Instagram post metrics via **Meta Graph API** after 24–48 hours. "
+        "High-intent actions (**Saves × 3**, **Shares × 3**, **Comments × 2**, **Likes × 1**) calculate an "
+        "**Engagement Score** that feeds back into the **5-Stage AI Topic Funnel**, injecting up to "
+        "**+3.0 Historical Resonance Boost** into semantically related candidate topics."
+    )
+
+    # Fetch Supabase records and top performing topics
+    all_supabase_posts = fetch_posts_from_supabase(limit=50)
+    top_performers = get_top_performing_topics(min_score=20.0, limit=20)
+
+    # Analytics Metrics Row
+    a_col1, a_col2, a_col3, a_col4 = st.columns([1.2, 1.2, 1.2, 1])
+    with a_col1:
+        st.markdown(
+            f'<div class="stat-pill"><div class="stat-val">{len(all_supabase_posts)}</div><div class="stat-lbl">Supabase Posts</div></div>',
+            unsafe_allow_html=True,
+        )
+    with a_col2:
+        st.markdown(
+            f'<div class="stat-pill" style="border-color: #34d399;"><div class="stat-val" style="color: #34d399;">{len(top_performers)}</div><div class="stat-lbl">Active Winners</div></div>',
+            unsafe_allow_html=True,
+        )
+    with a_col3:
+        avg_score = 0.0
+        if top_performers:
+            avg_score = round(sum(p.get("engagement_score", 0.0) for p in top_performers) / len(top_performers), 1)
+        st.markdown(
+            f'<div class="stat-pill" style="border-color: #818cf8;"><div class="stat-val" style="color: #818cf8;">{avg_score}</div><div class="stat-lbl">Avg Winner Score</div></div>',
+            unsafe_allow_html=True,
+        )
+    with a_col4:
+        if st.button("🔄 Audit Insights Now", type="primary", use_container_width=True):
+            with st.spinner("Fetching Graph API metrics & updating Supabase..."):
+                audit_summary = audit_published_posts_insights(max_posts=20)
+                st.success(f"Audit Complete! Updated {audit_summary.get('audited_count', 0)} posts. Found {audit_summary.get('top_performers_count', 0)} top performers.")
+                st.rerun()
+
+    st.markdown("---")
+
+    # Interactive Resonance Simulator
+    with st.expander("⚡ **Test Topic Resonance Boost in 5-Stage Funnel**", expanded=True):
+        st.caption("Enter any topic to calculate its real-time semantic similarity against top-performing past posts and view the resulting Stage 5 Actionability Bonus.")
+        sim_input = st.text_input("Candidate Topic", value=st.session_state.topic or "Modern Python Async Architecture Patterns")
+        if sim_input:
+            boost = calculate_topic_resonance_boost(sim_input)
+            if boost > 0.0:
+                st.markdown(
+                    f"""
+                    <div style="border-left: 4px solid #34d399; padding: 12px 18px; background: rgba(52,211,153,0.12); border-radius: 8px; margin-top: 8px;">
+                        <strong style="color: #34d399; font-size: 1.1rem;">⚡ +{boost} Actionability Boost Earned!</strong>
+                        <div style="color: #e2e8f0; font-size: 0.90rem; margin-top: 4px;">
+                            This topic strongly matches historical high-engagement themes. In Stage 5 of the Funnel, its score will be boosted by <strong>+{boost}</strong>, elevating it to top priority.
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    f"""
+                    <div style="border-left: 4px solid #94a3b8; padding: 12px 18px; background: rgba(148,163,184,0.10); border-radius: 8px; margin-top: 8px;">
+                        <strong style="color: #cbd5e1; font-size: 1.0rem;">Neutral Resonance (+0.0 Boost)</strong>
+                        <div style="color: #94a3b8; font-size: 0.88rem; margin-top: 4px;">
+                            Topic will be judged purely on raw actionability steps (no historical engagement bias).
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    st.markdown("---")
+
+    # Top Performing Posts (The Feed for Funnel Stage 5)
+    st.markdown("### 🏆 Top Historical Performers Driving the AI Funnel")
+    if not top_performers:
+        st.info("No audited top performers yet. Click **'🔄 Audit Insights Now'** above to fetch metrics.")
+    else:
+        grid_cols = st.columns(2)
+        for idx, p in enumerate(top_performers[:8]):
+            target_col = grid_cols[idx % 2]
+            score = p.get("engagement_score", 0.0)
+            tier = "VIRAL_TIER" if score >= 100 else ("TOP_PERFORMER" if score >= 40 else "ABOVE_AVERAGE")
+            tier_color = "#f43f5e" if tier == "VIRAL_TIER" else ("#fbbf24" if tier == "TOP_PERFORMER" else "#38bdf8")
+
+            with target_col:
+                st.markdown(
+                    f"""
+                    <div class="feed-card" style="border-color: rgba(129,140,248,0.35);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span class="funnel-step-badge badge-ai">{p.get('category', 'AI & CODING')}</span>
+                            <span style="color: {tier_color}; font-weight: 800; font-size: 0.82rem; border: 1px solid {tier_color}; padding: 2px 8px; border-radius: 6px;">
+                                {tier.replace('_', ' ')} • SCORE: {score}
+                            </span>
+                        </div>
+                        <div class="feed-title">{p.get('title')}</div>
+                        <div style="display: flex; gap: 16px; margin-top: 10px; font-size: 0.85rem; color: #cbd5e1;">
+                            <span>💾 <strong>{p.get('saved', 0)}</strong> saves</span>
+                            <span>↗️ <strong>{p.get('shares', 0)}</strong> shares</span>
+                            <span>👀 <strong>{p.get('reach', 0)}</strong> reach</span>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+    # Supabase Posts Explorer
+    with st.expander("☁️ **Supabase Cloud Posts Database Explorer**", expanded=False):
+        if not all_supabase_posts:
+            st.info("No posts found in Supabase database.")
+        else:
+            for sp in all_supabase_posts[:15]:
+                s_meta = sp.get("metadata") or {}
+                s_insights = s_meta.get("insights") or {}
+                s_score = s_insights.get("engagement_score", 0.0)
+                slide_urls = s_meta.get("slide_urls") or []
+
+                st.markdown(
+                    f"""
+                    <div style="border: 1px solid rgba(255,255,255,0.08); background: rgba(15,23,42,0.4); border-radius: 10px; padding: 12px 16px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <strong style="color: #f1f5f9; font-size: 0.95rem;">{sp.get('title')}</strong>
+                            <span style="color: #4ade80; font-size: 0.82rem; font-weight: 700;">Score: {s_score}</span>
+                        </div>
+                        <div style="color: #94a3b8; font-size: 0.80rem; margin-top: 4px;">
+                            Category: {sp.get('category')} | Format: {s_meta.get('format', 'carousel')} | Created: {sp.get('created_at')}
+                        </div>
+                        <div style="color: #cbd5e1; font-size: 0.82rem; margin-top: 6px; font-style: italic;">
+                            "{sp.get('hook', 'No hook')}"
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+                if slide_urls:
+                    th_cols = st.columns(min(len(slide_urls), 5))
+                    for t_idx, u in enumerate(slide_urls[:5]):
+                        with th_cols[t_idx]:
+                            st.image(u, caption=f"Slide {t_idx+1}", use_container_width=True)
+
 

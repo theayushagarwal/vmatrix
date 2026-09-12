@@ -53,6 +53,7 @@ from core import (
     record_post,
     get_time_since_last_post,
     queue_post_for_approval,
+    audit_published_posts_insights,
 )
 from core.utils import logger
 
@@ -320,6 +321,26 @@ def run_autonomous_post(
         logger.info("Review & approve in Streamlit dashboard or let it auto-publish.")
         logger.info("=" * 65)
 
+        # Sync full queued payload to Supabase & memory
+        record_post(
+            title=series_name,
+            category=content_plan.get("category", chosen_category),
+            hook=content_plan.get("hook_line") or chosen_hook,
+            post_id=queued_item["id"],
+            format_type=pipeline_mode,
+            slide_urls=queued_item.get("image_urls", []),
+            caption=caption,
+            auto_comment=auto_comment,
+            metadata={
+                "status": "queued_for_approval",
+                "queue_id": queued_item["id"],
+                "expires_at": queued_item["expires_at"],
+                "slot": active_slot,
+                "weekday": day_name,
+                "vision_score": audit_result.get("score"),
+            },
+        )
+
         return {
             "status": "queued_for_approval",
             "queue_id": queued_item["id"],
@@ -344,6 +365,25 @@ def run_autonomous_post(
     post_id = ig_result.get("post_id", "unknown")
     comment_id = ig_result.get("comment_id")
     elapsed = round(time.time() - start_time, 2)
+
+    # Persist complete published post to Supabase and local vector memory
+    record_post(
+        title=series_name,
+        category=content_plan.get("category", chosen_category),
+        hook=content_plan.get("hook_line") or chosen_hook,
+        post_id=post_id,
+        format_type=pipeline_mode,
+        slide_urls=cloudinary_urls,
+        caption=caption,
+        auto_comment=auto_comment,
+        metadata={
+            "status": "published",
+            "slot": active_slot,
+            "weekday": day_name,
+            "vision_score": audit_result.get("score"),
+            "comment_id": comment_id,
+        },
+    )
 
     logger.info("=" * 65)
     logger.info("🎉 POST PUBLISHED LIVE ON INSTAGRAM! Post ID: %s | Comment ID: %s in %.2fs", post_id, comment_id or "N/A", elapsed)
@@ -395,8 +435,31 @@ def main():
         default=30,
         help="Approval grace period duration in minutes before auto-publishing (default: 30)",
     )
+    parser.add_argument(
+        "--audit-insights",
+        action="store_true",
+        help="Audit recent posts, query Meta Graph API insights, and update Supabase & vector memory",
+    )
 
     args = parser.parse_args()
+
+    if args.audit_insights:
+        logger.info("🔍 Running on-demand Post-Publishing Analytics Audit via Graph API & Supabase...")
+        audit_res = audit_published_posts_insights()
+        print("\n" + "=" * 60)
+        print("📈 POST-PUBLISHING ANALYTICS AUDIT SUMMARY")
+        print("=" * 60)
+        print(f"  Audited Posts: {audit_res.get('audited_count', 0)}")
+        print(f"  Top Performers Identified: {audit_res.get('top_performers_count', 0)}")
+        print(f"  Timestamp: {audit_res.get('timestamp')}")
+        print("\n🏆 Top Performing Topics Active in Funnel Feedback Loop:")
+        for tp in audit_res.get("top_performers", [])[:5]:
+            m = tp.get("metrics", {})
+            print(f"  - \"{tp['title']}\"")
+            print(f"    Engagement Score: {tp['score']} (Saves: {m.get('saved', 0)}, Shares: {m.get('shares', 0)}, Reach: {m.get('reach', 0)})")
+        print("=" * 60)
+        return
+
     res = run_autonomous_post(
         dry_run=args.dry_run,
         forced_topic=args.topic,

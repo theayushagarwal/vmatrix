@@ -84,11 +84,22 @@ from .memory import (
     get_time_since_last_post,
     get_text_embedding,
     cosine_similarity,
+    get_top_performing_topics,
+    calculate_topic_resonance_boost,
 )
 from .database import (
     get_supabase_client,
     sync_post_to_supabase,
+    update_post_insights_in_supabase,
     fetch_posts_from_supabase,
+    fetch_top_performing_posts_from_supabase,
+    fetch_posts_needing_audit_from_supabase,
+)
+from .analytics import (
+    calculate_engagement_score,
+    classify_resonance_tier,
+    fetch_instagram_post_insights,
+    audit_published_posts_insights,
 )
 from .approval import (
     queue_post_for_approval,
@@ -154,9 +165,18 @@ __all__ = [
     "get_time_since_last_post",
     "get_text_embedding",
     "cosine_similarity",
+    "get_top_performing_topics",
+    "calculate_topic_resonance_boost",
     "get_supabase_client",
     "sync_post_to_supabase",
+    "update_post_insights_in_supabase",
     "fetch_posts_from_supabase",
+    "fetch_top_performing_posts_from_supabase",
+    "fetch_posts_needing_audit_from_supabase",
+    "calculate_engagement_score",
+    "classify_resonance_tier",
+    "fetch_instagram_post_insights",
+    "audit_published_posts_insights",
     "queue_post_for_approval",
     "load_approval_queue",
     "get_pending_approvals",

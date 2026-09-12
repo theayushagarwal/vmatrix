@@ -23,7 +23,7 @@ from google import genai
 from google.genai import types
 
 from .utils import retry_with_backoff, logger
-from .memory import check_max_similarity, check_duplicate_guardrails, record_post
+from .memory import check_max_similarity, check_duplicate_guardrails, record_post, calculate_topic_resonance_boost
 
 
 
@@ -671,7 +671,13 @@ def apply_stage5_actionability_scoring(
             steps = e_info.get("step_ideas", [])
             is_winner = e_info.get("is_winning_candidate", score >= min_score)
 
+            # Resonance boost feedback loop from historical top performers
+            resonance_boost = calculate_topic_resonance_boost(title)
+            composite_score = round(score + resonance_boost, 1)
+
             item_copy["actionability_score"] = score
+            item_copy["resonance_boost"] = resonance_boost
+            item_copy["composite_score"] = composite_score
             item_copy["hook_angle"] = hook
             item_copy["step_ideas"] = steps
 
@@ -681,13 +687,17 @@ def apply_stage5_actionability_scoring(
                 item_copy["drop_reason"] = f"Stage 5: Low actionability score ({score}/10 — lacks 3-5 concrete steps)"
                 dropped.append(item_copy)
         else:
-            item_copy["actionability_score"] = 8
+            base_score = 8
+            resonance_boost = calculate_topic_resonance_boost(title)
+            item_copy["actionability_score"] = base_score
+            item_copy["resonance_boost"] = resonance_boost
+            item_copy["composite_score"] = round(base_score + resonance_boost, 1)
             item_copy["hook_angle"] = f"How to master {title}"
             item_copy["step_ideas"] = ["Getting Started", "Key Method", "Pro Application"]
             passed.append(item_copy)
 
-    # Sort winners by actionability score
-    passed.sort(key=lambda x: x.get("actionability_score", 0), reverse=True)
+    # Sort winners by composite score (actionability score + historical resonance boost)
+    passed.sort(key=lambda x: x.get("composite_score", x.get("actionability_score", 0)), reverse=True)
     return passed, dropped
 
 
