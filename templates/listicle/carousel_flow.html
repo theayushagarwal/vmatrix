@@ -147,15 +147,45 @@
             background: #6366f1;
             border-radius: 0 4px 4px 0;
         }
-        .cover-tech-row { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; }
+        .cover-tech-row { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 15px; }
         .tech-tag {
-            background: var(--badge-bg);
-            color: var(--badge-color);
-            border: 1px solid var(--card-border);
-            font-size: 18px;
-            font-weight: 700;
-            padding: 10px 24px;
+            background: var(--card-bg);
+            color: var(--title-color);
+            border: 1.5px solid var(--card-border);
+            font-size: 20px;
+            font-weight: 750;
+            padding: 10px 22px;
             border-radius: 50px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 4px 16px rgba(99, 102, 241, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .tech-tag-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            background: var(--logo-bg);
+            border: 1px solid var(--logo-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            overflow: hidden;
+            padding: 3px;
+        }
+        .tech-tag-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        .tech-tag-icon .letter-fallback {
+            font-size: 13px;
+            font-weight: 900;
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         /* Flow Step View */
         .flow-main { margin-top: 35px; margin-bottom: auto; display: flex; flex-direction: column; gap: 25px; flex-grow: 1; }
@@ -372,7 +402,13 @@
             {% if tools %}
             <div class="cover-tech-row">
                 {% for tool in tools %}
-                <span class="tech-tag">{% if tool is mapping %}{{ tool.name }}{% else %}{{ tool }}{% endif %}</span>
+                {% set t_name = tool.name if tool is mapping else tool %}
+                {% set t_logo = (tool.logo if tool is mapping else tool) or t_name %}
+                {% set t_domain = (tool.domain if tool is mapping else '') %}
+                <span class="tech-tag">
+                    <span class="tech-tag-icon tool-logo-slot" data-logo="{{ t_logo }}" data-domain="{{ t_domain }}" data-name="{{ t_name }}"></span>
+                    <span>{{ t_name }}</span>
+                </span>
                 {% endfor %}
             </div>
             {% endif %}
@@ -443,19 +479,70 @@
         </footer>
     </div>
     <script>
-    const ALIAS_MAP = { "gemini": "googlegemini", "chatgpt": "openai", "claude": "anthropic", "copilot": "githubcopilot" };
+    const ALIAS_MAP = {
+        "gemini": "googlegemini",
+        "chatgpt": "openai",
+        "claude": "anthropic",
+        "copilot": "githubcopilot",
+        "nextjs": "nextdotjs",
+        "postgres": "postgresql",
+        "fastapi": "fastapi",
+        "docker": "docker",
+        "redis": "redis",
+        "python": "python",
+        "github": "github"
+    };
+
+    const LOGODEV_TOKEN = "pk_Sq5GhYXkQpK2aOCI-cbM-A";
+
     document.querySelectorAll('.tool-logo-slot').forEach(slot => {
-        const logoVal = slot.dataset.logo;
-        if (!logoVal) return;
+        const logoVal = slot.dataset.logo || "";
+        const toolName = slot.dataset.name || logoVal || "Tool";
+        const domain = slot.dataset.domain || "";
         const isLightTheme = document.body.classList.contains('light-theme');
         const colorParam = isLightTheme ? "000000" : "ffffff";
-        if (logoVal.startsWith("file:") || logoVal.startsWith("http") || logoVal.includes("/")) {
-            slot.innerHTML = `<img src="${logoVal}" style="width: 100%; height: 100%; object-fit: contain;">`;
+        const letterFallback = `<span class="letter-fallback">${toolName.slice(0, 2).toUpperCase()}</span>`;
+
+        if (!logoVal && !domain) {
+            slot.innerHTML = letterFallback;
             return;
         }
+
+        if (logoVal.startsWith("file:") || logoVal.startsWith("http") || logoVal.includes("/")) {
+            slot.innerHTML = `<img src="${logoVal}" alt="${toolName}" style="width: 100%; height: 100%; object-fit: contain;">`;
+            return;
+        }
+
         const rawSlug = logoVal.toLowerCase().replaceAll(" ", "").trim();
         const slug = ALIAS_MAP[rawSlug] || rawSlug;
-        slot.innerHTML = `<img src="https://cdn.simpleicons.org/${slug}/${colorParam}" style="width: 100%; height: 100%; object-fit: contain;" onerror="this.parentElement.innerHTML='<span style=\\'font-weight:900;\\'>${slug.slice(0,2).toUpperCase()}</span>'">`;
+
+        const targetDomain = domain || (slug === "groq" ? "groq.com" : (slug === "fastapi" ? "fastapi.tiangolo.com" : (slug === "redis" ? "redis.io" : slug + ".com")));
+        const simpleIconsUrl = `https://cdn.simpleicons.org/${slug}/${colorParam}`;
+        const logodevUrl = `https://img.logo.dev/${targetDomain}?token=${LOGODEV_TOKEN}&size=128&format=png`;
+        const googleFaviconUrl = `https://s2.googleusercontent.com/s2/favicons?domain=${targetDomain}&sz=128`;
+
+        const img = document.createElement('img');
+        img.src = simpleIconsUrl;
+        img.alt = toolName;
+        img.style.width = "100%";
+        img.style.height = "100%";
+        img.style.objectFit = "contain";
+
+        let fallbackStage = 1;
+        img.onerror = () => {
+            if (fallbackStage === 1) {
+                fallbackStage = 2;
+                img.src = logodevUrl;
+            } else if (fallbackStage === 2) {
+                fallbackStage = 3;
+                img.src = googleFaviconUrl;
+            } else {
+                slot.innerHTML = letterFallback;
+            }
+        };
+
+        slot.innerHTML = "";
+        slot.appendChild(img);
     });
     </script>
 </body>
