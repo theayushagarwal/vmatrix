@@ -1,0 +1,105 @@
+name: 🚀 Autonomous Instagram Publisher
+on:
+  schedule:
+    # Runs twice daily at 04:30 UTC (10:00 AM IST) and 13:00 UTC (06:30 PM IST)
+    - cron: '30 4,13 * * *'
+  workflow_dispatch:
+    inputs:
+      topic:
+        description: 'Optional: Force a specific topic (leave empty for auto trend discovery)'
+        required: false
+        default: ''
+      format:
+        description: 'Carousel Format'
+        required: true
+        type: choice
+        options:
+          - auto
+          - listicle
+          - flow
+        default: 'auto'
+      dry_run:
+        description: 'Dry Run (generates & renders without publishing to Instagram)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    name: ⚡ Discover, Plan, Render & Publish Carousel
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: 📥 Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🐍 Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+
+      - name: 📦 Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🎭 Install Playwright Chromium with Linux System Dependencies
+        run: |
+          playwright install chromium --with-deps
+
+      - name: 🚀 Run Autonomous Social Engine Pipeline
+        env:
+          # Groq AI
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'openai/gpt-oss-120b' }}
+
+          # Logo & Brand Asset Resolvers
+          LOGODEV_PUBLISHABLE_KEY: ${{ secrets.LOGODEV_PUBLISHABLE_KEY }}
+          LOGODEV_SECRET_KEY: ${{ secrets.LOGODEV_SECRET_KEY }}
+          BRANDFETCH_API_KEY: ${{ secrets.BRANDFETCH_API_KEY }}
+
+          # Supabase Database & Memory
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+          # Cloudinary Media CDN
+          CLOUDINARY_CLOUD_NAME: ${{ secrets.CLOUDINARY_CLOUD_NAME }}
+          CLOUDINARY_API_KEY: ${{ secrets.CLOUDINARY_API_KEY }}
+          CLOUDINARY_API_SECRET: ${{ secrets.CLOUDINARY_API_SECRET }}
+
+          # Meta / Instagram Graph API
+          IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          IG_USERNAME: ${{ secrets.IG_USERNAME || 'vmatrix.co' }}
+          IG_ACCESS_TOKEN: ${{ secrets.IG_ACCESS_TOKEN }}
+
+          # Gemini Guard (Kept dormant unless explicitly enabled)
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ENABLE_GEMINI: ${{ secrets.ENABLE_GEMINI || 'false' }}
+        run: |
+          FLAGS=""
+          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+            FLAGS="$FLAGS --dry-run"
+          fi
+          if [ -n "${{ github.event.inputs.topic }}" ]; then
+            FLAGS="$FLAGS --topic \"${{ github.event.inputs.topic }}\""
+          fi
+          if [ -n "${{ github.event.inputs.format }}" ]; then
+            FLAGS="$FLAGS --format ${{ github.event.inputs.format }}"
+          fi
+          python autonomous_publisher.py $FLAGS
+
+      - name: 💾 Commit Updated Post History Memory
+        if: success() && github.event.inputs.dry_run != 'true'
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/post_history.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "chore(memory): record automated published post to 30-day history [skip ci]" && git push)
