@@ -26,5 +26,17 @@ class Config:
     def supabase_key(self) -> str:
         return os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY") or ""
 
+    @property
+    def openrouter_api_key(self) -> str:
+        return os.environ.get("OPENROUTER_API_KEY") or ""
+
+    @property
+    def openrouter_model(self) -> str:
+        return os.environ.get("OPENROUTER_MODEL") or "meta-llama/llama-3.3-70b-instruct"
+
+    @property
+    def huggingface_api_key(self) -> str:
+        return os.environ.get("HUGGINGFACE_API_KEY") or os.environ.get("HF_TOKEN") or ""
+
 
 config = Config()

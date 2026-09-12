@@ -112,6 +112,14 @@
 
     <!-- Live Telemetry Status Pills -->
     <div class="flex items-center flex-wrap gap-2 text-xs font-mono" id="telemetry-pills">
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-openrouter">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">OpenRouter 70B</span>
+      </div>
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-hf">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Hugging Face 72B</span>
+      </div>
       <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-groq">
         <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
         <span class="text-slate-400">Groq 120B</span>
@@ -732,6 +740,8 @@
         const data = await res.json();
         
         if (data.telemetry) {
+          updatePill('tel-openrouter', data.telemetry.openrouter, 'OpenRouter 70B');
+          updatePill('tel-hf', data.telemetry.huggingface, 'Hugging Face 72B');
           updatePill('tel-groq', data.telemetry.groq, 'Groq 120B');
           updatePill('tel-apify', data.telemetry.apify, 'Apify Scraper');
           updatePill('tel-supabase', data.telemetry.supabase, 'Supabase DB');
@@ -1428,49 +1438,86 @@
           AppState.activeAnalyzingPost = post;
 
           body.innerHTML = `
-            <div class="space-y-6">
-              <!-- Hook Breakdown -->
+            <div class="space-y-5">
+              <!-- Top Banner: Trend Angle -->
+              <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                    <i class="fa-solid fa-arrow-trend-up"></i> MACRO TREND ANGLE
+                  </span>
+                  <span class="text-xs font-mono text-emerald-400 font-bold">Virality Score: ${a.virality_score || 90}/100</span>
+                </div>
+                <h4 class="text-sm font-bold text-white">${a.trend_angle || 'High-Performance Developer Architecture & AI Workflows'}</h4>
+              </div>
+
+              <!-- Viral Hook & Scroll-Stopper -->
               <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-                <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
-                  <i class="fa-solid fa-magnet"></i> 1. The Scroll-Stopping Hook
-                </h4>
-                <p class="text-sm font-semibold text-white">${a.hook_technique || 'High curiosity / contrarian hook'}</p>
-                <p class="text-xs text-slate-400">${a.why_it_stopped_the_scroll || a.hook_breakdown || 'Leveraged high cognitive tension.'}</p>
-              </div>
-
-              <!-- Psychological Triggers -->
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
-                  <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-heart-pulse"></i> Emotional Triggers
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-magnet"></i> Scroll-Stopping Hook Formula
                   </h4>
-                  <div class="flex flex-wrap gap-1.5">
-                    ${(a.emotional_triggers || ['Curiosity', 'FOMO', 'Competence']).map(t => `
-                      <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-xs font-mono">${t}</span>
-                    `).join('')}
-                  </div>
+                  <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.viral_hook || '').replace(/'/g, "\\'") }'); showToast('Hook copied to clipboard!', 'success')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
+                    <i class="fa-regular fa-copy"></i> Copy Hook
+                  </button>
                 </div>
-
-                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
-                  <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-repeat"></i> Retention Engine
-                  </h4>
-                  <p class="text-xs text-slate-300">${a.retention_mechanism || a.why_viral || 'Slide progression created an open loop resolved only on final slide.'}</p>
+                <div class="text-sm font-semibold text-white p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-pink-200">
+                  "${a.viral_hook || (a.hook_analysis ? a.hook_analysis.hook_breakdown : 'Pattern interrupt hook')}"
+                </div>
+                <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
+                  <div><span class="text-slate-500">Hook Type:</span> <span class="text-slate-300 font-semibold">${(a.hook_analysis && a.hook_analysis.hook_type) || 'Contrarian Value'}</span></div>
+                  <div><span class="text-slate-500">Trigger:</span> <span class="text-slate-300 font-semibold">${(a.hook_analysis && a.hook_analysis.psychological_trigger) || 'Curiosity Gap & Status'}</span></div>
                 </div>
               </div>
 
-              <!-- Adaptation Blueprint -->
-              <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 to-indigo-950/40 border border-pink-500/30 space-y-3">
-                <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
-                  <i class="fa-solid fa-lightbulb"></i> Recommended Carousel Adaptation Strategy
+              <!-- Caption Strategy & Mechanics -->
+              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-align-left"></i> Caption Architecture & Save/Share Triggers
+                  </h4>
+                  ${a.caption_mechanics && a.caption_mechanics.suggested_caption ? `
+                    <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.caption_mechanics.suggested_caption).replace(/'/g, "\\'") }'); showToast('Caption copied!', 'success')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
+                      <i class="fa-regular fa-copy"></i> Copy Caption
+                    </button>
+                  ` : ''}
+                </div>
+                <div class="space-y-1.5 text-xs text-slate-300">
+                  <div><strong class="text-slate-400">First Line Hook:</strong> "${(a.caption_mechanics && a.caption_mechanics.first_line_hook) || 'N/A'}"</div>
+                  <div><strong class="text-slate-400">CTA Effectiveness:</strong> ${(a.caption_mechanics && a.caption_mechanics.cta_effectiveness) || 'Direct bookmark prompt.'}</div>
+                  <div><strong class="text-slate-400">Save & Share Triggers:</strong> ${(a.caption_mechanics && a.caption_mechanics.save_share_triggers) || 'High-utility reference material.'}</div>
+                </div>
+              </div>
+
+              <!-- Why It Went Viral Pills -->
+              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-fire"></i> Why This Post Went Viral
                 </h4>
-                <div class="text-sm font-bold text-white">Suggested Topic: "${a.adaptation_title || a.adaptation_topic || 'The AI Blueprint That Crushes 2026'}"</div>
-                <div class="text-xs text-slate-300 space-y-1">
-                  ${(a.adaptation_steps || [
+                <div class="space-y-1.5 text-xs">
+                  ${(a.why_it_went_viral || ['High utility developer code', 'Pattern interrupt in crowded feed', 'Bookmarkable reference blueprint']).map(r => `
+                    <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> <span>${r}</span></div>
+                  `).join('')}
+                </div>
+              </div>
+
+              <!-- Vmatrix Adaptation Blueprint -->
+              <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/40 to-indigo-950/40 border border-pink-500/40 space-y-3">
+                <div class="flex items-center justify-between">
+                  <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Vmatrix 4K Carousel Adaptation Blueprint
+                  </h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300">100% Pure White Theme</span>
+                </div>
+                <div class="text-sm font-bold text-white">Suggested Topic: "${(a.vmatrix_blueprint && a.vmatrix_blueprint.adapted_title) || a.adaptation_title || 'Autonomous AI Engineering Guide'}"</div>
+                <div class="text-xs text-indigo-300 font-mono">Slide 1 Hook: "${(a.vmatrix_blueprint && a.vmatrix_blueprint.hook_line) || 'The definitive breakdown.'}"</div>
+                
+                <div class="text-xs text-slate-300 space-y-1 pt-1">
+                  ${((a.vmatrix_blueprint && a.vmatrix_blueprint.slide_ideas) || a.adaptation_steps || [
                     'Slide 1: State the controversial premise.',
                     'Slide 2: Show architectural comparison.',
                     'Slide 3: Provide copy-paste workflow.',
-                    'Slide 4: Call-to-action for bookmarks & shares.'
+                    'Slide 4: Address common production pitfalls.',
+                    'Slide 5: Call-to-action for bookmarks & shares.'
                   ]).map((s, i) => `<div class="font-mono text-slate-300">👉 ${s}</div>`).join('')}
                 </div>
               </div>

@@ -145,6 +145,8 @@ def get_system_status():
             "groq": bool(os.environ.get("GROQ_API_KEY")),
             "apify": bool(os.environ.get("APIFY_API_KEY") or os.environ.get("APIFY_API_TOKEN")),
             "supabase": bool(os.environ.get("SUPABASE_URL") and (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))),
+            "openrouter": bool(os.environ.get("OPENROUTER_API_KEY")),
+            "huggingface": bool(os.environ.get("HUGGINGFACE_API_KEY") or os.environ.get("HF_TOKEN")),
             "cloudinary": bool(os.environ.get("CLOUDINARY_CLOUD_NAME") and os.environ.get("CLOUDINARY_API_KEY")),
             "instagram": bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")),
             "logodev": bool(os.environ.get("LOGODEV_PUBLISHABLE_KEY") or os.environ.get("LOGODEV_SECRET_KEY")),
