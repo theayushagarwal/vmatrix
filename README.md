@@ -1,16 +1,60 @@
 # ⚡ ai-social-engine
 
-**An autonomous social media engine that discovers trending topics across 4 real-time data feeds and turns any topic into a published Instagram carousel — in under 5 seconds of AI compute.**
+**An autonomous social media engine that filters 100+ raw trend signals through a 5-Stage AI Funnel and turns winning topics into published Instagram carousels — in under 5 seconds of AI compute.**
 
-No design tool. No copywriter. No manual export-and-upload. Pick a breaking trend from the live radar (or type your own topic), and the pipeline plans the content, designs on-brand visuals, and publishes live.
+No design tool. No copywriter. No manual export-and-upload. Raw noise in, vetted educational carousel live on Instagram.
 
 ---
 
 ## 🏆 The Pitch
 
-Educational Instagram pages live and die by a brutal content treadmill: research what's trending, write punchy copy, design five on-brand slides, export them, upload them, write a caption, and publish — every single day. `ai-social-engine` collapses that entire pipeline into one flow:
+Educational Instagram pages live and die by a brutal content treadmill: research what's trending, filter out noise, write punchy copy, design five on-brand slides, export them, upload them, write a caption, and publish — every single day. `ai-social-engine` collapses that entire pipeline into one autonomous flow:
 
-**Real-Time Feeds In → Structured Plan (Gemini 2.5 Flash) → Rendered 4:5 Retina Slides (Playwright + HTML/CSS) → Live Instagram Post (Meta Graph API), end to end, with a live-updating Streamlit control room.**
+**100+ Raw Signals In → 5-Stage Filtering Funnel → Structured Plan (Gemini 2.5 Flash) → Rendered 4:5 Retina Slides (Playwright + HTML/CSS) → Live Instagram Post (Meta Graph API).**
+
+---
+
+## 🌪️ 5-Stage Filtering Funnel
+
+When gathering real-time data from search trends and news feeds, 90% of raw headlines are noise, sports, gossip, and clickbait. Our 5-stage funnel refines raw signals into high-converting post topics:
+
+```
+                       RAW GATHERED DATA
+                (100+ raw news titles & trends)
+                              │
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│ 🔴 STAGE 1: Fast Keyword Blacklist (Throw out junk)       │
+│ • Cost: $0, 0ms | Drops sports, movies, drama, scandals   │
+└─────────────────────────────┬─────────────────────────────┘
+                              │ (~30 items left)
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│ 🟢 STAGE 2: Positive Niche Scoring (Rule-based)           │
+│ • Cost: $0, 1ms | Ranks AI, coding, fintech, investing    │
+└─────────────────────────────┬─────────────────────────────┘
+                              │ (~10 items left)
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│ 🧠 STAGE 3: Semantic LLM Classifier (Fast 0.5s Check)     │
+│ • Cost: <$0.0001 | Classifies PURE_AI, PURE_FINANCE, MIXED│
+└─────────────────────────────┬─────────────────────────────┘
+                              │ (~5 items left)
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│ 🔄 STAGE 4: Vector Anti-Duplication (Cosine Similarity)   │
+│ • Compares 768-dim embedding against 30-day post memory   │
+│ • Drops anything > 80% similar to recent posts            │
+└─────────────────────────────┬─────────────────────────────┘
+                              │ (~2-3 top candidates)
+                              ▼
+┌───────────────────────────────────────────────────────────┐
+│ 🏆 STAGE 5: Format Fit & Actionability Score              │
+│ • Verifies 3-5 concrete educational steps can be built    │
+└─────────────────────────────┬─────────────────────────────┘
+                              ▼
+                     WINNING POST TOPIC
+```
 
 ---
 
@@ -35,6 +79,12 @@ The engine continuously monitors 4 live signals for high-signal topic discovery:
 └────────────────┬────────────────┘
                  │
                  ▼
+┌─────────────────────────────────┐
+│   5-Stage Filtering Funnel      │
+│  (core/funnel.py + memory.py)   │
+└────────────────┬────────────────┘
+                 │
+                 ▼
 ┌────────────────────────────────┐     ┌───────────────────┐     ┌──────────────────┐     ┌────────────────────┐
 │      Streamlit Control Room    │ ──▶ │  Gemini 2.5 Flash │ ──▶ │  Playwright HTML  │ ──▶ │ Cloudinary + Meta   │
 │            app.py              │     │  core/generator.py│     │  core/renderer.py │     │  core/publisher.py  │
@@ -43,22 +93,14 @@ The engine continuously monitors 4 live signals for high-signal topic discovery:
 └────────────────────────────────┘     └───────────────────┘     └──────────────────┘     └────────────────────┘
 ```
 
-**Why this stack:**
-- **4 Live Feeds (`core/feeds.py`)** with direct RSS and API ingestion for real-time trend discovery.
-- **Gemini 2.5 Flash** with native `response_mime_type="application/json"` — no brittle regex parsing of markdown-fenced JSON, schema enforced by the model.
-- **Playwright + Jinja2 + Tailwind** for rendering — real CSS (blur, gradients, grid) at true Retina resolution (`device_scale_factor=2`).
-- **Cloudinary** as the media bridge — Meta's Graph API requires public HTTPS image URLs.
-- **Meta Graph API's carousel state machine** — item containers → parent container → publish, each step polled until `FINISHED`.
-
 ---
 
 ## 🩹 Self-Healing by Design
 
-Auto-publishing to a live social account means a silent failure is worse than a loud one. `core/utils.py` centralizes two safety nets used everywhere in the pipeline:
-
-- **Retry with exponential backoff** — every network call (feed gathering, Gemini generation, Cloudinary upload, each step of the Instagram container/publish flow) is wrapped in `retry_with_backoff`.
-- **Render validation, not blind trust** — every screenshot is checked against expected pixel dimensions and pixel-variance before acceptance.
-- **Graceful UI recovery** — targeted retries in Streamlit without burning unnecessary AI compute.
+- **Multi-Tier Feed Failover** — RSS feeds automatically fall back to resilient search bridges if rate limits (e.g. 429) occur.
+- **Retry with Exponential Backoff** — all external network calls use exponential backoff + jitter.
+- **Render Validation** — Playwright renders are validated for pixel variance to prevent blank frames.
+- **Persistent Semantic Memory** — tracks 30-day post history in `data/post_history.json` to prevent repetitive content.
 
 ---
 
@@ -71,7 +113,9 @@ ai-social-engine/
 ├── README.md
 ├── core/
 │   ├── __init__.py
-│   ├── feeds.py           # 4 core feeds (Google Trends, TechCrunch AI, VentureBeat, Hacker News)
+│   ├── feeds.py           # 4 core feeds (Google Trends, TechCrunch, VentureBeat, Hacker News)
+│   ├── funnel.py          # 5-Stage filtering funnel (Blacklist, Niche, LLM, Dedup, Actionability)
+│   ├── memory.py          # 30-day post history & vector cosine deduplication
 │   ├── generator.py       # Gemini 2.5 Flash structured content planner
 │   ├── renderer.py        # Playwright HTML-to-Image 4:5 slide renderer
 │   ├── publisher.py       # Cloudinary uploader & Meta Graph API publisher
@@ -79,7 +123,7 @@ ai-social-engine/
 ├── templates/
 │   ├── carousel_slide.html       # Glassmorphic dark-mode educational slide
 │   └── single_infographic.html   # Cheatsheet/comparison grid infographic
-└── app.py                 # Streamlit control room UI with Live Topic Radar
+└── app.py                 # Streamlit control room UI with Funnel & Radar
 ```
 
 ---
@@ -105,7 +149,8 @@ streamlit run app.py
 
 | Layer | Technology |
 |---|---|
-| Topic Data Gathering | Google Trends RSS, TechCrunch AI RSS, VentureBeat AI RSS, Hacker News API |
+| Topic Gathering | Google Trends RSS, TechCrunch AI RSS, VentureBeat AI RSS, Hacker News API |
+| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Gemini 2.5 Flash Classifier, Cosine Memory |
 | Content Intelligence | Gemini 2.5 Flash, structured JSON output |
 | Rendering | Playwright (headless Chromium), Jinja2, Tailwind CSS |
 | Media Hosting | Cloudinary |

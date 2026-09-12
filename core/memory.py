@@ -1,0 +1,174 @@
+"""
+core/memory.py
+--------------
+Persistent post history and vector embedding memory.
+Stores the last 30+ days of published / generated topics and embeddings to
+power Stage 4 (Vector Anti-Duplication with Cosine Similarity).
+"""
+
+import os
+import json
+import math
+import time
+from pathlib import Path
+from typing import List, Dict, Any, Optional
+
+from google import genai
+from .utils import logger
+
+MEMORY_FILE_PATH = Path(__file__).resolve().parent.parent / "data" / "post_history.json"
+
+
+def _get_embedding_client() -> Optional[genai.Client]:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        return None
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception as e:
+        logger.warning("Could not initialize Gemini Client for embeddings: %s", e)
+        return None
+
+
+def compute_fallback_embedding(text: str, dim: int = 128) -> List[float]:
+    """
+    Deterministic n-gram character hashing vector fallback when offline or without API key.
+    Provides reliable cosine similarity for deduplication without external API calls.
+    """
+    text_clean = text.lower().strip()
+    vector = [0.0] * dim
+    if not text_clean:
+        return vector
+
+    # Character tri-grams
+    words = text_clean.split()
+    for word in words:
+        for i in range(len(word) - 2):
+            trigram = word[i : i + 3]
+            idx = hash(trigram) % dim
+            vector[idx] += 1.0
+
+    # Word unigrams
+    for word in words:
+        idx = hash(word) % dim
+        vector[idx] += 2.0
+
+    # L2 Normalize
+    norm = math.sqrt(sum(x * x for x in vector))
+    if norm > 0:
+        vector = [x / norm for x in vector]
+    return vector
+
+
+def get_text_embedding(text: str) -> List[float]:
+    """
+    Generates a 768-dimension embedding using Gemini text-embedding-004.
+    Falls back to deterministic character vector if API key is not configured.
+    """
+    client = _get_embedding_client()
+    if client:
+        try:
+            resp = client.models.embed_content(
+                model="text-embedding-004",
+                contents=text,
+            )
+            # Response from google.genai has .embedding.values or .embeddings[0].values
+            if hasattr(resp, "embedding") and hasattr(resp.embedding, "values"):
+                return list(resp.embedding.values)
+            elif hasattr(resp, "embeddings") and resp.embeddings:
+                return list(resp.embeddings[0].values)
+        except Exception as e:
+            logger.warning("Gemini text-embedding-004 error, using fallback vector: %s", e)
+
+    return compute_fallback_embedding(text)
+
+
+def cosine_similarity(v1: List[float], v2: List[float]) -> float:
+    """Computes the cosine similarity between two vector lists."""
+    if not v1 or not v2 or len(v1) != len(v2):
+        return 0.0
+    dot = sum(a * b for a, b in zip(v1, v2))
+    norm1 = math.sqrt(sum(a * a for a in v1))
+    norm2 = math.sqrt(sum(b * b for b in v2))
+    if norm1 == 0.0 or norm2 == 0.0:
+        return 0.0
+    return dot / (norm1 * norm2)
+
+
+def load_post_history() -> List[Dict[str, Any]]:
+    """Loads all post history items from data/post_history.json."""
+    if not MEMORY_FILE_PATH.exists():
+        return []
+    try:
+        with open(MEMORY_FILE_PATH, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning("Error reading post history from %s: %s", MEMORY_FILE_PATH, e)
+        return []
+
+
+def save_post_history(history: List[Dict[str, Any]]) -> None:
+    """Saves post history items to data/post_history.json."""
+    MEMORY_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(MEMORY_FILE_PATH, "w", encoding="utf-8") as f:
+            json.dump(history, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logger.error("Error saving post history to %s: %s", MEMORY_FILE_PATH, e)
+
+
+def get_recent_posts(days: int = 30) -> List[Dict[str, Any]]:
+    """Retrieves posts published within the last N days."""
+    history = load_post_history()
+    cutoff = time.time() - (days * 86400)
+    return [item for item in history if item.get("timestamp", 0) >= cutoff]
+
+
+def record_post(title: str, category: str = "AI & CODING", hook: str = "", metadata: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+    """
+    Records a new published/chosen topic and its vector embedding into history memory.
+    """
+    history = load_post_history()
+    embedding = get_text_embedding(title)
+
+    entry = {
+        "title": title,
+        "category": category,
+        "hook": hook,
+        "timestamp": time.time(),
+        "created_at": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+        "embedding": embedding,
+        "metadata": metadata or {},
+    }
+
+    # Prepend newest first
+    history.insert(0, entry)
+    # Keep up to 200 items in history
+    history = history[:200]
+    save_post_history(history)
+    return entry
+
+
+def check_max_similarity(candidate_title: str, days: int = 30) -> tuple[float, Optional[str]]:
+    """
+    Compares candidate title embedding against posts in the last N days.
+    Returns: (max_similarity_score, matching_recent_title)
+    """
+    recent = get_recent_posts(days=days)
+    if not recent:
+        return 0.0, None
+
+    cand_vec = get_text_embedding(candidate_title)
+    max_sim = 0.0
+    matched_title = None
+
+    for item in recent:
+        item_vec = item.get("embedding")
+        if not item_vec:
+            continue
+        sim = cosine_similarity(cand_vec, item_vec)
+        if sim > max_sim:
+            max_sim = sim
+            matched_title = item.get("title")
+
+    return max_sim, matched_title

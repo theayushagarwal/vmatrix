@@ -8,6 +8,24 @@ from .feeds import (
     fetch_venturebeat_ai,
     fetch_hacker_news,
 )
+from .funnel import (
+    run_filtering_funnel,
+    apply_stage1_blacklist,
+    apply_stage2_niche_scoring,
+    apply_stage3_semantic_classifier,
+    apply_stage4_vector_deduplication,
+    apply_stage5_actionability_scoring,
+    passes_blacklist,
+    compute_niche_score,
+)
+from .memory import (
+    record_post,
+    get_recent_posts,
+    load_post_history,
+    check_max_similarity,
+    get_text_embedding,
+    cosine_similarity,
+)
 from .utils import RenderValidationError
 
 __all__ = [
@@ -22,6 +40,19 @@ __all__ = [
     "fetch_techcrunch_ai",
     "fetch_venturebeat_ai",
     "fetch_hacker_news",
+    "run_filtering_funnel",
+    "apply_stage1_blacklist",
+    "apply_stage2_niche_scoring",
+    "apply_stage3_semantic_classifier",
+    "apply_stage4_vector_deduplication",
+    "apply_stage5_actionability_scoring",
+    "passes_blacklist",
+    "compute_niche_score",
+    "record_post",
+    "get_recent_posts",
+    "load_post_history",
+    "check_max_similarity",
+    "get_text_embedding",
+    "cosine_similarity",
     "RenderValidationError",
 ]
-
