@@ -87,8 +87,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GH_MODELS_TOKEN }}
           GITHUB_VISION_MODEL: ${{ secrets.GH_VISION_MODEL || 'gpt-4o' }}
 
-          # Apify Intelligence Radar (AI Agents & Developer Tools)
+          # Apify Intelligence Radar (AI Agents & Developer Tools + Multi-Key Failover)
           APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          APIFY_API_KEY_BACKUP_1: ${{ secrets.APIFY_API_KEY_BACKUP_1 }}
+          APIFY_API_KEY_BACKUP_2: ${{ secrets.APIFY_API_KEY_BACKUP_2 }}
+          APIFY_API_KEY_BACKUP_3: ${{ secrets.APIFY_API_KEY_BACKUP_3 }}
+          APIFY_BACKUP_KEYS: ${{ secrets.APIFY_BACKUP_KEYS }}
           APIFY_DATASET_ID: ${{ secrets.APIFY_DATASET_ID }}
           APIFY_TASK_ID: ${{ secrets.APIFY_TASK_ID }}
 
