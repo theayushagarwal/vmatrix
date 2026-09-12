@@ -37,7 +37,7 @@ NVIDIA_VISION_MODEL = os.environ.get("NVIDIA_VISION_MODEL", "meta/llama-3.2-11b-
 # 🛡️ LOCAL COMPUTER-VISION AUDIT (PIL / 0ms / $0)
 # ==============================================================================
 
-def _audit_single_image_pil(image_path: Path) -> Dict[str, Any]:
+def _audit_single_image_pil(image_path: Path, expected_theme: Optional[str] = None) -> Dict[str, Any]:
     """
     Performs pixel-level computer vision inspection using Pillow.
     Validates dimensions, aspect ratio, file size, color variance, and contrast.
@@ -94,9 +94,13 @@ def _audit_single_image_pil(image_path: Path) -> Dict[str, Any]:
                 issues.append(f"Extremely low image variance ({std_dev:.1f}), slide appears blank or monochromatic")
                 score -= 5.0
 
-            # @vmatrix.co dark theme expects average luminance around 15-60
-            if mean_lum > 180.0:
+            # Theme & Luminance validation:
+            # Supports both @vmatrix.co Dark Theme (mean_lum 15-120) and Light Editorial Theme (mean_lum 180-252)
+            if expected_theme == "DARK" and mean_lum > 180.0:
                 issues.append(f"Unexpected bright background luminance ({mean_lum:.1f}), dark theme violated")
+                score -= 1.5
+            elif expected_theme == "LIGHT" and mean_lum < 90.0:
+                issues.append(f"Unexpected dark background luminance ({mean_lum:.1f}), light theme violated")
                 score -= 1.5
 
             # 5. Edge margin safety: inspect 3% outer border
@@ -301,9 +305,11 @@ def audit_slide_images(
             "summary": "❌ Vision Audit Failed: 0 slides provided",
         }
 
+    expected_theme = (content_metadata or {}).get("theme")
+
     # 1. Local Pillow Audit on every slide (in parallel)
     with ThreadPoolExecutor(max_workers=min(8, len(paths))) as executor:
-        slide_reports = list(executor.map(_audit_single_image_pil, paths))
+        slide_reports = list(executor.map(lambda p: _audit_single_image_pil(p, expected_theme=expected_theme), paths))
 
     all_passed = all(r["passed"] for r in slide_reports)
     avg_score = sum(r["score"] for r in slide_reports) / len(slide_reports)
@@ -312,9 +318,9 @@ def audit_slide_images(
     for r in slide_reports:
         all_issues.extend(r["issues"])
 
-    # 2. Slide count integrity
-    if len(paths) not in (1, 3, 5):
-        all_issues.append(f"Unexpected slide count: {len(paths)} (Expected 1 for photo, 5 for carousel)")
+    # 2. Slide count integrity (Instagram allows 1 photo or 2-10 carousel slides)
+    if not (1 <= len(paths) <= 10):
+        all_issues.append(f"Unexpected slide count: {len(paths)} (Expected 1 for photo, 2-10 for carousel)")
 
     method_used = "pil_retina_analyzer"
     ai_feedback = ""

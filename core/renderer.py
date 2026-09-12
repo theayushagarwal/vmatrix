@@ -8,9 +8,14 @@ Pillow's primitive drawing API.
 """
 
 from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, FileSystemLoader, ChoiceLoader
 
 from playwright.sync_api import sync_playwright, Error as PlaywrightError
+
+try:
+    from pypdf import PdfMerger
+except ImportError:
+    from pypdf import PdfWriter as PdfMerger
 
 from .utils import retry_with_backoff, validate_png, RenderValidationError, logger
 
@@ -106,7 +111,13 @@ def format_title_gradient(title: str) -> str:
 
 
 def _get_jinja_env() -> Environment:
-    env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
+    env = Environment(
+        loader=ChoiceLoader([
+            FileSystemLoader(str(TEMPLATE_DIR)),
+            FileSystemLoader(str(TEMPLATE_DIR / "listicle")),
+        ]),
+        autoescape=True,
+    )
     env.filters["favicon"] = get_favicon_url
     env.filters["logo"] = get_logo_url
     env.filters["title_gradient"] = format_title_gradient
@@ -188,13 +199,10 @@ def render_carousel_slides(data: dict, output_dir: Path, image_format: str = "jp
     return _render_html_batch(html_items)
 
 
-def render_carousel_flow_slides(flow_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
+def render_rich_flow_slides(flow_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
     """
-    Renders 5-slide System Architecture Flowchart Carousel using templates/carousel_flow.html:
-    1. Cover Slide: Blueprint title, hook, tech stack chips with Logo.dev icons
-    2-4. Flow Diagram Slides: Connected architecture nodes, status pills, specs
-    5. Outro Slide: Call-to-Action keyword trigger box
-    Uses pooled Chromium instance for high-speed in-memory rendering.
+    Renders carousel_flow.html templates to ultra-sharp 2160x2700 Retina PNGs/JPEGs
+    and a compiled lead magnet PDF (full_carousel_guide.pdf).
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -202,75 +210,190 @@ def render_carousel_flow_slides(flow_data: dict, output_dir: Path, image_format:
     env = _get_jinja_env()
     template = env.get_template("carousel_flow.html")
 
-    slides_data = flow_data.get("slides", [])
-    total_slides = len(slides_data) + 2  # Cover + N flow slides + Outro
+    slides = flow_data.get("slides", [])
+    total_slides = len(slides) + 1
+    theme = flow_data.get("theme", "LIGHT")  # Or "DARK"
+    cta_keyword = flow_data.get("cta_keyword", "GUIDE")
+    brand_handle = flow_data.get("brand_handle", "@vmatrix.co")
     ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
-    html_items: list[tuple[str, Path, str]] = []
 
-    # 1. Cover Slide
+    pages: list[tuple[str, Path]] = []
+
+    # ── A. Render Cover Slide HTML ──────────────────────────────────────────
     cover_html = template.render(
         is_cover=True,
-        is_outro=False,
+        theme=theme,
         slide_index=1,
         total_slides=total_slides,
-        category=flow_data.get("category", "AI & CODING"),
-        series_title=flow_data.get("series_title", "SYSTEM ARCHITECTURE"),
-        cover_title=flow_data.get("cover_title", flow_data.get("title", "System Blueprint")),
-        cover_subtitle=flow_data.get("cover_subtitle", flow_data.get("hook_line", "Step-by-step Technical Flow")),
+        cover_title=flow_data.get("cover_title", flow_data.get("title", "System Architecture Flow")),
+        cover_subtitle=flow_data.get("cover_subtitle", flow_data.get("hook_line", "A beginner walkthrough")),
         tools=flow_data.get("tools", []),
+        cta_keyword=cta_keyword,
+        brand_handle=brand_handle,
     )
-    html_items.append((cover_html, output_dir / f"flow_slide_1.{ext}", image_format))
+    pages.append((cover_html, output_dir / f"slide_1.{ext}"))
 
-    # 2. Flow Diagram Content Slides
-    for idx, s in enumerate(slides_data):
-        slide_index = idx + 2
+    # ── B. Render Content Flow Steps HTML ──────────────────────────────────
+    for idx, s_data in enumerate(slides):
+        diagram = s_data.get("diagram", {})
+        if not diagram or not isinstance(diagram, dict):
+            nodes_list = s_data.get("nodes", [])
+            diagram = {
+                "type": "flowchart",
+                "nodes": [n.get("name", str(n)) if isinstance(n, dict) else str(n) for n in nodes_list] if nodes_list else ["Input", "Process", "Output"],
+            }
+
+        tools_list = s_data.get("tools", [])
+        if not tools_list and flow_data.get("tools"):
+            tools_list = flow_data.get("tools")
+
         slide_html = template.render(
             is_cover=False,
-            is_outro=False,
-            slide_index=slide_index,
+            theme=theme,
+            slide_index=idx + 2,
             total_slides=total_slides,
-            category=flow_data.get("category", "AI & CODING"),
-            headline=s.get("headline", f"Phase {idx+1}: Pipeline Execution"),
-            description=s.get("description", ""),
-            active_node_name=s.get("active_node_name", ""),
-            status_badge=s.get("status_badge", "ACTIVE"),
-            nodes=s.get("nodes", []),
-            bullets=s.get("bullets", []),
+            headline=s_data.get("headline", f"Phase 0{idx+1}: Architecture Flow"),
+            description=s_data.get("description", ""),
+            tools=tools_list,
+            diagram=diagram,
+            cta_keyword=cta_keyword,
+            brand_handle=brand_handle,
         )
-        html_items.append((slide_html, output_dir / f"flow_slide_{slide_index}.{ext}", image_format))
+        pages.append((slide_html, output_dir / f"slide_{idx + 2}.{ext}"))
 
-    # 3. Outro CTA Slide
-    outro = flow_data.get("outro", {})
-    outro_html = template.render(
-        is_cover=False,
-        is_outro=True,
-        slide_index=total_slides,
-        total_slides=total_slides,
-        category=flow_data.get("category", "AI & CODING"),
-        series_title=flow_data.get("series_title", "COMPLETE BLUEPRINT"),
-        title=outro.get("title", "Ready to Build This Pipeline?"),
-        cta_keyword=outro.get("cta_keyword", flow_data.get("cta_keyword", "FLOW")),
-        action_text=outro.get("action_text", "Drop 'FLOW' below and get the complete starter repo."),
-    )
-    html_items.append((outro_html, output_dir / f"flow_slide_{total_slides}.{ext}", image_format))
+    # ── C. High-Res Playwright Capture ─────────────────────────────────────
+    image_paths: list[Path] = []
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=True, args=["--force-color-profile=srgb"])
+        # device_scale_factor=2 gives a crisp 2160x2700 Retina image!
+        context = browser.new_context(
+            viewport={"width": SLIDE_WIDTH, "height": SLIDE_HEIGHT},
+            device_scale_factor=DEVICE_SCALE_FACTOR,
+        )
+        page = context.new_page()
 
-    return _render_html_batch(html_items)
+        merger = PdfMerger()
+
+        for idx, (html_content, img_path) in enumerate(pages):
+            temp_html = output_dir / f"temp_slide_{idx+1}.html"
+            temp_html.write_text(html_content, encoding="utf-8")
+
+            # Load slide
+            page.goto(temp_html.absolute().as_uri(), timeout=30000)
+            try:
+                page.wait_for_load_state("networkidle", timeout=5000)
+            except Exception:
+                pass
+            page.wait_for_timeout(800)  # Wait for Google Fonts & SimpleIcons SVG render
+
+            # 1. Screenshot PNG / JPEG
+            if ext in ("jpg", "jpeg"):
+                page.screenshot(path=str(img_path), type="jpeg", quality=95)
+            else:
+                page.screenshot(path=str(img_path), type="png")
+
+            validate_slide_image(img_path, *EXPECTED_PNG_SIZE)
+            image_paths.append(img_path)
+
+            # 2. PDF Page for lead magnet
+            slide_pdf = img_path.with_suffix(".pdf")
+            try:
+                page.pdf(
+                    path=str(slide_pdf),
+                    print_background=True,
+                    width="1080px",
+                    height="1350px",
+                    margin={"top": "0px", "right": "0px", "bottom": "0px", "left": "0px"},
+                )
+                merger.append(str(slide_pdf))
+            except Exception as e:
+                logger.debug("Slide PDF generation skipped: %s", e)
+
+            # Cleanup temp html
+            temp_html.unlink(missing_ok=True)
+
+        browser.close()
+
+        # Merge all into one PDF
+        final_pdf_path = output_dir / "full_carousel_guide.pdf"
+        try:
+            merger.write(str(final_pdf_path))
+            merger.close()
+        except Exception as e:
+            logger.warning("PDF guide generation note: %s", e)
+
+        # Remove individual pdf pages
+        for p_file in output_dir.glob("slide_*.pdf"):
+            p_file.unlink(missing_ok=True)
+
+    logger.info("Generated %d slides and guide at %s", len(image_paths), final_pdf_path)
+    return image_paths
 
 
-def render_infographic(data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
+def render_carousel_flow_slides(flow_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
     """
-    Renders single-page cheatsheet using templates/single_infographic.html.
+    Renders System Architecture Flowchart Carousel using templates/carousel_flow.html.
+    Maintains backwards compatibility while using the 2x Retina rich flow engine.
+    """
+    return render_rich_flow_slides(flow_data, output_dir, image_format=image_format)
+
+
+def render_cheatsheet_slide(cheatsheet_data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
+    """
+    Renders single-page reference cheatsheet using templates/single_page_cheatsheet.html.
+    Supports 2-column editorial layout, category cards, commands, and CTA pill.
+    Returns saved Path.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
 
     env = _get_jinja_env()
-    template = env.get_template("single_infographic.html")
+    template = env.get_template("single_page_cheatsheet.html")
 
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+    out_path = output_dir / f"cheatsheet.{ext}"
+
+    theme = cheatsheet_data.get("theme", "LIGHT")
     html = template.render(
-        title=data.get("title", ""),
+        title=cheatsheet_data.get("title", "Developer Reference"),
+        title_highlight=cheatsheet_data.get("title_highlight", ""),
+        hook_line=cheatsheet_data.get("hook_line", ""),
+        category=cheatsheet_data.get("category", "CORE ESSENTIALS"),
+        brand_tag=cheatsheet_data.get("brand_tag", "VMATRIX // REFERENCE"),
+        brand_handle=cheatsheet_data.get("brand_handle", "@vmatrix.co"),
+        theme=theme,
+        cta_keyword=cheatsheet_data.get("cta_keyword", "GUIDE"),
+        categories=cheatsheet_data.get("categories", []),
+        items=cheatsheet_data.get("items", []),
+    )
+    results = _render_html_batch([(html, out_path, image_format)])
+    return results[0]
+
+
+def render_infographic(data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
+    """
+    Renders single-page cheatsheet using templates/single_page_cheatsheet.html (or fallback single_infographic.html).
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    env = _get_jinja_env()
+    try:
+        template = env.get_template("single_page_cheatsheet.html")
+    except Exception:
+        template = env.get_template("single_infographic.html")
+
+    theme = data.get("theme", "LIGHT")
+    html = template.render(
+        title=data.get("title", "Developer Cheatsheet"),
+        title_highlight=data.get("title_highlight", ""),
         hook_line=data.get("hook_line", ""),
         category=data.get("category", "TOOLS"),
+        brand_tag=data.get("brand_tag", "VMATRIX // CHEAT SHEET"),
+        brand_handle=data.get("brand_handle", "@vmatrix.co"),
+        theme=theme,
+        cta_keyword=data.get("cta_keyword", "GUIDE"),
+        categories=data.get("categories", []),
         items=data.get("items", []),
     )
 

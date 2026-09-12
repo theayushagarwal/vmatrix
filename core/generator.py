@@ -227,6 +227,56 @@ _CHEATSHEET_SCHEMA = {
 }
 
 
+# Part 4: Structured Data Schema for Gemini 2.5 Flash
+RICH_SLIDE_SCHEMA = types.Schema(
+    type=types.Type.OBJECT,
+    properties={
+        "theme": types.Schema(type=types.Type.STRING, description="'LIGHT' or 'DARK'"),
+        "cover_title": types.Schema(type=types.Type.STRING),
+        "cover_subtitle": types.Schema(type=types.Type.STRING),
+        "cta_keyword": types.Schema(type=types.Type.STRING),
+        "slides": types.Schema(
+            type=types.Type.ARRAY,
+            items=types.Schema(
+                type=types.Type.OBJECT,
+                properties={
+                    "headline": types.Schema(type=types.Type.STRING),
+                    "description": types.Schema(type=types.Type.STRING),
+                    "tools": types.Schema(
+                        type=types.Type.ARRAY,
+                        items=types.Schema(
+                            type=types.Type.OBJECT,
+                            properties={
+                                "name": types.Schema(type=types.Type.STRING),
+                                "logo": types.Schema(type=types.Type.STRING, description="SimpleIcon slug, e.g. 'docker', 'python', 'github'")
+                            },
+                            required=["name", "logo"]
+                        ),
+                    ),
+                    "diagram": types.Schema(
+                        type=types.Type.OBJECT,
+                        properties={
+                            "type": types.Schema(
+                                type=types.Type.STRING,
+                                description="'flowchart', 'stack', or 'grid'",
+                            ),
+                            "nodes": types.Schema(
+                                type=types.Type.ARRAY,
+                                items=types.Schema(type=types.Type.STRING),
+                                description="List of 3 to 4 labels for the diagram"
+                            ),
+                        },
+                        required=["type", "nodes"]
+                    ),
+                },
+                required=["headline", "description", "diagram"]
+            ),
+        ),
+    },
+    required=["cover_title", "cover_subtitle", "slides", "theme", "cta_keyword"]
+)
+
+
 # --------------------------------------------------------------------------
 # Prompts
 # --------------------------------------------------------------------------
@@ -502,22 +552,30 @@ def generate_cheatsheet_content(topic: str) -> dict:
 
 
 _GROQ_FLOW_PROMPT = """You are an elite system architect and technical Instagram creator.
-Given a technical TOPIC, produce a complete 5-slide System Architecture Flowchart Carousel plan as JSON.
+Given a technical TOPIC, produce a complete System Architecture Flowchart Carousel plan as JSON.
 
 EXACT JSON SCHEMA REQUIRED:
 {
+  "theme": "LIGHT" | "DARK",
   "series_title": "string (3-5 words, e.g. SYSTEM BLUEPRINT)",
   "cover_title": "string (bold headline, 4-7 words)",
   "cover_subtitle": "string (punchy subtitle, 8-14 words)",
   "category": "AI & CODING" | "TOOLS" | "FINANCE",
-  "cta_keyword": "string (ONE word e.g. FLOW or BUILD)",
+  "cta_keyword": "string (ONE word e.g. FLOW or GUIDE)",
   "tools": [
-    {"name": "string", "domain": "domain.com"}
+    {"name": "string", "logo": "simpleicon-slug e.g. docker, fastapi, groq, redis, python, github"}
   ],
   "slides": [
     {
-      "headline": "string (e.g. 01: Ingestion & Gateway)",
+      "headline": "string (e.g. Ingestion & WebSocket Gateway)",
       "description": "string (tight explanation, max 25 words)",
+      "tools": [
+        {"name": "string", "logo": "simpleicon-slug"}
+      ],
+      "diagram": {
+        "type": "flowchart" | "stack" | "grid",
+        "nodes": ["string (step 1)", "string (step 2)", "string (step 3)", "string (step 4)"]
+      },
       "active_node_name": "string (e.g. API Gateway)",
       "status_badge": "string (e.g. LATENCY < 15MS or STREAMING)",
       "nodes": [
@@ -540,8 +598,8 @@ EXACT JSON SCHEMA REQUIRED:
 
 Rules:
 1. 'slides' array MUST contain exactly 3 technical flow steps (representing step 1, 2, 3 of the pipeline).
-2. 'nodes' array inside each slide MUST contain exactly 3 or 4 connected pipeline nodes, where only ONE node has is_active=true matching that slide's step.
-3. 'tools' array MUST contain 3-4 key tools with valid domain names (e.g. nextjs.org, fastapi.tiangolo.com, groq.com, supabase.com, redis.io, docker.com, postgresql.org).
+2. 'diagram' object inside each slide MUST have 'type' ('flowchart', 'stack', or 'grid') and 'nodes' (list of 3-4 concise step names).
+3. 'tools' array MUST contain 3-4 key tools with SimpleIcon slugs in 'logo' (e.g. 'docker', 'python', 'github', 'fastapi', 'redis', 'postgresql', 'supabase', 'nextdotjs', 'nginx').
 4. Return ONLY valid JSON.
 """
 
@@ -549,9 +607,10 @@ Rules:
 def generate_flow_carousel_content(topic: str) -> dict:
     """
     Generates structured system architecture flowchart carousel plan:
+    - theme: 'LIGHT' or 'DARK'
     - series_title, cover_title, cover_subtitle, category, cta_keyword
-    - tools: 4 key tools/frameworks
-    - slides: 3 concrete pipeline flow steps with node diagrams and specs
+    - tools: 4 key tools/frameworks with SimpleIcon slugs
+    - slides: 3 concrete pipeline flow steps with diagram (flowchart/stack/grid) and specs
     - outro: CTA keyword and action text
     - caption: Instagram caption
     """
@@ -591,7 +650,7 @@ def generate_flow_carousel_content(topic: str) -> dict:
                     gemini_client,
                     contents=f"TOPIC: {topic}",
                     system_instruction=_GROQ_FLOW_PROMPT,
-                    schema=_CAROUSEL_SCHEMA,
+                    schema=RICH_SLIDE_SCHEMA,
                     temperature=0.7,
                 )
             except Exception as e:
@@ -601,6 +660,7 @@ def generate_flow_carousel_content(topic: str) -> dict:
         raise ValueError("Neither Groq, Cerebras, nor Gemini could generate flow carousel content. Check your API keys in .env.")
 
     # Defensive normalization
+    data.setdefault("theme", "LIGHT")
     data.setdefault("series_title", "SYSTEM ARCHITECTURE")
     data.setdefault("cover_title", topic)
     data.setdefault("cover_subtitle", "Complete Step-by-Step Technical Blueprint")
@@ -610,11 +670,15 @@ def generate_flow_carousel_content(topic: str) -> dict:
     tools = data.get("tools", [])
     if not tools:
         data["tools"] = [
-            {"name": "FastAPI", "domain": "fastapi.tiangolo.com"},
-            {"name": "Groq", "domain": "groq.com"},
-            {"name": "Supabase", "domain": "supabase.com"},
-            {"name": "Docker", "domain": "docker.com"}
+            {"name": "FastAPI", "logo": "fastapi", "domain": "fastapi.tiangolo.com"},
+            {"name": "Groq", "logo": "groq", "domain": "groq.com"},
+            {"name": "Supabase", "logo": "supabase", "domain": "supabase.com"},
+            {"name": "Docker", "logo": "docker", "domain": "docker.com"}
         ]
+    else:
+        for t in tools:
+            if isinstance(t, dict):
+                t.setdefault("logo", t.get("name", "github").lower().replace(" ", "").replace(".", ""))
 
     slides = data.get("slides", [])
     if not slides:
@@ -623,24 +687,52 @@ def generate_flow_carousel_content(topic: str) -> dict:
     for idx, s in enumerate(slides):
         s.setdefault("headline", f"Phase {idx+1}: Architecture Flow")
         s.setdefault("description", "Pipeline processing step.")
-        s.setdefault("active_node_name", f"Node {idx+1}")
-        s.setdefault("status_badge", "ACTIVE")
-        nodes = s.get("nodes", [])
-        if not nodes:
+
+        # Normalize diagram
+        diagram = s.get("diagram")
+        if not diagram or not isinstance(diagram, dict):
+            existing_nodes = s.get("nodes", [])
+            node_names = [n.get("name", str(n)) if isinstance(n, dict) else str(n) for n in existing_nodes] if existing_nodes else ["Input", "Process", "Output"]
+            diagram_types = ["flowchart", "stack", "grid"]
+            s["diagram"] = {
+                "type": diagram_types[idx % len(diagram_types)],
+                "nodes": node_names
+            }
+        else:
+            diagram.setdefault("type", "flowchart")
+            if "nodes" not in diagram or not diagram["nodes"]:
+                diagram["nodes"] = ["Input", "Process", "Output"]
+
+        # Backwards compatible nodes list
+        if not s.get("nodes"):
             s["nodes"] = [
-                {"name": "Ingress", "role": "Gateway", "domain": "fastapi.tiangolo.com", "is_active": idx == 0},
-                {"name": "Compute", "role": "LPU Engine", "domain": "groq.com", "is_active": idx == 1},
-                {"name": "Storage", "role": "Postgres", "domain": "supabase.com", "is_active": idx == 2},
+                {"name": n, "role": "Component", "domain": "github.com", "is_active": i == 0}
+                for i, n in enumerate(s["diagram"]["nodes"])
             ]
+
+        s.setdefault("active_node_name", s["diagram"]["nodes"][0] if s["diagram"]["nodes"] else f"Node {idx+1}")
+        s.setdefault("status_badge", "ACTIVE")
         s.setdefault("bullets", [
             "High-throughput asynchronous event handling",
             "Low-latency streaming payload serialization",
             "Automatic connection pooling with graceful backoff"
         ])
+        if not s.get("tools"):
+            s["tools"] = data["tools"][:2]
 
     outro = data.setdefault("outro", {})
     outro.setdefault("title", "Ready to Build This Pipeline?")
     outro.setdefault("cta_keyword", data.get("cta_keyword", "FLOW"))
     outro.setdefault("action_text", f"Comment '{data.get('cta_keyword', 'FLOW')}' and I'll DM you the complete starter repo.")
 
+    return data
+
+
+def generate_rich_flow_content(topic: str, theme: str = "LIGHT") -> dict:
+    """
+    Generates structured system architecture flowchart carousel plan
+    matching the RICH_SLIDE_SCHEMA with selectable theme ('LIGHT' or 'DARK').
+    """
+    data = generate_flow_carousel_content(topic)
+    data["theme"] = theme
     return data
