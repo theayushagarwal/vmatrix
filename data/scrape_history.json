@@ -110,5 +110,69 @@
     "error": null,
     "timestamp": "2026-09-12T18:09:11.489594+00:00",
     "epoch": 1789236551.4895945
+  },
+  {
+    "handle": "bytebytego_",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No items matched in dataset",
+    "timestamp": "2026-09-12T18:37:32.249530+00:00",
+    "epoch": 1789238252.24953
+  },
+  {
+    "handle": "thecodebytes",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No items matched in dataset",
+    "timestamp": "2026-09-12T18:37:33.871394+00:00",
+    "epoch": 1789238253.8713944
+  },
+  {
+    "handle": "bhavik.dev",
+    "niche": "AI & CODING",
+    "status": "success",
+    "error": null,
+    "timestamp": "2026-09-12T18:37:36.039848+00:00",
+    "epoch": 1789238256.039848
+  },
+  {
+    "handle": "systemdesignhub",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No items matched in dataset",
+    "timestamp": "2026-09-12T18:37:36.041674+00:00",
+    "epoch": 1789238256.0416741
+  },
+  {
+    "handle": "bytebytego_",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No valid posts parsed",
+    "timestamp": "2026-09-12T18:41:50.620180+00:00",
+    "epoch": 1789238510.620181
+  },
+  {
+    "handle": "thesamur_ai",
+    "niche": "AI & CODING",
+    "status": "success",
+    "error": null,
+    "timestamp": "2026-09-12T18:43:35.273857+00:00",
+    "epoch": 1789238615.2738578
+  },
+  {
+    "handle": "thesamur_ai",
+    "niche": "AI & CODING",
+    "status": "success",
+    "error": null,
+    "timestamp": "2026-09-12T18:44:35.558031+00:00",
+    "epoch": 1789238675.5600667
+  },
+  {
+    "handle": "bytebytego_",
+    "niche": "AI & CODING",
+    "status": "failed",
+    "error": "No valid posts parsed",
+    "timestamp": "2026-09-12T18:55:42.532093+00:00",
+    "epoch": 1789239342.5320938
   }
 ]

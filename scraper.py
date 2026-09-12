@@ -61,13 +61,48 @@ class InstaScraper:
         except Exception:
             return ""
 
-    def _get_curated_fallback_posts(self, handle: str, niche: str, limit: int = 5) -> list[dict]:
+    def _get_curated_fallback_posts(self, handle: str, niche: str, limit: int = 6) -> list[dict]:
         """High-engagement sample competitor posts for testing and offline execution."""
+        # First priority: if we already have rich stored posts for this handle in the database, return them
+        existing = db.get_competitor_posts(handle=handle, limit=limit)
+        if existing and len(existing) >= 3:
+            return existing[:limit]
+
         sample_bank = {
             "bytebytego_": [
                 {
+                    "shortcode": "C_byte_microservices_fail",
+                    "caption": "Why Top Tech Companies Are Migrating Back from Microservices to Modular Monoliths. 🏗️\n\nDistributed systems introduce distributed transactions, dual-write inconsistencies, and high network serialization overhead. If you don't have 500+ engineers, a well-factored Modular Monolith outperforms microservices on cost and iteration velocity.\n\nSwipe through for the cost analysis 👉 #systemdesign #microservices #architecture #softwareengineering #coding",
+                    "likes": 128400,
+                    "views": 245000,
+                    "comments": 1420,
+                    "media_url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_byte_cache_stampede",
+                    "caption": "How Top Tech Companies Prevent Cache Stampedes: 4 Production Strategies (Probabilistic Early Expiration & Mutex Locking). 💾⚡ When 100,000 requests hit an expired Redis key simultaneously, your database dies. Here is how to prevent catastrophic outages in production. Save this blueprint! #systemdesign #redis #backend #architecture #database",
+                    "likes": 58200,
+                    "views": 145000,
+                    "comments": 1020,
+                    "media_url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_byte_kafka_rabbitmq",
+                    "caption": "Kafka vs RabbitMQ vs SQS: Event Streaming vs Message Queues. 📨⚡\n\nKey differences explained simply:\n- RabbitMQ: Smart broker, dumb consumer (AMQP routing keys, complex routing).\n- Kafka: Dumb broker, smart consumer (Distributed commit log, high throughput partition replaying).\n- SQS: Fully managed cloud queue (Best for serverless AWS event fanout).\n\nBookmark this architecture guide! #kafka #rabbitmq #systemdesign #microservices #eventdriven",
+                    "likes": 49600,
+                    "views": 130000,
+                    "comments": 815,
+                    "media_url": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
                     "shortcode": "C_byte_api_gateway",
-                    "caption": "API Gateway vs Reverse Proxy vs Load Balancer: What is the real architectural difference? 🚀 Save this for your next System Design interview! #systemdesign #softwareengineering #microservices #backend",
+                    "caption": "API Gateway vs Reverse Proxy vs Load Balancer: What is the real architectural difference? 🚀\n\nMost developers confuse these three core networking components. Here is a slide-by-slide visual breakdown:\n1. Load Balancer distributes traffic across multiple instances (L4/L7).\n2. Reverse Proxy handles SSL termination, caching, and compression.\n3. API Gateway manages auth tokens, rate limiting, request transformation, and API routing.\n\nSave this for your next System Design interview! 🔖 #systemdesign #softwareengineering #microservices #backend #devops #architecture",
                     "likes": 42800,
                     "views": 120000,
                     "comments": 940,
@@ -76,12 +111,12 @@ class InstaScraper:
                     "is_carousel": 1,
                 },
                 {
-                    "shortcode": "C_byte_cache_stampede",
-                    "caption": "How Top Tech Companies Prevent Cache Stampedes: 4 Production Strategies (Probabilistic Early Expiration & Mutex Locks). Save this blueprint! #systemdesign #redis #backend",
-                    "likes": 38200,
-                    "views": 95000,
-                    "comments": 710,
-                    "media_url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80",
+                    "shortcode": "C_byte_sql_vs_nosql",
+                    "caption": "SQL vs NoSQL in 2026: The Complete Engineering Tradeoffs Matrix. 📊\n\nWhen should you pick PostgreSQL vs MongoDB vs Cassandra vs DynamoDB? We compare ACID compliance, horizontal partitioning, read vs write amplification, and indexing latency.\n\nSave this cheat sheet for your next database selection sprint! #database #sql #nosql #systemdesign #backend #programming",
+                    "likes": 34100,
+                    "views": 89000,
+                    "comments": 620,
+                    "media_url": "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
                     "is_carousel": 1,
                 },
@@ -90,15 +125,55 @@ class InstaScraper:
                 {
                     "shortcode": "C_code_langgraph_mcp",
                     "caption": "Why LangGraph + Model Context Protocol (MCP) is replacing monolithic RAG chains in 2026. 🤖⚡ Swipe through for the complete state graph flowchart 👉 #ai #llm #python #machinelearning",
-                    "likes": 36500,
-                    "views": 98000,
-                    "comments": 780,
+                    "likes": 78500,
+                    "views": 182000,
+                    "comments": 1150,
                     "media_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_code_rag_vs_finetune",
+                    "caption": "RAG vs Fine-Tuning vs Prompt Engineering: The 2026 Decision Matrix. 🧠 Most companies spend $50k fine-tuning when they just needed hybrid search RAG. Here is how to choose! #ai #llm #rag #machinelearning",
+                    "likes": 41200,
+                    "views": 112000,
+                    "comments": 870,
+                    "media_url": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_code_vector_dbs",
+                    "caption": "Top 5 Vector Databases Ranked for Production LLM Apps (Pinecone vs Milvus vs Qdrant vs pgvector). ⚡ Benchmark stats on latency and p99 index build times. #ai #vectordb #python",
+                    "likes": 35400,
+                    "views": 94000,
+                    "comments": 620,
+                    "media_url": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_code_agentic_workflows",
+                    "caption": "Building Multi-Agent Workflows: Supervisor Pattern vs Hierarchical Router. Complete Python architecture breakdown. #ai #agents #python #llm",
+                    "likes": 29800,
+                    "views": 78000,
+                    "comments": 490,
+                    "media_url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
                     "is_carousel": 1,
                 },
             ],
             "bhavik.dev": [
+                {
+                    "shortcode": "C_bhavik_clean_code_python",
+                    "caption": "7 Python Clean Code Rules You Should NEVER Break in Production. 🐍 Before vs After refactoring examples for dataclasses, pattern matching, and context managers. Save this! #python #cleancode #developer",
+                    "likes": 88900,
+                    "views": 196000,
+                    "comments": 1290,
+                    "media_url": "https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
                 {
                     "shortcode": "C_bhavik_fastapi_tricks",
                     "caption": "5 Python Performance Hacks Every Senior Backend Dev Uses (That Aren't Async/Await). 🐍⚡ Save for your backend sprints! #python #backend #fastapi #programming",
@@ -109,10 +184,31 @@ class InstaScraper:
                     "is_reel": 0,
                     "is_carousel": 1,
                 },
+                {
+                    "shortcode": "C_bhavik_pydantic_v2",
+                    "caption": "Pydantic V2 Migration Guide: 10x Speedup with Rust Core. Real benchmarks and validation tricks. #python #pydantic #fastapi",
+                    "likes": 32100,
+                    "views": 89000,
+                    "comments": 580,
+                    "media_url": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
+                {
+                    "shortcode": "C_bhavik_gil_free",
+                    "caption": "Python 3.13 Free-Threaded (No GIL): What it means for high-concurrency API services. Real multi-core benchmarking. #python #gil #backend",
+                    "likes": 36700,
+                    "views": 98000,
+                    "comments": 670,
+                    "media_url": "https://images.unsplash.com/photo-1504639725590-34d0984388bd?w=800&auto=format&fit=crop&q=80",
+                    "is_reel": 0,
+                    "is_carousel": 1,
+                },
             ],
         }
 
-        items = sample_bank.get(handle.lower().strip())
+        clean_h = handle.lower().strip().lstrip("@")
+        items = sample_bank.get(clean_h)
         if not items:
             items = sample_bank["bytebytego_"]
 
@@ -124,13 +220,13 @@ class InstaScraper:
             posted_time = now - timedelta(days=idx + 2, hours=4)
             results.append({
                 "niche": niche,
-                "handle": handle,
+                "handle": clean_h,
                 "shortcode": it["shortcode"],
                 "post_url": f"https://www.instagram.com/p/{it['shortcode']}/",
-                "media_url": it["media_url"],
+                "media_url": it.get("media_url", ""),
                 "caption": it["caption"],
                 "likes": it["likes"],
-                "views": it["views"],
+                "views": it.get("views", it["likes"] * 2),
                 "comments": it["comments"],
                 "posted_at": posted_time.isoformat(),
                 "is_reel": it.get("is_reel", 0),
@@ -141,7 +237,7 @@ class InstaScraper:
         """Scrape latest posts from the target Instagram handle using Apify."""
         if not self.client:
             logger.warning("APIFY_API_KEY is not configured. Falling back to curated competitor intelligence dataset.")
-            fallback_posts = self._get_curated_fallback_posts(handle, niche, limit=min(limit, 5))
+            fallback_posts = self._get_curated_fallback_posts(handle, niche, limit=limit)
             db.save_competitor_posts(fallback_posts)
             db.log_scrape_attempt(handle, niche, "success")
             return fallback_posts

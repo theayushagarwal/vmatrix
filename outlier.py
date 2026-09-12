@@ -382,6 +382,8 @@ def process_post_outlier_status(
     )
     result["virality_score"] = virality_score
     result["recency_multiplier"] = round(recency_multiplier, 4)
+    result["engagement_rate"] = round(gate_eval["gate_3"]["er_percent"], 2)
+    result["virality_multiplier"] = round(gate_eval["raw_score"], 2)
 
     if gate_eval["is_outlier"]:
         result["badge_text"] = f"🔥 {virality_score:.1f}x VIRAL OUTLIER"
@@ -457,11 +459,19 @@ def detect_viral_outliers(
     outliers_only.sort(key=lambda x: x.get("virality_score", 0.0), reverse=True)
     evaluated_posts.sort(key=lambda x: x.get("virality_score", 0.0), reverse=True)
 
+    # Calculate overall median ER for summary telemetry
+    overall_median = 0.0
+    all_ers = [p.get("engagement_rate", 0.0) for p in evaluated_posts if p.get("engagement_rate")]
+    if all_ers:
+        overall_median = float(statistics.median(all_ers))
+
     return {
         "outliers": outliers_only,
         "all_evaluated": evaluated_posts,
+        "processed_posts": evaluated_posts,
         "outlier_count": len(outliers_only),
         "total_evaluated": len(evaluated_posts),
+        "overall_median": overall_median,
         "cohorts": {
             "reels": {
                 "valid": cohorts_data["reels"]["valid"],

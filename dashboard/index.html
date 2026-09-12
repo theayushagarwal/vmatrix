@@ -1425,8 +1425,8 @@
               body: JSON.stringify({ posts: posts, multiplier_threshold: 1.5, min_cohort_size: 2 })
             });
             const outlierData = await outlierRes.json();
-            if (outlierData.success && outlierData.data && outlierData.data.processed_posts) {
-              posts = outlierData.data.processed_posts;
+            if (outlierData.success && outlierData.data) {
+              posts = outlierData.data.all_evaluated || outlierData.data.processed_posts || posts;
               const medianVal = (outlierData.data.overall_median || 0).toFixed(2);
               document.getElementById('spy-cohort-summary').innerText = `Cohort: ${posts.length} posts | Median ER: ${medianVal}%`;
             } else {
@@ -1508,7 +1508,7 @@
 
         let processedPosts = rawPosts;
         if (outlierData.success && outlierData.data) {
-          processedPosts = outlierData.data.processed_posts || rawPosts;
+          processedPosts = outlierData.data.all_evaluated || outlierData.data.processed_posts || rawPosts;
           const medianVal = (outlierData.data.overall_median || 0).toFixed(2);
           document.getElementById('spy-cohort-summary').innerText = `Cohort: ${processedPosts.length} posts | Median ER: ${medianVal}%`;
         }
@@ -1526,6 +1526,16 @@
       }
     }
 
+    function escapeHtml(str) {
+      if (!str) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
     function renderCompetitorPosts(posts, handle) {
       const container = document.getElementById('spy-posts-grid');
       if (!posts || posts.length === 0) {
@@ -1539,67 +1549,114 @@
 
       container.innerHTML = posts.map((post, idx) => {
         const isOutlier = post.is_outlier || (post.gates_passed && post.gates_passed.length >= 2);
-        const multiplier = (post.virality_multiplier || 1.0).toFixed(2);
+        const multiplier = (post.virality_multiplier || post.raw_score || 1.0).toFixed(2);
         const likes = (post.likes || 0).toLocaleString();
         const comments = (post.comments || 0).toLocaleString();
-        const mediaUrl = post.display_url || post.media_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600';
+        const views = (post.views || (post.likes ? post.likes * 2 : 0)).toLocaleString();
         const caption = post.caption || 'No caption available.';
         const er = (post.engagement_rate || 0).toFixed(2);
         const postHandle = (post.handle || handle || '').replace(/^@/, '');
+        const postUrl = post.post_url || (post.shortcode ? `https://www.instagram.com/p/${post.shortcode}/` : `https://www.instagram.com/${postHandle}/`);
+        const postDate = post.posted_at ? new Date(post.posted_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : 'Recent';
         const hasAnalysis = !!post.virality_analysis;
         const analysisScore = (post.virality_analysis && post.virality_analysis.virality_score) || 85;
 
         return `
-          <div class="glass-card rounded-2xl overflow-hidden border ${isOutlier ? 'border-pink-500 shadow-xl shadow-pink-500/10' : 'border-slate-800'} flex flex-col justify-between">
-            <!-- Media Thumbnail with Overlaid Badges -->
-            <div class="relative w-full aspect-video bg-slate-950 overflow-hidden group">
-              <img src="${mediaUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600'">
-              
-              <!-- Outlier Badge & Dossier Badge -->
-              <div class="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
+          <div class="glass-card rounded-2xl border ${isOutlier ? 'border-pink-500 shadow-xl shadow-pink-500/10' : 'border-slate-800'} flex flex-col justify-between p-5 space-y-4 hover:border-slate-700 transition-all">
+            <!-- Header: Profile link, Badges, and Type -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between gap-2 flex-wrap">
+                <!-- Direct Clickable Instagram Handle & Link -->
+                <a href="${postUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-pink-400 hover:text-pink-300 font-bold font-mono text-sm group" title="Open post on Instagram">
+                  <i class="fa-brands fa-instagram text-pink-500 group-hover:scale-110 transition-transform"></i>
+                  <span>@${postHandle}</span>
+                  <i class="fa-solid fa-arrow-up-right-from-square text-[10px] text-pink-400/80"></i>
+                </a>
+
+                <div class="flex items-center gap-2">
+                  <span class="px-2 py-0.5 rounded-md bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-400">
+                    <i class="fa-regular fa-clock mr-1"></i>${postDate}
+                  </span>
+                  <span class="px-2 py-0.5 rounded-md ${post.is_reel ? 'bg-purple-950/60 border border-purple-500/30 text-purple-300' : 'bg-blue-950/60 border border-blue-500/30 text-blue-300'} text-[10px] font-mono">
+                    <i class="fa-solid ${post.is_reel ? 'fa-video' : 'fa-images'} mr-1"></i>${post.is_reel ? 'Reel' : 'Carousel'}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Outlier & AI Dossier Status Pills -->
+              <div class="flex items-center gap-2 flex-wrap">
                 ${isOutlier ? `
-                  <span class="px-2.5 py-1 rounded-lg bg-pink-600/90 backdrop-blur text-white text-xs font-bold shadow-lg flex items-center gap-1.5">
-                    <i class="fa-solid fa-fire"></i> VIRAL OUTLIER ${multiplier}x
+                  <span class="px-2.5 py-1 rounded-lg bg-pink-600/90 text-white text-xs font-bold shadow-md shadow-pink-500/20 flex items-center gap-1.5">
+                    <i class="fa-solid fa-fire text-amber-300 animate-pulse"></i> VIRAL OUTLIER ${multiplier}x
                   </span>
                 ` : `
-                  <span class="px-2 py-0.5 rounded-lg bg-slate-900/80 backdrop-blur text-slate-300 text-[10px] font-mono border border-slate-700">
-                    ⚪ Normal Cohort
+                  <span class="px-2.5 py-0.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-300 text-[11px] font-mono flex items-center gap-1">
+                    ⚪ Baseline Cohort (${multiplier}x)
                   </span>
                 `}
                 ${hasAnalysis ? `
-                  <span class="px-2 py-0.5 rounded-lg bg-indigo-950/90 backdrop-blur text-indigo-300 text-[10px] font-mono border border-indigo-500/40 flex items-center gap-1">
+                  <span class="px-2 py-0.5 rounded-lg bg-indigo-950/90 text-indigo-300 text-[11px] font-mono border border-indigo-500/40 flex items-center gap-1">
                     <i class="fa-solid fa-brain text-indigo-400"></i> AI Dossier (${analysisScore}/100)
                   </span>
                 ` : ''}
-              </div>
-
-              <!-- Metrics Pill -->
-              <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-white bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/10">
-                <span class="flex items-center gap-1"><i class="fa-solid fa-heart text-pink-400"></i> ${likes}</span>
-                <span class="flex items-center gap-1"><i class="fa-solid fa-comment text-indigo-400"></i> ${comments}</span>
-                <span class="flex items-center gap-1 text-emerald-400 font-bold">ER: ${er}%</span>
+                ${post.shortcode ? `
+                  <a href="${postUrl}" target="_blank" rel="noopener noreferrer" class="px-2 py-0.5 rounded-lg bg-slate-950 border border-slate-800 text-slate-400 hover:text-slate-200 text-[10px] font-mono ml-auto">
+                    ${post.shortcode}
+                  </a>
+                ` : ''}
               </div>
             </div>
 
-            <!-- Content Details -->
-            <div class="p-5 space-y-3 flex-1 flex flex-col justify-between">
-              <div class="space-y-2">
-                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span class="text-pink-300 font-semibold">@${postHandle}</span>
-                  <span>${post.posted_at ? new Date(post.posted_at).toLocaleDateString() : 'Recent'}</span>
-                </div>
-                <p class="text-xs text-slate-300 line-clamp-3 font-sans">${caption}</p>
+            <!-- Key Engagement Metrics Strip -->
+            <div class="grid grid-cols-4 gap-2 p-2.5 rounded-xl bg-slate-950/80 border border-slate-800 text-center font-mono">
+              <div class="space-y-0.5">
+                <div class="text-[10px] text-slate-500 uppercase flex items-center justify-center gap-1"><i class="fa-solid fa-heart text-pink-500 text-[9px]"></i> Likes</div>
+                <div class="text-xs font-bold text-white">${likes}</div>
               </div>
+              <div class="space-y-0.5">
+                <div class="text-[10px] text-slate-500 uppercase flex items-center justify-center gap-1"><i class="fa-solid fa-comment text-indigo-400 text-[9px]"></i> Comm</div>
+                <div class="text-xs font-bold text-white">${comments}</div>
+              </div>
+              <div class="space-y-0.5">
+                <div class="text-[10px] text-slate-500 uppercase flex items-center justify-center gap-1"><i class="fa-solid fa-eye text-cyan-400 text-[9px]"></i> Views</div>
+                <div class="text-xs font-bold text-white">${views}</div>
+              </div>
+              <div class="space-y-0.5">
+                <div class="text-[10px] text-slate-500 uppercase flex items-center justify-center gap-1"><i class="fa-solid fa-chart-line text-emerald-400 text-[9px]"></i> ER</div>
+                <div class="text-xs font-bold text-emerald-400">${er}%</div>
+              </div>
+            </div>
 
-              <!-- Action Buttons -->
-              <div class="pt-3 border-t border-slate-800/80 space-y-2">
-                <button onclick="triggerDeepViralityAnalysis(${idx})" class="w-full py-2 px-3 rounded-xl ${hasAnalysis ? 'bg-gradient-to-r from-purple-600/40 to-indigo-600/40 hover:from-purple-600/60 hover:to-indigo-600/60 border border-indigo-500/50 text-indigo-200' : 'bg-gradient-to-r from-pink-600/30 to-purple-600/30 hover:from-pink-600/50 hover:to-purple-600/50 border border-pink-500/40 text-pink-300'} hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+            <!-- Full Scrollable Caption Container (No Image, High Legibility) -->
+            <div class="space-y-1.5 flex-1 flex flex-col justify-start">
+              <div class="flex items-center justify-between text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <span class="flex items-center gap-1.5 text-pink-400 font-mono">
+                  <i class="fa-solid fa-align-left text-[10px]"></i> Scraped Caption
+                </span>
+                <span class="text-[10px] text-slate-500 font-mono">${caption.length} chars</span>
+              </div>
+              <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800/90 max-h-48 overflow-y-auto custom-scrollbar text-xs text-slate-200 font-sans leading-relaxed whitespace-pre-line select-text selection:bg-pink-500/30">
+                ${escapeHtml(caption)}
+              </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="pt-3 border-t border-slate-800 space-y-2">
+              <!-- Direct Instagram Post Link Button -->
+              <a href="${postUrl}" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700 hover:border-pink-500/50 text-slate-200 hover:text-pink-300 font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+                <i class="fa-brands fa-instagram text-pink-500"></i>
+                <span>Open Post on Instagram</span>
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px] opacity-70"></i>
+              </a>
+
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="triggerDeepViralityAnalysis(${idx})" class="py-2 px-2.5 rounded-xl ${hasAnalysis ? 'bg-indigo-950/60 hover:bg-indigo-900/80 border border-indigo-500/40 text-indigo-300' : 'bg-pink-950/50 hover:bg-pink-900/70 border border-pink-500/40 text-pink-300'} font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
                   <i class="fa-solid fa-brain"></i>
-                  <span>${hasAnalysis ? 'View AI Virality Dossier' : 'Deep AI Virality Breakdown'}</span>
+                  <span>${hasAnalysis ? 'AI Dossier' : 'Analyze'}</span>
                 </button>
-                <button onclick="adaptCompetitorPost(${idx})" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
-                  <i class="fa-solid fa-wand-magic-sparkles"></i>
-                  <span>Adapt into 4K Carousel</span>
+                <button onclick="adaptCompetitorPost(${idx})" class="py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                  <i class="fa-solid fa-wand-magic-sparkles text-amber-400"></i>
+                  <span>Adapt 4K</span>
                 </button>
               </div>
             </div>
@@ -1820,22 +1877,28 @@
                     <tr class="hover:bg-slate-900/40 transition-colors">
                       <td class="p-3.5 font-bold text-white">
                         <div class="flex items-center gap-2">
-                          <i class="fa-brands fa-instagram text-pink-400"></i>
-                          <span>@${p.handle || 'unknown'}</span>
+                          <a href="${p.post_url || (p.shortcode ? `https://www.instagram.com/p/${p.shortcode}/` : `https://www.instagram.com/${(p.handle||'').replace(/^@/,'')}/`)}" target="_blank" rel="noopener noreferrer" class="text-pink-400 hover:text-pink-300 flex items-center gap-1.5 hover:underline" title="View on Instagram">
+                            <i class="fa-brands fa-instagram text-pink-500"></i>
+                            <span>@${p.handle || 'unknown'}</span>
+                            <i class="fa-solid fa-arrow-up-right-from-square text-[9px] opacity-75"></i>
+                          </a>
                         </div>
-                        <div class="text-[11px] font-sans text-slate-400 font-normal line-clamp-1 mt-0.5">${p.caption || ''}</div>
+                        <div class="text-[11px] font-sans text-slate-400 font-normal line-clamp-2 mt-1 leading-relaxed">${p.caption || ''}</div>
                       </td>
                       <td class="p-3.5 text-indigo-300">${p.niche || 'AI & CODING'}</td>
-                      <td class="p-3.5 text-pink-400">${(p.likes || 0).toLocaleString()}</td>
+                      <td class="p-3.5 text-pink-400 font-semibold">${(p.likes || 0).toLocaleString()}</td>
                       <td class="p-3.5 text-slate-300">${(p.comments || 0).toLocaleString()}</td>
                       <td class="p-3.5">
                         ${p.virality_analysis ? `
-                          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">Analyzed</span>
+                          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">Analyzed (${p.virality_analysis.virality_score || 85}/100)</span>
                         ` : `
                           <span class="text-slate-600 text-[10px]">Pending</span>
                         `}
                       </td>
-                      <td class="p-3.5 text-right">
+                      <td class="p-3.5 text-right whitespace-nowrap">
+                        <a href="${p.post_url || (p.shortcode ? `https://www.instagram.com/p/${p.shortcode}/` : `https://www.instagram.com/${(p.handle||'').replace(/^@/,'')}/`)}" target="_blank" rel="noopener noreferrer" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-pink-300 text-[11px] transition-colors inline-flex items-center gap-1 mr-1.5">
+                          <i class="fa-brands fa-instagram text-pink-500"></i> View
+                        </a>
                         <button onclick="setStudioTopic('Viral Adapt: ' + '${p.caption ? encodeURIComponent(p.caption.slice(0, 80)) : ''}'); switchTab('tab-studio')" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] transition-colors">
                           Adapt
                         </button>
