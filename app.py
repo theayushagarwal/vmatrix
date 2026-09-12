@@ -11,6 +11,7 @@ Streamlit demo UI for ai-social-engine:
 
 import os
 import tempfile
+import time
 from pathlib import Path
 
 import streamlit as st
@@ -49,12 +50,14 @@ from core import (
     fetch_top_performing_posts_from_supabase,
     audit_published_posts_insights,
     get_top_performing_topics,
+    calculate_topic_resonance_boost,
     InstaScraper,
     analyze_post_virality,
     detect_viral_outliers,
     process_post_outlier_status,
     db,
 )
+from core.utils import logger
 
 load_dotenv()
 
@@ -409,6 +412,19 @@ if "funnel_results" not in st.session_state:
     st.session_state.funnel_results = None
 if "carousel_mode" not in st.session_state:
     st.session_state.carousel_mode = "listicle"
+
+# ---------------------------------------------------------------------------
+# Constants & Feed Caching
+# ---------------------------------------------------------------------------
+PRESETS = [
+    "🔥 5 Claude Prompt Hacks for Developers",
+    "🤖 DeepSeek-V3 vs Claude 3.5 Sonnet",
+    "⚡ Build an AI Agent in 10 Minutes",
+]
+
+@st.cache_data(ttl=900)
+def load_cached_feeds(geo: str = "IN"):
+    return fetch_all_feeds(geo=geo, max_per_feed=10)
 
 # ---------------------------------------------------------------------------
 # Section 1: 🎯 5-Stage Filtering Funnel (Curator Auto-Pilot)

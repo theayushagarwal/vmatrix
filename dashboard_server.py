@@ -322,8 +322,8 @@ def reject_queue_item(item_id: str):
 @app.post("/api/queue/{item_id}/extend")
 def extend_queue_item(item_id: str):
     try:
-        success = extend_approval_timeout(item_id, extension_minutes=15)
-        return {"success": success}
+        success = extend_approval_timeout(item_id, extra_minutes=15)
+        return {"success": bool(success)}
     except Exception as e:
         logger.error(f"Extend error: {e}")
         return {"success": False, "error": str(e)}

@@ -9,7 +9,7 @@
     "created_at_iso": "2026-09-12 11:49:35 UTC",
     "expires_at": 1789215572.7107043,
     "timeout_minutes": 30,
-    "status": "pending",
+    "status": "auto_published",
     "vision_score": 10.0,
     "vision_method": "pil_retina_analyzer",
     "content_plan": {
@@ -75,10 +75,10 @@
     ],
     "caption": "Async Mastery Blueprint ⚡ A step‑by‑step guide to the async tools and patterns that cut wait time and keep your codebase responsive. Learn when to favor promises, async/await, or event‑driven streams, and see concrete examples of error handling and cancellation tokens. 💻 Key architecture notes: isolate I/O in dedicated workers, use a task queue with back‑pressure control, and profile latency with built‑in timers to spot bottlenecks before they hit production. ⚠️ Disclaimer: For educational and informational purposes only. #codinglife #programmer #learntocode #computerscience #github #vscode #webdevelopment #aiagent #softwaredev #tech #javascript #devcommunity",
     "auto_comment": "Which of these key takeaways had the biggest impact on your developer workflow? Drop a comment below! 👇\n\n📌 Save this guide so you can reference it anytime.",
-    "post_id": null,
-    "comment_id": null,
-    "permalink": null,
+    "post_id": "18393869815163196",
+    "comment_id": "17906365608549474",
+    "permalink": "https://www.instagram.com/p/DdMfaEGDsw3/",
     "rejection_reason": null,
-    "action_taken_at": null
+    "action_taken_at": 1789233044.590713
   }
 ]
