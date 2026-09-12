@@ -119,6 +119,14 @@ jobs:
           # Gemini Guard (Kept dormant unless explicitly enabled)
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ENABLE_GEMINI: ${{ secrets.ENABLE_GEMINI || 'false' }}
+
+          # OpenRouter Intelligence (Deep Virality, Hook Analysis & Caption Extraction)
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          OPENROUTER_MODEL: ${{ secrets.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct' }}
+
+          # Hugging Face Model & Dataset Access
+          HUGGINGFACE_API_KEY: ${{ secrets.HUGGINGFACE_API_KEY }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           FLAGS=""
           if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
