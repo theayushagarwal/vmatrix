@@ -1,0 +1,1627 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vmatrix Social OS · Autonomous Instagram Intelligence & Carousel Engine</title>
+  
+  <!-- Tailwind CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              400: '#818cf8',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            },
+            dark: {
+              950: '#070a13',
+              900: '#0b0f19',
+              850: '#111827',
+              800: '#1e293b',
+              700: '#334155',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #070a13;
+      color: #f1f5f9;
+      font-family: 'Inter', sans-serif;
+    }
+    .glass-panel {
+      background: rgba(17, 24, 39, 0.7);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.2s ease-in-out;
+    }
+    .glass-card:hover {
+      border-color: rgba(99, 102, 241, 0.4);
+      transform: translateY(-2px);
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #a5b4fc 0%, #6366f1 50%, #38bdf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .gradient-border {
+      position: relative;
+      border-radius: 0.75rem;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #0b0f19;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 9999px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #475569;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col custom-scrollbar">
+
+  <!-- TOP STATUS NAVBAR -->
+  <header class="glass-panel sticky top-0 z-40 px-6 py-3.5 border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+    <!-- Brand Title -->
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 text-white font-bold text-lg">
+        <i class="fa-solid fa-atom"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="font-bold text-base tracking-tight text-white">VMATRIX <span class="gradient-text font-black">SOCIAL OS</span></h1>
+          <span class="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">v2.5 Non-Streamlit</span>
+        </div>
+        <p class="text-xs text-slate-400">Autonomous Social Publishing Engine & Competitor Intelligence</p>
+      </div>
+    </div>
+
+    <!-- Live Telemetry Status Pills -->
+    <div class="flex items-center flex-wrap gap-2 text-xs font-mono" id="telemetry-pills">
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-groq">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Groq 120B</span>
+      </div>
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-apify">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Apify Scraper</span>
+      </div>
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-supabase">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Supabase DB</span>
+      </div>
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-cloudinary">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Cloudinary CDN</span>
+      </div>
+      <div class="px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5" id="tel-instagram">
+        <span class="w-2 h-2 rounded-full bg-slate-600 animate-pulse"></span>
+        <span class="text-slate-400">Meta Graph API</span>
+      </div>
+    </div>
+
+    <!-- Right Actions -->
+    <div class="flex items-center gap-3">
+      <button onclick="refreshSystemStatus()" title="Refresh Telemetry" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors">
+        <i class="fa-solid fa-arrows-rotate" id="status-spinner"></i>
+      </button>
+      <div class="h-5 w-px bg-slate-800"></div>
+      <span class="text-xs font-mono text-emerald-400 flex items-center gap-1.5">
+        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span> Live 8000
+      </span>
+    </div>
+  </header>
+
+  <!-- NAVIGATION TABS -->
+  <nav class="border-b border-slate-800/80 bg-slate-950/60 px-6 backdrop-blur">
+    <div class="flex space-x-1 sm:space-x-4 overflow-x-auto custom-scrollbar py-2">
+      <button onclick="switchTab('tab-radar')" id="btn-tab-radar" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-indigo-400 bg-indigo-950/40 border border-indigo-500/30 transition-all">
+        <i class="fa-solid fa-satellite-dish"></i>
+        <span>1. Trend Radar & Funnel</span>
+      </button>
+      
+      <button onclick="switchTab('tab-studio')" id="btn-tab-studio" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent transition-all">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>2. 4K Carousel Studio</span>
+      </button>
+
+      <button onclick="switchTab('tab-queue')" id="btn-tab-queue" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent transition-all">
+        <i class="fa-solid fa-clock"></i>
+        <span>3. 30-Min Approval Queue</span>
+        <span id="badge-queue-count" class="px-2 py-0.5 text-[10px] rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 hidden">0</span>
+      </button>
+
+      <button onclick="switchTab('tab-spy')" id="btn-tab-spy" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent transition-all">
+        <i class="fa-solid fa-crosshairs text-pink-400"></i>
+        <span>4. Competitor Outlier Spy</span>
+        <span class="px-1.5 py-0.2 text-[9px] font-bold rounded bg-pink-500/20 text-pink-300 border border-pink-500/30">Phase 2</span>
+      </button>
+
+      <button onclick="switchTab('tab-db')" id="btn-tab-db" class="tab-btn px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-2 text-slate-400 hover:text-slate-200 hover:bg-slate-900/60 border border-transparent transition-all">
+        <i class="fa-solid fa-database"></i>
+        <span>5. Intelligence Database</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MAIN TAB CONTENT CONTAINER -->
+  <main class="flex-1 p-6 max-w-7xl w-full mx-auto">
+
+    <!-- ================================================================= -->
+    <!-- TAB 1: TREND RADAR & 5-STAGE FUNNEL -->
+    <!-- ================================================================= -->
+    <section id="tab-radar" class="tab-content space-y-6">
+      <!-- Header Banner -->
+      <div class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">STAGE 01-05 ENGINE</span>
+            <h2 class="text-xl font-bold text-white">Live Multi-Source Radar & 5-Stage Mathematical Funnel</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+            Harvests real-time signals from Google Trends, TechCrunch AI, VentureBeat AI, and Hacker News. Runs a 5-stage filter to select high-resonance, non-duplicate viral topics.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <select id="funnel-geo" class="bg-slate-900 border border-slate-700 text-xs font-mono rounded-xl px-3 py-2 text-white focus:outline-none focus:border-indigo-500">
+            <option value="IN" selected>Region: India (IN)</option>
+            <option value="US">Region: United States (US)</option>
+            <option value="GLOBAL">Region: Global</option>
+          </select>
+          <button onclick="triggerFunnelRun()" id="btn-run-funnel" class="px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-indigo-600/30 flex items-center gap-2 transition-all">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Run 5-Stage Funnel</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Funnel Progress Stages Indicator -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="funnel-stats-row">
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-blue-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">Stage 1: Safety</div>
+          <div class="text-lg font-bold text-white mt-1">Blacklist Filter</div>
+          <div class="text-xs text-slate-400 mt-1">Strips political, clickbait & off-niche topics</div>
+          <div class="text-xs font-mono text-blue-400 mt-2" id="stat-s1">Passed: --</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-indigo-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">Stage 2: Scoring</div>
+          <div class="text-lg font-bold text-white mt-1">Niche Resonance</div>
+          <div class="text-xs text-slate-400 mt-1">AI Agents (4x), Local LLMs (3.5x), Dev Tools (3x)</div>
+          <div class="text-xs font-mono text-indigo-400 mt-2" id="stat-s2">Passed: --</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-purple-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">Stage 3: Classifier</div>
+          <div class="text-lg font-bold text-white mt-1">Semantic NLP</div>
+          <div class="text-xs text-slate-400 mt-1">Cosine confidence threshold ≥ 0.70</div>
+          <div class="text-xs font-mono text-purple-400 mt-2" id="stat-s3">Passed: --</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-pink-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">Stage 4: Memory</div>
+          <div class="text-lg font-bold text-white mt-1">Deduplication</div>
+          <div class="text-xs text-slate-400 mt-1">Cosine similarity &lt; 0.85 vs past 30 days</div>
+          <div class="text-xs font-mono text-pink-400 mt-2" id="stat-s4">Passed: --</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-emerald-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">Stage 5: Verdict</div>
+          <div class="text-lg font-bold text-white mt-1">Actionability Score</div>
+          <div class="text-xs text-slate-400 mt-1">Virality potential threshold ≥ 7.5</div>
+          <div class="text-xs font-mono text-emerald-400 mt-2" id="stat-s5">Finalists: --</div>
+        </div>
+      </div>
+
+      <!-- Funnel Results & Winning Topics Container -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold tracking-wider text-slate-300 uppercase flex items-center gap-2">
+            <i class="fa-solid fa-trophy text-amber-400"></i>
+            <span>Selected High-Resonance Viral Candidates</span>
+          </h3>
+          <span class="text-xs text-slate-500" id="funnel-timestamp">Last updated: Never</span>
+        </div>
+
+        <div id="funnel-results-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <!-- Default placeholder -->
+          <div class="col-span-full glass-card p-12 rounded-2xl text-center">
+            <div class="w-14 h-14 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 text-xl mb-3">
+              <i class="fa-solid fa-radar"></i>
+            </div>
+            <h4 class="text-base font-semibold text-slate-200">Radar In Standby Mode</h4>
+            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">
+              Click <strong class="text-indigo-400">"Run 5-Stage Funnel"</strong> above to query live Google Trends, TechCrunch AI, and Hacker News through our mathematical scoring pipeline.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 2: 4K CAROUSEL STUDIO -->
+    <!-- ================================================================= -->
+    <section id="tab-studio" class="tab-content hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Column: Controls & Prompting -->
+        <div class="lg:col-span-5 space-y-6">
+          <div class="glass-panel p-6 rounded-2xl space-y-5">
+            <div>
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">RETINA 4K ENGINE</span>
+              <h2 class="text-xl font-bold text-white mt-1">4K Carousel Studio</h2>
+              <p class="text-xs text-slate-400 mt-1">Generates 2160x2700 pure-white 100% compliant Instagram carousels using Groq 120B and Playwright.</p>
+            </div>
+
+            <!-- Topic Input -->
+            <div class="space-y-2">
+              <label class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Carousel Topic / Hook Idea</label>
+              <textarea id="studio-topic-input" rows="3" placeholder="e.g. DeepSeek-V3 vs Claude 3.5 Sonnet: The Complete Architectural Breakdown..." class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl p-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 custom-scrollbar"></textarea>
+            </div>
+
+            <!-- Preset Topic Pills -->
+            <div class="space-y-1.5">
+              <span class="text-[11px] font-mono text-slate-400">High-Resonance Presets:</span>
+              <div class="flex flex-wrap gap-1.5">
+                <button onclick="setStudioTopic('DeepSeek-V3 Architecture: Why It Beats Models 5x Its Cost')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">🔥 DeepSeek-V3 Architecture</button>
+                <button onclick="setStudioTopic('5 Open-Source AI Agent Frameworks To Build Autonomous Apps in 2026')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">🤖 5 Agent Frameworks</button>
+                <button onclick="setStudioTopic('Local LLMs in 2026: How To Run 70B Models on Mac & Windows for Free')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">💻 Run 70B LLMs Locally</button>
+                <button onclick="setStudioTopic('Cursor IDE Power Workflows: 7 Secret Prompts That 10x Dev Speed')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">⚡ Cursor IDE Secrets</button>
+              </div>
+            </div>
+
+            <!-- Settings Grid -->
+            <div class="grid grid-cols-2 gap-3 pt-2">
+              <div>
+                <label class="text-xs text-slate-400 font-semibold block mb-1">Slide Layout Mode</label>
+                <select id="studio-mode-select" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500">
+                  <option value="listicle" selected>Listicle / Teardown (5-6 slides)</option>
+                  <option value="flow">Architecture Flow (6 slides)</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="text-xs text-slate-400 font-semibold block mb-1">Image Format</label>
+                <select id="studio-format-select" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl p-2.5 text-white focus:outline-none focus:border-indigo-500">
+                  <option value="jpeg" selected>JPEG (Fastest · ~500ms/slide)</option>
+                  <option value="png">PNG (Lossless Retina 4K)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Generate Button -->
+            <button onclick="triggerCarouselGeneration()" id="btn-generate-carousel" class="w-full py-3.5 bg-gradient-to-r from-indigo-600 via-purple-600 to-cyan-500 hover:from-indigo-500 hover:to-cyan-400 text-white font-bold text-sm rounded-xl shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2.5 transition-all">
+              <i class="fa-solid fa-wand-magic-sparkles"></i>
+              <span>Generate 4K Retina Carousel</span>
+            </button>
+
+            <!-- Generation Status Progress -->
+            <div id="gen-progress-container" class="hidden p-4 rounded-xl bg-slate-900/90 border border-indigo-500/30 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-indigo-300 font-mono flex items-center gap-2" id="gen-step-text">
+                  <i class="fa-solid fa-circle-notch fa-spin text-indigo-400"></i> Synthesizing content plan with Groq 120B...
+                </span>
+              </div>
+              <div class="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                <div id="gen-progress-bar" class="bg-gradient-to-r from-indigo-500 to-cyan-400 h-1.5 rounded-full transition-all duration-300 w-1/4"></div>
+              </div>
+            </div>
+
+            <!-- Post-Generation Quick Publishing Actions -->
+            <div id="studio-action-box" class="hidden space-y-3 pt-3 border-t border-slate-800">
+              <div class="text-xs font-semibold text-slate-300 uppercase tracking-wider">Publishing Pipeline</div>
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="sendGeneratedToQueue()" id="btn-studio-queue" class="py-2.5 px-3 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-solid fa-clock"></i>
+                  <span>Send to 30-Min Queue</span>
+                </button>
+                <button onclick="publishGeneratedDirect()" id="btn-studio-publish" class="py-2.5 px-3 rounded-xl bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-brands fa-instagram"></i>
+                  <span>Publish Direct</span>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Caption & Comment Preview Panel -->
+          <div id="studio-copy-panel" class="glass-panel p-5 rounded-2xl space-y-4 hidden">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-align-left text-indigo-400"></i> Caption & Call-To-Action
+              </h4>
+              <button onclick="copyElementText('studio-caption-box')" class="text-xs text-indigo-400 hover:text-indigo-300 font-mono flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+            <div id="studio-caption-box" class="p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono whitespace-pre-wrap max-h-48 overflow-y-auto custom-scrollbar"></div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+              <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-regular fa-comment-dots text-purple-400"></i> High-Engagement Comment 1
+              </h4>
+              <button onclick="copyElementText('studio-comment-box')" class="text-xs text-purple-400 hover:text-purple-300 font-mono flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy
+              </button>
+            </div>
+            <div id="studio-comment-box" class="p-3 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-300 font-mono whitespace-pre-wrap max-h-24 overflow-y-auto custom-scrollbar"></div>
+          </div>
+        </div>
+
+        <!-- Right Column: Interactive 4K Slide Viewer & Lightbox -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="glass-panel p-6 rounded-2xl space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                  <i class="fa-solid fa-images text-indigo-400"></i>
+                  <span>Live 4K Retina Slide Preview</span>
+                </h3>
+                <p class="text-xs text-slate-400">Rendered at full 2160x2700 resolution (4:5 vertical portrait aspect ratio)</p>
+              </div>
+              <div class="flex items-center gap-2" id="slide-nav-controls">
+                <button onclick="prevSlide()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span id="slide-counter-badge" class="text-xs font-mono text-indigo-300 px-2.5 py-1 rounded bg-slate-900 border border-slate-800">Slide 1 / 1</span>
+                <button onclick="nextSlide()" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Big Main Slide Display -->
+            <div class="relative w-full aspect-[4/5] max-h-[600px] bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-center overflow-hidden group">
+              <img id="main-slide-img" src="" alt="Slide Preview" class="hidden w-full h-full object-contain cursor-zoom-in" onclick="openLightbox(this.src)">
+              <div id="slide-empty-state" class="text-center p-8">
+                <div class="w-16 h-16 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-600 text-2xl mx-auto mb-3">
+                  <i class="fa-regular fa-image"></i>
+                </div>
+                <h4 class="text-sm font-semibold text-slate-300">No Slides Rendered Yet</h4>
+                <p class="text-xs text-slate-500 mt-1">Enter a topic and click Generate to view rendered 4K slides.</p>
+              </div>
+
+              <!-- Hover Zoom Button -->
+              <button onclick="openCurrentSlideLightbox()" id="btn-zoom-slide" class="hidden absolute top-3 right-3 px-3 py-1.5 rounded-lg bg-slate-900/90 hover:bg-indigo-600 text-white text-xs font-mono backdrop-blur border border-white/10 flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-expand"></i> Full 4K View
+              </button>
+            </div>
+
+            <!-- Thumbnail Carousel Strip -->
+            <div id="slide-thumbnails-strip" class="flex gap-2 overflow-x-auto custom-scrollbar py-2"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 3: 30-MINUTE APPROVAL QUEUE -->
+    <!-- ================================================================= -->
+    <section id="tab-queue" class="tab-content hidden space-y-6">
+      <div class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">GOVERNANCE ENGINE</span>
+            <h2 class="text-xl font-bold text-white">30-Minute Human Approval Queue</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+            Posts enter a 30-minute grace window before release. If you take no action, the post will auto-publish to Instagram upon timer expiry.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="loadApprovalQueue()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2 transition-colors">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Refresh Queue</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending Queue Items Grid -->
+      <div id="queue-items-container" class="space-y-4">
+        <!-- Default Empty State -->
+        <div class="glass-card p-12 rounded-2xl text-center">
+          <div class="w-14 h-14 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 text-xl mb-3">
+            <i class="fa-solid fa-inbox"></i>
+          </div>
+          <h4 class="text-base font-semibold text-slate-200">Approval Queue Empty</h4>
+          <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">
+            There are currently no queued posts awaiting human approval. Generate a carousel in the Studio and click <strong class="text-amber-400">"Send to 30-Min Queue"</strong> to stage it here.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 4: COMPETITOR OUTLIER SPY (PHASE 2 CORE FEATURE) -->
+    <!-- ================================================================= -->
+    <section id="tab-spy" class="tab-content hidden space-y-6">
+      
+      <!-- Spy Search Bar -->
+      <div class="glass-panel p-6 rounded-2xl space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-pink-500/20 text-pink-300 border border-pink-500/30">PHASE 2 INTELLIGENCE</span>
+              <h2 class="text-xl font-bold text-white">Competitor Outlier Spy & Virality Reverse-Engineering</h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+              Scrapes competitor Instagram profiles using Apify, filters posts using our rigorous 3-gate mathematical framework (12h cooldown, 2-hit breaker, 24h maturation), and breaks down why they went viral.
+            </p>
+          </div>
+
+          <!-- Target Handle Selector & Quick Chips -->
+          <div class="flex items-center gap-3">
+            <div class="relative">
+              <i class="fa-brands fa-instagram absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+              <input type="text" id="spy-handle-input" placeholder="e.g. levelsio" value="levelsio" class="bg-slate-900 border border-slate-700 text-sm rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-pink-500 font-mono w-48 sm:w-60">
+            </div>
+            <button onclick="triggerCompetitorScrape()" id="btn-scrape-competitor" class="px-5 py-2.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-pink-600/30 flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-radar"></i>
+              <span>Scrape & Analyze</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Preset Handle Chips -->
+        <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
+          <span class="text-[11px] font-mono text-slate-400">Quick Targets:</span>
+          <button onclick="setSpyHandle('levelsio')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@levelsio</button>
+          <button onclick="setSpyHandle('thesamur_ai')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@thesamur_ai</button>
+          <button onclick="setSpyHandle('aisavvy')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@aisavvy</button>
+          <button onclick="setSpyHandle('rowancheung')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@rowancheung</button>
+          <button onclick="setSpyHandle('marketingharry')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@marketingharry</button>
+        </div>
+
+        <!-- Scrape Options Row -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1 text-xs">
+          <div>
+            <label class="text-slate-400 block mb-1">Niche Classification</label>
+            <select id="spy-niche-select" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl p-2 text-white">
+              <option value="AI & CODING" selected>AI & CODING</option>
+              <option value="SAAS & STARTUPS">SAAS & STARTUPS</option>
+              <option value="TECH & DEV">TECH & DEV</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-slate-400 block mb-1">Posts To Fetch (Max)</label>
+            <select id="spy-limit-select" class="w-full bg-slate-900 border border-slate-700 text-xs rounded-xl p-2 text-white">
+              <option value="4">4 Posts (Quick test)</option>
+              <option value="6" selected>6 Posts (Standard Cohort)</option>
+              <option value="12">12 Posts (Deep Analysis)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-2 pt-5">
+            <input type="checkbox" id="spy-force-toggle" class="rounded bg-slate-900 border-slate-700 text-pink-600 focus:ring-pink-500">
+            <label for="spy-force-toggle" class="text-slate-300 cursor-pointer">Bypass 12-Hour Cooldown (Force Scrape)</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Gate Math Framework Banner -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="spy-math-banner">
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-pink-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">3-Gate Math: Gate 1</div>
+          <div class="text-sm font-bold text-white mt-0.5">Engagement Rate vs Median</div>
+          <div class="text-xs text-slate-400 mt-1">ER &gt; 1.5× Cohort Median (separates reels vs static images)</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-purple-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">3-Gate Math: Gate 2</div>
+          <div class="text-sm font-bold text-white mt-0.5">Time-Decay Multiplier</div>
+          <div class="text-xs text-slate-400 mt-1">Virality Multiplier &gt; 2.0× with 7-day half-life decay</div>
+        </div>
+
+        <div class="glass-card p-4 rounded-xl border-l-4 border-l-emerald-500">
+          <div class="text-[11px] font-mono text-slate-400 uppercase">3-Gate Math: Gate 3</div>
+          <div class="text-sm font-bold text-white mt-0.5">24h Maturation Guard</div>
+          <div class="text-xs text-slate-400 mt-1">Age &gt; 24h avoids premature false positives</div>
+        </div>
+      </div>
+
+      <!-- Competitor Posts Scraped List -->
+      <div class="space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-bold tracking-wider text-slate-300 uppercase flex items-center gap-2">
+            <i class="fa-solid fa-fire text-pink-400"></i>
+            <span>Competitor Outlier Stream</span>
+          </h3>
+          <span class="text-xs font-mono text-slate-500" id="spy-cohort-summary">Cohort: -- posts</span>
+        </div>
+
+        <div id="spy-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <!-- Placeholder card -->
+          <div class="col-span-full glass-card p-12 rounded-2xl text-center">
+            <div class="w-14 h-14 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-pink-400 text-xl mb-3">
+              <i class="fa-solid fa-ghost"></i>
+            </div>
+            <h4 class="text-base font-semibold text-slate-200">No Competitor Posts Loaded</h4>
+            <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">
+              Enter an Instagram handle above (or click a quick target like <strong class="text-pink-400">@levelsio</strong>) and click Scrape & Analyze to evaluate posts against the 3-gate math.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================= -->
+    <!-- TAB 5: INTELLIGENCE DATABASE & MEMORY -->
+    <!-- ================================================================= -->
+    <section id="tab-db" class="tab-content hidden space-y-6">
+      <div class="glass-panel p-6 rounded-2xl flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30">MEMORY VAULT</span>
+            <h2 class="text-xl font-bold text-white">Competitor Database & Viral Archive</h2>
+          </div>
+          <p class="text-xs text-slate-400 mt-1 max-w-2xl">
+            Synchronized archive of all scraped competitor posts, engagement statistics, and AI virality breakdown blueprints.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <button onclick="loadDatabasePosts()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs rounded-xl flex items-center gap-2 transition-colors">
+            <i class="fa-solid fa-arrows-rotate"></i>
+            <span>Refresh Archive</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Archive Table / Grid -->
+      <div id="db-posts-container" class="space-y-3"></div>
+    </section>
+
+  </main>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: DEEP AI VIRALITY BREAKDOWN -->
+  <!-- ================================================================= -->
+  <div id="modal-virality" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-3xl w-full max-h-[90vh] rounded-2xl border border-pink-500/30 shadow-2xl flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center">
+            <i class="fa-solid fa-brain"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-white">Groq 120B Virality Reverse-Engineering</h3>
+            <p class="text-xs text-slate-400" id="modal-post-author">Analysis for @--</p>
+          </div>
+        </div>
+        <button onclick="closeViralityModal()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto custom-scrollbar space-y-5 text-sm" id="modal-virality-body">
+        <div class="text-center py-12">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl text-pink-400 mb-3"></i>
+          <p class="text-slate-300 font-medium">Reverse-engineering virality drivers...</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
+        <button onclick="closeViralityModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+          Close
+        </button>
+        <button onclick="adaptCurrentAnalysisToStudio()" id="btn-modal-adapt" class="px-5 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-pink-600/30">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Adapt Into 4K Carousel</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: 4K LIGHTBOX IMAGE VIEWER -->
+  <!-- ================================================================= -->
+  <div id="modal-lightbox" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden flex flex-col items-center justify-center p-4">
+    <button onclick="closeLightbox()" class="absolute top-5 right-5 p-3 rounded-full bg-slate-800/80 hover:bg-slate-700 text-white text-lg transition-colors">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+    <div class="max-w-4xl max-h-[90vh] flex items-center justify-center overflow-hidden">
+      <img id="lightbox-img" src="" alt="4K Full Resolution Slide" class="max-w-full max-h-[85vh] object-contain rounded-lg border border-slate-800 shadow-2xl">
+    </div>
+    <div class="mt-3 flex items-center gap-4">
+      <a id="lightbox-download-link" href="#" download class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-2">
+        <i class="fa-solid fa-download"></i> Download 4K Image
+      </a>
+    </div>
+  </div>
+
+  <!-- FLOATING TOAST NOTIFICATIONS -->
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- ================================================================= -->
+  <!-- CLIENT APPLICATION JAVASCRIPT -->
+  <!-- ================================================================= -->
+  <script>
+    // Global Application State
+    const AppState = {
+      activeTab: 'tab-radar',
+      currentSlideIndex: 0,
+      currentSlides: [],
+      currentPlan: null,
+      currentCaption: '',
+      currentComment: '',
+      activeViralityAnalysis: null,
+      activeScrapedPosts: [],
+      queueItems: []
+    };
+
+    // Initialize application on load
+    document.addEventListener('DOMContentLoaded', () => {
+      refreshSystemStatus();
+      loadApprovalQueue();
+      // Auto-poll approval queue every 8 seconds
+      setInterval(loadApprovalQueue, 8000);
+    });
+
+    // -----------------------------------------------------------------
+    // Navigation & Tab Switching
+    // -----------------------------------------------------------------
+    function switchTab(tabId) {
+      AppState.activeTab = tabId;
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(el => {
+        el.classList.remove('text-indigo-400', 'bg-indigo-950/40', 'border-indigo-500/30');
+        el.classList.add('text-slate-400', 'border-transparent');
+      });
+
+      const activeSection = document.getElementById(tabId);
+      if (activeSection) activeSection.classList.remove('hidden');
+
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.classList.add('text-indigo-400', 'bg-indigo-950/40', 'border-indigo-500/30');
+        activeBtn.classList.remove('text-slate-400', 'border-transparent');
+      }
+
+      if (tabId === 'tab-db') {
+        loadDatabasePosts();
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // System Telemetry & Status
+    // -----------------------------------------------------------------
+    async function refreshSystemStatus() {
+      const spinner = document.getElementById('status-spinner');
+      if (spinner) spinner.classList.add('fa-spin');
+
+      try {
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        
+        if (data.telemetry) {
+          updatePill('tel-groq', data.telemetry.groq, 'Groq 120B');
+          updatePill('tel-apify', data.telemetry.apify, 'Apify Scraper');
+          updatePill('tel-supabase', data.telemetry.supabase, 'Supabase DB');
+          updatePill('tel-cloudinary', data.telemetry.cloudinary, 'Cloudinary CDN');
+          updatePill('tel-instagram', data.telemetry.instagram, 'Meta Graph API');
+        }
+
+        if (data.stats) {
+          const qBadge = document.getElementById('badge-queue-count');
+          if (qBadge) {
+            qBadge.innerText = data.stats.pending_queue_count || 0;
+            if (data.stats.pending_queue_count > 0) {
+              qBadge.classList.remove('hidden');
+            } else {
+              qBadge.classList.add('hidden');
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Status fetch error:', err);
+      } finally {
+        if (spinner) spinner.classList.remove('fa-spin');
+      }
+    }
+
+    function updatePill(id, isOnline, name) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (isOnline) {
+        el.className = 'px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-500/30 flex items-center gap-1.5 text-emerald-300';
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${name}</span>`;
+      } else {
+        el.className = 'px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 flex items-center gap-1.5 text-slate-500';
+        el.innerHTML = `<span class="w-2 h-2 rounded-full bg-slate-600"></span><span>${name}</span>`;
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // Tab 1: Trend Radar & 5-Stage Funnel
+    // -----------------------------------------------------------------
+    async function triggerFunnelRun() {
+      const btn = document.getElementById('btn-run-funnel');
+      const geo = document.getElementById('funnel-geo').value;
+      const resultsContainer = document.getElementById('funnel-results-list');
+      
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Harvesting & Scoring...</span>`;
+
+      try {
+        showToast('Harvesting RSS feeds & running 5-Stage Funnel...', 'info');
+        const res = await fetch('/api/funnel', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ geo })
+        });
+        const data = await res.json();
+
+        if (data.success && data.results) {
+          const r = data.results;
+          document.getElementById('stat-s1').innerText = `Passed: ${r.passed_s1_count ?? '--'}`;
+          document.getElementById('stat-s2').innerText = `Passed: ${r.passed_s2_count ?? '--'}`;
+          document.getElementById('stat-s3').innerText = `Passed: ${r.passed_s3_count ?? '--'}`;
+          document.getElementById('stat-s4').innerText = `Passed: ${r.passed_s4_count ?? '--'}`;
+          document.getElementById('stat-s5').innerText = `Finalists: ${r.final_candidates ? r.final_candidates.length : 0}`;
+
+          document.getElementById('funnel-timestamp').innerText = `Last run: ${new Date().toLocaleTimeString()}`;
+
+          renderFunnelWinners(r.final_candidates || []);
+          showToast('5-Stage Funnel completed! High-resonance topics ready.', 'success');
+        } else {
+          showToast(`Funnel error: ${data.error || 'Failed to run funnel'}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Request failed: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-bolt"></i><span>Run 5-Stage Funnel</span>`;
+      }
+    }
+
+    function renderFunnelWinners(candidates) {
+      const container = document.getElementById('funnel-results-list');
+      if (!candidates || candidates.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full glass-card p-8 rounded-2xl text-center">
+            <p class="text-sm text-slate-400">No candidates cleared all 5 stages in this harvest cycle. Try another region or re-run.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = candidates.map((c, i) => {
+        const score = (c.actionability_score || c.score || 8.5).toFixed(1);
+        const title = c.title || c.topic || 'Untitled Trend';
+        const source = c.source || 'Google Trends';
+        const hook = c.hook || c.summary || 'Viral angle identified by autonomous radar.';
+
+        return `
+          <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border ${i === 0 ? 'border-indigo-500/50 shadow-lg shadow-indigo-500/10' : 'border-slate-800'}">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-md bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  ${source}
+                </span>
+                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  ⭐ Score: ${score}/10
+                </span>
+              </div>
+              <h4 class="font-bold text-sm text-white line-clamp-2">${title}</h4>
+              <p class="text-xs text-slate-400 line-clamp-3">${hook}</p>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+              <span class="text-[11px] font-mono text-slate-500">Rank #${i + 1} Candidate</span>
+              <button onclick="loadTopicToStudio('${encodeURIComponent(title)}')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Send to 4K Studio
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function loadTopicToStudio(encodedTopic) {
+      const topic = decodeURIComponent(encodedTopic);
+      setStudioTopic(topic);
+      switchTab('tab-studio');
+      showToast(`Topic loaded into 4K Studio!`, 'info');
+    }
+
+    // -----------------------------------------------------------------
+    // Tab 2: 4K Carousel Studio
+    // -----------------------------------------------------------------
+    function setStudioTopic(topic) {
+      document.getElementById('studio-topic-input').value = topic;
+    }
+
+    async function triggerCarouselGeneration() {
+      const topic = document.getElementById('studio-topic-input').value.trim();
+      const mode = document.getElementById('studio-mode-select').value;
+      const format = document.getElementById('studio-format-select').value;
+      const btn = document.getElementById('btn-generate-carousel');
+      const progressBox = document.getElementById('gen-progress-container');
+      const progressBar = document.getElementById('gen-progress-bar');
+      const stepText = document.getElementById('gen-step-text');
+
+      if (!topic) {
+        showToast('Please enter a carousel topic or select a preset.', 'warning');
+        return;
+      }
+
+      btn.disabled = true;
+      progressBox.classList.remove('hidden');
+      progressBar.style.width = '25%';
+      stepText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-indigo-400"></i> Step 1/3: Groq 120B formulating high-retention slide architecture...`;
+
+      try {
+        // Stage update after 2s
+        const t1 = setTimeout(() => {
+          progressBar.style.width = '65%';
+          stepText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-cyan-400"></i> Step 2/3: Playwright rendering 2160x2700 Retina slides (100% white compliance)...`;
+        }, 2500);
+
+        const res = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ topic, mode, image_format: format })
+        });
+        clearTimeout(t1);
+
+        progressBar.style.width = '90%';
+        stepText.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin text-emerald-400"></i> Step 3/3: Auto-generating viral caption & auto-comment...`;
+
+        const data = await res.json();
+
+        if (data.success) {
+          progressBar.style.width = '100%';
+          stepText.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Carousel rendered successfully!`;
+
+          AppState.currentSlides = data.slide_urls || [];
+          AppState.currentPlan = data.content || {};
+          AppState.currentSlidePaths = data.slide_paths || [];
+          AppState.currentCaption = data.caption || '';
+          AppState.currentComment = data.auto_comment || '';
+
+          // Display slides
+          displayRenderedSlides(AppState.currentSlides);
+
+          // Display copy
+          document.getElementById('studio-caption-box').innerText = AppState.currentCaption;
+          document.getElementById('studio-comment-box').innerText = AppState.currentComment;
+          document.getElementById('studio-copy-panel').classList.remove('hidden');
+          document.getElementById('studio-action-box').classList.remove('hidden');
+
+          showToast('4K Carousel generated and audited!', 'success');
+        } else {
+          showToast(`Generation failed: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Generation error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        setTimeout(() => progressBox.classList.add('hidden'), 2000);
+      }
+    }
+
+    function displayRenderedSlides(slideUrls) {
+      if (!slideUrls || slideUrls.length === 0) return;
+
+      AppState.currentSlideIndex = 0;
+      const img = document.getElementById('main-slide-img');
+      const emptyState = document.getElementById('slide-empty-state');
+      const zoomBtn = document.getElementById('btn-zoom-slide');
+
+      emptyState.classList.add('hidden');
+      img.classList.remove('hidden');
+      zoomBtn.classList.remove('hidden');
+      
+      updateMainSlide();
+
+      // Render thumbnail strip
+      const strip = document.getElementById('slide-thumbnails-strip');
+      strip.innerHTML = slideUrls.map((url, idx) => `
+        <div onclick="selectSlide(${idx})" class="w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 cursor-pointer transition-all ${idx === 0 ? 'border-indigo-500 scale-105' : 'border-slate-800 opacity-70 hover:opacity-100'}">
+          <img src="${url}" class="w-full h-full object-cover">
+        </div>
+      `).join('');
+    }
+
+    function updateMainSlide() {
+      const img = document.getElementById('main-slide-img');
+      const counter = document.getElementById('slide-counter-badge');
+      if (!AppState.currentSlides.length) return;
+
+      const url = AppState.currentSlides[AppState.currentSlideIndex];
+      img.src = url;
+      counter.innerText = `Slide ${AppState.currentSlideIndex + 1} / ${AppState.currentSlides.length}`;
+
+      // Highlight active thumbnail
+      const thumbs = document.getElementById('slide-thumbnails-strip').children;
+      for (let i = 0; i < thumbs.length; i++) {
+        if (i === AppState.currentSlideIndex) {
+          thumbs[i].className = 'w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-indigo-500 scale-105 cursor-pointer transition-all';
+        } else {
+          thumbs[i].className = 'w-16 h-20 flex-shrink-0 rounded-lg overflow-hidden border-2 border-slate-800 opacity-70 hover:opacity-100 cursor-pointer transition-all';
+        }
+      }
+    }
+
+    function prevSlide() {
+      if (AppState.currentSlideIndex > 0) {
+        AppState.currentSlideIndex--;
+        updateMainSlide();
+      }
+    }
+
+    function nextSlide() {
+      if (AppState.currentSlideIndex < AppState.currentSlides.length - 1) {
+        AppState.currentSlideIndex++;
+        updateMainSlide();
+      }
+    }
+
+    function selectSlide(idx) {
+      AppState.currentSlideIndex = idx;
+      updateMainSlide();
+    }
+
+    function openCurrentSlideLightbox() {
+      if (AppState.currentSlides.length) {
+        openLightbox(AppState.currentSlides[AppState.currentSlideIndex]);
+      }
+    }
+
+    function openLightbox(src) {
+      const modal = document.getElementById('modal-lightbox');
+      const img = document.getElementById('lightbox-img');
+      const link = document.getElementById('lightbox-download-link');
+      img.src = src;
+      link.href = src;
+      modal.classList.remove('hidden');
+    }
+
+    function closeLightbox() {
+      document.getElementById('modal-lightbox').classList.add('hidden');
+    }
+
+    async function sendGeneratedToQueue() {
+      if (!AppState.currentSlidePaths || !AppState.currentSlidePaths.length) {
+        showToast('No rendered slides to queue.', 'warning');
+        return;
+      }
+
+      const topic = document.getElementById('studio-topic-input').value.trim();
+      const btn = document.getElementById('btn-studio-queue');
+      btn.disabled = true;
+
+      try {
+        const res = await fetch('/api/queue/enqueue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            topic,
+            slide_paths: AppState.currentSlidePaths,
+            caption: AppState.currentCaption,
+            auto_comment: AppState.currentComment,
+            timeout_minutes: 30
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Post queued in 30-Min Approval Queue!', 'success');
+          loadApprovalQueue();
+          switchTab('tab-queue');
+        } else {
+          showToast(`Queue failed: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Queue error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function publishGeneratedDirect() {
+      if (!AppState.currentSlidePaths || !AppState.currentSlidePaths.length) {
+        showToast('No rendered slides to publish.', 'warning');
+        return;
+      }
+
+      if (!confirm('Are you sure you want to publish directly to Instagram right now?')) return;
+
+      const btn = document.getElementById('btn-studio-publish');
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Publishing...`;
+
+      try {
+        const res = await fetch('/api/publish', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            slide_paths: AppState.currentSlidePaths,
+            caption: AppState.currentCaption,
+            auto_comment: AppState.currentComment
+          })
+        });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Published directly to Instagram!', 'success');
+        } else {
+          showToast(`Publish error: ${data.error}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Publish error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-brands fa-instagram"></i><span>Publish Direct</span>`;
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // Tab 3: 30-Minute Approval Queue
+    // -----------------------------------------------------------------
+    async function loadApprovalQueue() {
+      try {
+        const res = await fetch('/api/queue');
+        const data = await res.json();
+        const container = document.getElementById('queue-items-container');
+
+        if (data.success && data.pending) {
+          AppState.queueItems = data.pending;
+          const count = data.pending.length;
+
+          // Update badge
+          const qBadge = document.getElementById('badge-queue-count');
+          if (qBadge) {
+            qBadge.innerText = count;
+            count > 0 ? qBadge.classList.remove('hidden') : qBadge.classList.add('hidden');
+          }
+
+          if (count === 0) {
+            container.innerHTML = `
+              <div class="glass-card p-12 rounded-2xl text-center">
+                <div class="w-14 h-14 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 text-xl mb-3">
+                  <i class="fa-solid fa-inbox"></i>
+                </div>
+                <h4 class="text-base font-semibold text-slate-200">Approval Queue Empty</h4>
+                <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                  There are currently no queued posts awaiting human approval. Generate a carousel in the Studio and click <strong class="text-amber-400">"Send to 30-Min Queue"</strong> to stage it here.
+                </p>
+              </div>
+            `;
+            return;
+          }
+
+          container.innerHTML = data.pending.map(item => {
+            const mins = item.mins_left ?? 30;
+            const secs = item.secs_left ?? 0;
+            const formattedTime = `${mins}m ${secs < 10 ? '0' : ''}${secs}s`;
+            const percentRemaining = Math.max(0, Math.min(100, (mins * 60 + secs) / (30 * 60) * 100));
+            const slides = item.slide_urls || [];
+
+            return `
+              <div class="glass-card p-6 rounded-2xl border border-amber-500/30 space-y-4">
+                <!-- Top Row: Meta & Countdown -->
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div class="space-y-1">
+                    <div class="flex items-center gap-2">
+                      <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        ${item.category || 'AI & CODING'}
+                      </span>
+                      <span class="text-xs font-mono text-slate-400">ID: ${item.id}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-white">${item.topic}</h3>
+                  </div>
+
+                  <!-- Live Countdown Timer -->
+                  <div class="bg-slate-900 border border-amber-500/40 px-4 py-2 rounded-xl flex items-center gap-3">
+                    <i class="fa-solid fa-stopwatch text-amber-400 text-lg animate-pulse"></i>
+                    <div>
+                      <div class="text-[10px] font-mono text-slate-400 uppercase">Auto-Publishes In</div>
+                      <div class="text-sm font-mono font-bold text-amber-300">${formattedTime}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Timer Progress Bar -->
+                <div class="w-full bg-slate-900 rounded-full h-1.5 overflow-hidden">
+                  <div class="bg-amber-400 h-1.5 rounded-full" style="width: ${percentRemaining}%"></div>
+                </div>
+
+                <!-- Slide Thumbnails & Preview -->
+                ${slides.length > 0 ? `
+                  <div class="space-y-1.5">
+                    <div class="text-xs text-slate-400 font-semibold">Rendered Slides (${slides.length}):</div>
+                    <div class="flex gap-2 overflow-x-auto custom-scrollbar py-1">
+                      ${slides.map(s => `
+                        <div onclick="openLightbox('${s}')" class="w-20 h-24 flex-shrink-0 rounded-lg overflow-hidden border border-slate-700 hover:border-indigo-400 cursor-pointer transition-all">
+                          <img src="${s}" class="w-full h-full object-cover">
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                ` : ''}
+
+                <!-- Caption Snippet -->
+                <div class="p-3 bg-slate-900/90 rounded-xl border border-slate-800 text-xs text-slate-300 font-mono line-clamp-3">
+                  ${item.caption || 'No caption specified.'}
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3">
+                  <div class="text-[11px] font-mono text-slate-500">Queued at: ${item.created_at_iso || 'Recently'}</div>
+                  <div class="flex items-center gap-2">
+                    <button onclick="extendQueueItem('${item.id}')" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                      <i class="fa-solid fa-clock-rotate-left"></i> +15 Mins
+                    </button>
+                    <button onclick="rejectQueueItem('${item.id}')" class="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-300 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+                      <i class="fa-solid fa-xmark"></i> Reject
+                    </button>
+                    <button onclick="approveQueueItem('${item.id}')" class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold flex items-center gap-1.5 transition-colors shadow-lg shadow-emerald-600/30">
+                      <i class="fa-solid fa-check"></i> Approve & Publish Now
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('');
+        }
+      } catch (err) {
+        console.error('Failed to load queue:', err);
+      }
+    }
+
+    async function approveQueueItem(itemId) {
+      if (!confirm('Approve and publish this post to Instagram now?')) return;
+      try {
+        showToast('Publishing queued post to Instagram...', 'info');
+        const res = await fetch(`/api/queue/${itemId}/approve`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Post approved and published to Instagram!', 'success');
+          loadApprovalQueue();
+        } else {
+          showToast(`Approval failed: ${data.error || 'Check Graph API logs'}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Approval error: ${err.message}`, 'error');
+      }
+    }
+
+    async function rejectQueueItem(itemId) {
+      if (!confirm('Reject and cancel this queued post?')) return;
+      try {
+        const res = await fetch(`/api/queue/${itemId}/reject`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Post rejected and removed from queue.', 'info');
+          loadApprovalQueue();
+        }
+      } catch (err) {
+        showToast(`Reject error: ${err.message}`, 'error');
+      }
+    }
+
+    async function extendQueueItem(itemId) {
+      try {
+        const res = await fetch(`/api/queue/${itemId}/extend`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) {
+          showToast('Approval timer extended by +15 minutes.', 'success');
+          loadApprovalQueue();
+        }
+      } catch (err) {
+        showToast(`Extend error: ${err.message}`, 'error');
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // Tab 4: Competitor Outlier Spy (Phase 2 Core Feature)
+    // -----------------------------------------------------------------
+    function setSpyHandle(handle) {
+      document.getElementById('spy-handle-input').value = handle;
+    }
+
+    async function triggerCompetitorScrape() {
+      const handle = document.getElementById('spy-handle-input').value.trim();
+      const niche = document.getElementById('spy-niche-select').value;
+      const limit = parseInt(document.getElementById('spy-limit-select').value, 10);
+      const force = document.getElementById('spy-force-toggle').checked;
+      const btn = document.getElementById('btn-scrape-competitor');
+
+      if (!handle) {
+        showToast('Please enter an Instagram handle.', 'warning');
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Scraper Active...`;
+
+      try {
+        showToast(`Scraping @${handle} via Apify (Cooldown & Breaker Guard active)...`, 'info');
+        
+        // 1. Scrape posts
+        const scrapeRes = await fetch('/api/competitor/scrape', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ handle, niche, limit, force })
+        });
+        const scrapeData = await scrapeRes.json();
+
+        if (!scrapeData.success) {
+          showToast(`Scraper message: ${scrapeData.error || 'Scrape did not return posts'}`, 'warning');
+          return;
+        }
+
+        const rawPosts = scrapeData.posts || [];
+        if (rawPosts.length === 0) {
+          showToast(`No posts returned for @${handle}. May be private or empty profile.`, 'warning');
+          return;
+        }
+
+        // 2. Evaluate 3-Gate Outliers
+        showToast(`Evaluating 3-Gate mathematical outlier formulas on ${rawPosts.length} posts...`, 'info');
+        const outlierRes = await fetch('/api/competitor/outliers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ posts: rawPosts, multiplier_threshold: 1.5, min_cohort_size: 2 })
+        });
+        const outlierData = await outlierRes.json();
+
+        let processedPosts = rawPosts;
+        if (outlierData.success && outlierData.data) {
+          processedPosts = outlierData.data.processed_posts || rawPosts;
+          const medianVal = (outlierData.data.overall_median || 0).toFixed(2);
+          document.getElementById('spy-cohort-summary').innerText = `Cohort: ${processedPosts.length} posts | Median ER: ${medianVal}%`;
+        }
+
+        AppState.activeScrapedPosts = processedPosts;
+        renderCompetitorPosts(processedPosts, handle);
+        showToast(`Analyzed ${processedPosts.length} posts for @${handle}!`, 'success');
+
+      } catch (err) {
+        showToast(`Scrape error: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-radar"></i><span>Scrape & Analyze</span>`;
+      }
+    }
+
+    function renderCompetitorPosts(posts, handle) {
+      const container = document.getElementById('spy-posts-grid');
+      if (!posts || posts.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full glass-card p-8 rounded-2xl text-center">
+            <p class="text-sm text-slate-400">No posts to display.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = posts.map((post, idx) => {
+        const isOutlier = post.is_outlier || (post.gates_passed && post.gates_passed.length >= 2);
+        const multiplier = (post.virality_multiplier || 1.0).toFixed(2);
+        const likes = (post.likes || 0).toLocaleString();
+        const comments = (post.comments || 0).toLocaleString();
+        const mediaUrl = post.display_url || post.media_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600';
+        const caption = post.caption || 'No caption available.';
+        const er = (post.engagement_rate || 0).toFixed(2);
+
+        return `
+          <div class="glass-card rounded-2xl overflow-hidden border ${isOutlier ? 'border-pink-500 shadow-xl shadow-pink-500/10' : 'border-slate-800'} flex flex-col justify-between">
+            <!-- Media Thumbnail with Overlaid Badges -->
+            <div class="relative w-full aspect-video bg-slate-950 overflow-hidden group">
+              <img src="${mediaUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600'">
+              
+              <!-- Outlier Badge -->
+              <div class="absolute top-3 left-3">
+                ${isOutlier ? `
+                  <span class="px-2.5 py-1 rounded-lg bg-pink-600/90 backdrop-blur text-white text-xs font-bold shadow-lg flex items-center gap-1.5">
+                    <i class="fa-solid fa-fire"></i> VIRAL OUTLIER ${multiplier}x
+                  </span>
+                ` : `
+                  <span class="px-2 py-0.5 rounded-lg bg-slate-900/80 backdrop-blur text-slate-300 text-[10px] font-mono border border-slate-700">
+                    ⚪ Normal Cohort
+                  </span>
+                `}
+              </div>
+
+              <!-- Metrics Pill -->
+              <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between text-xs font-mono text-white bg-black/60 backdrop-blur-sm px-3 py-1.5 rounded-xl border border-white/10">
+                <span class="flex items-center gap-1"><i class="fa-solid fa-heart text-pink-400"></i> ${likes}</span>
+                <span class="flex items-center gap-1"><i class="fa-solid fa-comment text-indigo-400"></i> ${comments}</span>
+                <span class="flex items-center gap-1 text-emerald-400 font-bold">ER: ${er}%</span>
+              </div>
+            </div>
+
+            <!-- Content Details -->
+            <div class="p-5 space-y-3 flex-1 flex flex-col justify-between">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
+                  <span>@${handle}</span>
+                  <span>${post.posted_at ? new Date(post.posted_at).toLocaleDateString() : 'Recent'}</span>
+                </div>
+                <p class="text-xs text-slate-300 line-clamp-3 font-sans">${caption}</p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="pt-3 border-t border-slate-800/80 space-y-2">
+                <button onclick="triggerDeepViralityAnalysis(${idx})" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-pink-600/30 to-purple-600/30 hover:from-pink-600/50 hover:to-purple-600/50 border border-pink-500/40 text-pink-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+                  <i class="fa-solid fa-brain"></i>
+                  <span>Deep AI Virality Breakdown</span>
+                </button>
+                <button onclick="adaptCompetitorPost(${idx})" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
+                  <i class="fa-solid fa-wand-magic-sparkles"></i>
+                  <span>Adapt into 4K Carousel</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function triggerDeepViralityAnalysis(postIndex) {
+      const post = AppState.activeScrapedPosts[postIndex];
+      if (!post) return;
+
+      const modal = document.getElementById('modal-virality');
+      const authorText = document.getElementById('modal-post-author');
+      const body = document.getElementById('modal-virality-body');
+
+      authorText.innerText = `Analysis for @${post.handle || 'competitor'} (${post.likes || 0} likes · ${post.virality_multiplier || 1.5}x Outlier)`;
+      modal.classList.remove('hidden');
+      body.innerHTML = `
+        <div class="text-center py-16">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400 mb-3"></i>
+          <p class="text-slate-200 font-medium text-base">Groq 120B reverse-engineering virality drivers...</p>
+          <p class="text-slate-500 text-xs mt-1">Analyzing psychological triggers, scroll-stopping hooks & retention blueprint.</p>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/competitor/analyze', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ post_data: post })
+        });
+        const data = await res.json();
+
+        if (data.success && data.analysis) {
+          const a = data.analysis;
+          AppState.activeViralityAnalysis = a;
+          AppState.activeAnalyzingPost = post;
+
+          body.innerHTML = `
+            <div class="space-y-6">
+              <!-- Hook Breakdown -->
+              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+                <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-magnet"></i> 1. The Scroll-Stopping Hook
+                </h4>
+                <p class="text-sm font-semibold text-white">${a.hook_technique || 'High curiosity / contrarian hook'}</p>
+                <p class="text-xs text-slate-400">${a.why_it_stopped_the_scroll || a.hook_breakdown || 'Leveraged high cognitive tension.'}</p>
+              </div>
+
+              <!-- Psychological Triggers -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                  <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-heart-pulse"></i> Emotional Triggers
+                  </h4>
+                  <div class="flex flex-wrap gap-1.5">
+                    ${(a.emotional_triggers || ['Curiosity', 'FOMO', 'Competence']).map(t => `
+                      <span class="px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300 text-xs font-mono">${t}</span>
+                    `).join('')}
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                  <h4 class="text-xs font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-repeat"></i> Retention Engine
+                  </h4>
+                  <p class="text-xs text-slate-300">${a.retention_mechanism || a.why_viral || 'Slide progression created an open loop resolved only on final slide.'}</p>
+                </div>
+              </div>
+
+              <!-- Adaptation Blueprint -->
+              <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 to-indigo-950/40 border border-pink-500/30 space-y-3">
+                <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
+                  <i class="fa-solid fa-lightbulb"></i> Recommended Carousel Adaptation Strategy
+                </h4>
+                <div class="text-sm font-bold text-white">Suggested Topic: "${a.adaptation_title || a.adaptation_topic || 'The AI Blueprint That Crushes 2026'}"</div>
+                <div class="text-xs text-slate-300 space-y-1">
+                  ${(a.adaptation_steps || [
+                    'Slide 1: State the controversial premise.',
+                    'Slide 2: Show architectural comparison.',
+                    'Slide 3: Provide copy-paste workflow.',
+                    'Slide 4: Call-to-action for bookmarks & shares.'
+                  ]).map((s, i) => `<div class="font-mono text-slate-300">👉 ${s}</div>`).join('')}
+                </div>
+              </div>
+            </div>
+          `;
+        } else {
+          body.innerHTML = `<div class="p-6 text-center text-rose-400">Analysis failed: ${data.error}</div>`;
+        }
+      } catch (err) {
+        body.innerHTML = `<div class="p-6 text-center text-rose-400">Network error: ${err.message}</div>`;
+      }
+    }
+
+    function closeViralityModal() {
+      document.getElementById('modal-virality').classList.add('hidden');
+    }
+
+    function adaptCurrentAnalysisToStudio() {
+      const a = AppState.activeViralityAnalysis;
+      if (!a) return;
+      const title = a.adaptation_title || a.adaptation_topic || 'AI Engine Breakthrough Analysis';
+      closeViralityModal();
+      setStudioTopic(title);
+      switchTab('tab-studio');
+      showToast('Viral adaptation strategy loaded into 4K Studio!', 'success');
+    }
+
+    function adaptCompetitorPost(idx) {
+      const post = AppState.activeScrapedPosts[idx];
+      if (!post) return;
+      const snippet = (post.caption || 'Competitor Viral Breakdown').slice(0, 100);
+      setStudioTopic(`Deconstructing Why This Post Went Viral: "${snippet}..."`);
+      switchTab('tab-studio');
+      showToast('Competitor post angle sent to 4K Studio!', 'info');
+    }
+
+    // -----------------------------------------------------------------
+    // Tab 5: Intelligence Database & Archive
+    // -----------------------------------------------------------------
+    async function loadDatabasePosts() {
+      const container = document.getElementById('db-posts-container');
+      container.innerHTML = `
+        <div class="text-center py-12 text-slate-400">
+          <i class="fa-solid fa-circle-notch fa-spin text-xl text-cyan-400 mb-2"></i>
+          <p class="text-xs font-mono">Loading saved posts from SQLite / Supabase...</p>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/competitor/posts?limit=30');
+        const data = await res.json();
+
+        if (data.success && data.posts && data.posts.length > 0) {
+          container.innerHTML = `
+            <div class="glass-card rounded-2xl overflow-hidden border border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-900 border-b border-slate-800 font-mono text-slate-400 uppercase text-[10px]">
+                  <tr>
+                    <th class="p-3.5">Handle / Post</th>
+                    <th class="p-3.5">Niche</th>
+                    <th class="p-3.5">Likes</th>
+                    <th class="p-3.5">Comments</th>
+                    <th class="p-3.5">Virality Analysis</th>
+                    <th class="p-3.5 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/60 font-mono">
+                  ${data.posts.map(p => `
+                    <tr class="hover:bg-slate-900/40 transition-colors">
+                      <td class="p-3.5 font-bold text-white">
+                        <div class="flex items-center gap-2">
+                          <i class="fa-brands fa-instagram text-pink-400"></i>
+                          <span>@${p.handle || 'unknown'}</span>
+                        </div>
+                        <div class="text-[11px] font-sans text-slate-400 font-normal line-clamp-1 mt-0.5">${p.caption || ''}</div>
+                      </td>
+                      <td class="p-3.5 text-indigo-300">${p.niche || 'AI & CODING'}</td>
+                      <td class="p-3.5 text-pink-400">${(p.likes || 0).toLocaleString()}</td>
+                      <td class="p-3.5 text-slate-300">${(p.comments || 0).toLocaleString()}</td>
+                      <td class="p-3.5">
+                        ${p.virality_analysis ? `
+                          <span class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] border border-emerald-500/30">Analyzed</span>
+                        ` : `
+                          <span class="text-slate-600 text-[10px]">Pending</span>
+                        `}
+                      </td>
+                      <td class="p-3.5 text-right">
+                        <button onclick="setStudioTopic('Viral Adapt: ' + '${p.caption ? encodeURIComponent(p.caption.slice(0, 80)) : ''}'); switchTab('tab-studio')" class="px-2.5 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600 text-indigo-300 hover:text-white text-[11px] transition-colors">
+                          Adapt
+                        </button>
+                      </td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+              </table>
+            </div>
+          `;
+        } else {
+          container.innerHTML = `
+            <div class="glass-card p-12 rounded-2xl text-center">
+              <p class="text-sm text-slate-400">No competitor posts recorded in database yet. Scrape profiles in Tab 4 to populate.</p>
+            </div>
+          `;
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="p-6 text-center text-rose-400">Failed to load archive: ${err.message}</div>`;
+      }
+    }
+
+    // -----------------------------------------------------------------
+    // Helper Utilities
+    // -----------------------------------------------------------------
+    function copyElementText(elId) {
+      const el = document.getElementById(elId);
+      if (!el) return;
+      navigator.clipboard.writeText(el.innerText).then(() => {
+        showToast('Copied to clipboard!', 'success');
+      });
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      
+      let borderClass = 'border-slate-700 text-slate-200';
+      let icon = 'fa-circle-info text-blue-400';
+      if (type === 'success') {
+        borderClass = 'border-emerald-500/50 text-emerald-200';
+        icon = 'fa-circle-check text-emerald-400';
+      } else if (type === 'warning') {
+        borderClass = 'border-amber-500/50 text-amber-200';
+        icon = 'fa-triangle-exclamation text-amber-400';
+      } else if (type === 'error') {
+        borderClass = 'border-rose-500/50 text-rose-200';
+        icon = 'fa-circle-exclamation text-rose-400';
+      }
+
+      toast.className = `p-3.5 rounded-xl glass-panel border ${borderClass} shadow-2xl flex items-center gap-3 text-xs font-medium max-w-sm pointer-events-auto transform translate-y-2 opacity-0 transition-all duration-200`;
+      toast.innerHTML = `<i class="fa-solid ${icon} text-sm"></i><span>${message}</span>`;
+      
+      container.appendChild(toast);
+
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-2', 'opacity-0');
+      });
+
+      setTimeout(() => {
+        toast.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>

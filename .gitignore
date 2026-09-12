@@ -37,6 +37,7 @@ infographic.png
 data/queue_media/
 output/
 outputs/
+output_slides/
 exports/
 tmp/
 temp/
