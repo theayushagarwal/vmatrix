@@ -1,5 +1,5 @@
 from .generator import generate_carousel_content, generate_cheatsheet_content
-from .renderer import render_carousel_slides, render_infographic
+from .renderer import render_carousel_slides, render_infographic, get_logo_url, get_favicon_url
 from .publisher import upload_images_to_cloudinary, publish_to_instagram_carousel
 from .feeds import (
     fetch_all_feeds,
@@ -38,6 +38,8 @@ __all__ = [
     "generate_cheatsheet_content",
     "render_carousel_slides",
     "render_infographic",
+    "get_logo_url",
+    "get_favicon_url",
     "upload_images_to_cloudinary",
     "publish_to_instagram_carousel",
     "fetch_all_feeds",

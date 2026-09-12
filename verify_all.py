@@ -2,6 +2,11 @@ import sys
 import tempfile
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 print("======================================================")
 print("   ⚡ AI-SOCIAL-ENGINE COMPREHENSIVE VERIFICATION     ")
 print("======================================================\n")
@@ -57,27 +62,30 @@ print(f"  ✓ Stage 4 Vector Anti-Dup: -> {sc['stage4_dedup']} items")
 print(f"  ✓ Stage 5 Winning Topics: -> {len(funnel_report['winning_topics'])} winners")
 assert len(funnel_report["winning_topics"]) > 0, "Funnel produced 0 winners"
 
-# 3. Test Slide Rendering Engine
-print("\n>>> [3/4] Verifying Playwright Slide Rendering Engine...")
+# 3. Test Logo & Favicon Resolvers (Logo.dev & Brandfetch)
+print("\n>>> [3/5] Verifying Logo Resolvers (Logo.dev & Brandfetch)...")
+from core.renderer import get_logo_url, get_favicon_url
+logo_url = get_logo_url("cursor.com")
+print(f"  ✓ Resolved Logo for cursor.com: {logo_url}")
+assert "logo.dev" in logo_url or "googleusercontent" in logo_url, "Logo resolution returned invalid URL"
+
+# 4. Test Content Planning with Groq (openai/gpt-oss-120b)
+print("\n>>> [4/5] Verifying Groq Structured Content Generator (openai/gpt-oss-120b)...")
+from core.generator import generate_carousel_content, generate_cheatsheet_content
+
+planned_carousel = generate_carousel_content("3 Python Tips for AI Engineers")
+print(f"  ✓ Generated Series: \"{planned_carousel.get('series_title')}\"")
+print(f"  ✓ Category: {planned_carousel.get('category')}")
+print(f"  ✓ Slides Planned: {len(planned_carousel.get('slides', []))} slides")
+assert len(planned_carousel.get("slides", [])) >= 5, "Carousel must have at least 5 slides"
+
+# 5. Test Slide Rendering Engine
+print("\n>>> [5/5] Verifying Playwright Slide Rendering Engine...")
 from core.renderer import render_carousel_slides, render_infographic
 from core.utils import validate_png
 
-sample_carousel_data = {
-    "series_title": "5 CURSOR AI TRICKS",
-    "hook_line": "Stop writing boilerplate code by hand",
-    "category": "AI & CODING",
-    "slides": [
-        {"type": "cover", "title": "5 Cursor AI Hacks Every Dev Needs", "hook_line": "Write code 3x faster", "subtitle": "Master the AI IDE in 2 minutes"},
-        {"type": "content", "step_num": "01", "title": "Custom .cursorrules", "description": "Enforce framework rules across your codebase.", "key_benefit": "SAVES 2 HRS", "tool_name": "Cursor", "tool_domain": "cursor.com"},
-        {"type": "content", "step_num": "02", "title": "Composer Mode", "description": "Generate full multi-file features in one prompt.", "key_benefit": "10X SPEED", "tool_name": "Composer", "tool_domain": "github.com"},
-        {"type": "content", "step_num": "03", "title": "Context Tagging @Docs", "description": "Index third-party documentation directly in chat.", "key_benefit": "ZERO HALLUCINATIONS", "tool_name": "Docs", "tool_domain": "notion.so"},
-        {"type": "outro", "title": "Ready to 10x your workflow?", "cta_keyword": "CURSOR", "action_text": "Comment CURSOR and I will DM you my custom .cursorrules template!"}
-    ],
-    "caption": "5 Cursor AI tricks that changed how I code. #ai #coding #cursor #developer #tech"
-}
-
 tmp_dir = Path(tempfile.mkdtemp(prefix="verify-slides-"))
-slide_paths = render_carousel_slides(sample_carousel_data, tmp_dir)
+slide_paths = render_carousel_slides(planned_carousel, tmp_dir)
 print(f"  ✓ Rendered {len(slide_paths)} 4:5 slides successfully:")
 for p in slide_paths:
     validate_png(p, 2160, 2700)
@@ -101,8 +109,8 @@ info_path = render_infographic(sample_info_data, tmp_dir)
 validate_png(info_path, 2160, 2700)
 print(f"  ✓ Rendered Infographic: {info_path.name} ({info_path.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
 
-# 4. Check UI Compilation & Syntax
-print("\n>>> [4/4] Verifying Streamlit App Compilation...")
+# 6. Check UI Compilation & Syntax
+print("\n>>> Verifying Streamlit App Compilation...")
 import py_compile
 py_compile.compile("app.py")
 print("  ✓ app.py compiled with zero syntax/import errors")
@@ -110,3 +118,4 @@ print("  ✓ app.py compiled with zero syntax/import errors")
 print("\n======================================================")
 print("   🎉 ALL CHECKS PASSED: SYSTEM FULLY OPERATIONAL!    ")
 print("======================================================")
+

@@ -11,33 +11,71 @@ import os
 import json
 from google import genai
 from google.genai import types
+from typing import Optional, Any
+from dotenv import load_dotenv
 from .utils import retry_with_backoff, logger
 
+load_dotenv()
+
+DEFAULT_GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
+
 
 # --------------------------------------------------------------------------
-# Client
+# Clients
 # --------------------------------------------------------------------------
-def get_gemini_client() -> genai.Client:
+def _get_groq_client() -> Optional[Any]:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+        return Groq(api_key=api_key)
+    except Exception as e:
+        logger.warning("Could not initialize Groq client: %s", e)
+        return None
+
+
+def get_gemini_client() -> Optional[genai.Client]:
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
-        raise ValueError("GEMINI_API_KEY is not set. Add it to your .env file.")
-    return genai.Client(api_key=api_key)
+        return None
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception as e:
+        logger.warning("Could not initialize Gemini client: %s", e)
+        return None
 
 
-MODEL_NAME = "gemini-2.5-flash"
+@retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(Exception,))
+def _call_groq_json(client: Any, system_prompt: str, user_content: str, temperature: float = 0.7) -> dict:
+    """
+    Retried call to Groq with openai/gpt-oss-120b using native json_object mode.
+    """
+    completion = client.chat.completions.create(
+        model=DEFAULT_GROQ_MODEL,
+        messages=[
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_content},
+        ],
+        response_format={"type": "json_object"},
+        temperature=temperature,
+    )
+    content = completion.choices[0].message.content
+    try:
+        return json.loads(content)
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.warning("Groq returned non-JSON response, will retry: %s", e)
+        raise
 
 
 @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(Exception,))
 def _call_gemini_json(client: genai.Client, contents: str, system_instruction: str, schema: dict, temperature: float) -> dict:
     """
-    Single retried call to Gemini's structured-JSON mode. Self-healing here
-    covers two common failure modes: transient API errors (rate limits,
-    5xx, dropped connections) and, more rarely, a response that claims to be
-    JSON but fails to parse — both get a fresh attempt with backoff instead
-    of crashing the whole generation step on one bad response.
+    Single retried call to Gemini's structured-JSON mode.
     """
     response = client.models.generate_content(
-        model=MODEL_NAME,
+        model=GEMINI_MODEL_NAME,
         contents=contents,
         config=types.GenerateContentConfig(
             system_instruction=system_instruction,
@@ -169,40 +207,155 @@ Return ONLY valid JSON matching the schema. No markdown fences, no commentary.
 """
 
 
+_GROQ_CAROUSEL_PROMPT = _CAROUSEL_SYSTEM_PROMPT + """
+
+You MUST return ONLY valid JSON matching this exact structure:
+{
+  "series_title": "string (3-5 words)",
+  "hook_line": "string (catchy 8-12 word hook)",
+  "category": "AI & CODING" or "FINANCE" or "TOOLS",
+  "slides": [
+    {
+      "type": "cover",
+      "title": "string",
+      "hook_line": "string",
+      "subtitle": "string"
+    },
+    {
+      "type": "content",
+      "step_num": "01",
+      "title": "string",
+      "description": "string (<=25 words)",
+      "key_benefit": "string (2-4 words)",
+      "tool_name": "string",
+      "tool_domain": "bare domain e.g. cursor.com"
+    },
+    {
+      "type": "content",
+      "step_num": "02",
+      "title": "string",
+      "description": "string (<=25 words)",
+      "key_benefit": "string (2-4 words)",
+      "tool_name": "string",
+      "tool_domain": "bare domain"
+    },
+    {
+      "type": "content",
+      "step_num": "03",
+      "title": "string",
+      "description": "string (<=25 words)",
+      "key_benefit": "string (2-4 words)",
+      "tool_name": "string",
+      "tool_domain": "bare domain"
+    },
+    {
+      "type": "outro",
+      "title": "string",
+      "cta_keyword": "string (ONE word e.g. CODE)",
+      "action_text": "string"
+    }
+  ],
+  "caption": "string (clean Instagram caption with 5 hashtags)"
+}
+"""
+
+_GROQ_CHEATSHEET_PROMPT = _CHEATSHEET_SYSTEM_PROMPT + """
+
+You MUST return ONLY valid JSON matching this exact structure:
+{
+  "title": "string (3-6 words)",
+  "hook_line": "string (6-10 words)",
+  "category": "AI & CODING" or "FINANCE" or "TOOLS",
+  "items": [
+    {
+      "name": "string",
+      "domain": "bare domain e.g. notion.so",
+      "desc": "string (<= 12 words)",
+      "badge": "string (2-3 words e.g. FREE TIER, PRO PICK)"
+    }
+  ],
+  "caption": "string (clean Instagram caption with 5 hashtags)"
+}
+The items array MUST have exactly 6 items.
+"""
+
+
 # --------------------------------------------------------------------------
 # Public API
 # --------------------------------------------------------------------------
 def generate_carousel_content(topic: str) -> dict:
     """
-    Generates structured JSON for a 5-slide educational carousel:
-    - series_title: str (Bold 3-5 word title)
-    - hook_line: str (Catchy 8-12 word hook)
-    - category: str ('AI & CODING', 'FINANCE', or 'TOOLS')
-    - slides: list of 5 slides:
-        * Slide 1 (Cover): type='cover', title, hook_line, subtitle
-        * Slides 2-4 (Content): type='content', step_num ('01','02','03'), title, description
-          (max 25 words), key_benefit (badge), tool_name, tool_domain
-        * Slide 5 (Outro): type='outro', title, cta_keyword (e.g. 'CODE'), action_text
-    - caption: str (Clean Instagram caption with paragraphs, max 2 emojis, 5 targeted hashtags)
+    Generates structured JSON for a 5-slide educational carousel.
+    Uses Groq (openai/gpt-oss-120b) as the primary ultra-fast generator,
+    with automatic fallback to Gemini 2.5 Flash if configured.
     """
-    client = get_gemini_client()
-    data = _call_gemini_json(
-        client,
-        contents=f"TOPIC: {topic}",
-        system_instruction=_CAROUSEL_SYSTEM_PROMPT,
-        schema=_CAROUSEL_SCHEMA,
-        temperature=0.9,
-    )
+    data = None
+    groq_client = _get_groq_client()
+
+    # 1. Try Groq (Ultra-fast openai/gpt-oss-120b)
+    if groq_client:
+        try:
+            data = _call_groq_json(
+                groq_client,
+                system_prompt=_GROQ_CAROUSEL_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+        except Exception as e:
+            logger.warning("Groq carousel generation failed, trying Gemini: %s", e)
+
+    # 2. Try Gemini fallback
+    if not data:
+        gemini_client = get_gemini_client()
+        if gemini_client:
+            try:
+                data = _call_gemini_json(
+                    gemini_client,
+                    contents=f"TOPIC: {topic}",
+                    system_instruction=_CAROUSEL_SYSTEM_PROMPT,
+                    schema=_CAROUSEL_SCHEMA,
+                    temperature=0.9,
+                )
+            except Exception as e:
+                logger.error("Gemini carousel generation failed: %s", e)
+                raise
+
+    if not data:
+        raise ValueError(
+            "Neither GROQ_API_KEY nor GEMINI_API_KEY could generate content. "
+            "Please ensure GROQ_API_KEY is configured in your .env file."
+        )
 
     # Defensive normalization: guarantee cover/outro carry hook_line/subtitle fields
-    # even if the model omits them on individual slide objects.
-    for slide in data.get("slides", []):
-        if slide.get("type") == "cover":
+    # and all slides are complete and properly formatted.
+    slides = data.get("slides", [])
+    if not slides:
+        raise ValueError("Generated carousel data contains no slides.")
+
+    # Ensure valid category
+    cat = data.get("category", "AI & CODING").upper()
+    if "FIN" in cat:
+        data["category"] = "FINANCE"
+    elif "TOOL" in cat:
+        data["category"] = "TOOLS"
+    else:
+        data["category"] = "AI & CODING"
+
+    step_counter = 1
+    for slide in slides:
+        stype = slide.get("type", "content")
+        if stype == "cover":
             slide.setdefault("hook_line", data.get("hook_line", ""))
-        if slide.get("type") == "content":
-            slide.setdefault("step_num", "01")
-        if slide.get("type") == "outro":
-            slide.setdefault("cta_keyword", "MORE")
+            slide.setdefault("subtitle", "A practical step-by-step breakdown.")
+        elif stype == "content":
+            slide.setdefault("step_num", f"{step_counter:02d}")
+            step_counter += 1
+            slide.setdefault("key_benefit", "PRO TIP")
+            slide.setdefault("tool_name", "Tool")
+            slide.setdefault("tool_domain", "github.com")
+        elif stype == "outro":
+            slide.setdefault("cta_keyword", "GUIDE")
+            slide.setdefault("action_text", "Comment below and get the complete resource.")
 
     return data
 
@@ -213,11 +366,41 @@ def generate_cheatsheet_content(topic: str) -> dict:
     - title, hook_line, category, items (list of 6 cards with name, domain, desc, badge)
     - caption: str
     """
-    client = get_gemini_client()
-    return _call_gemini_json(
-        client,
-        contents=f"TOPIC: {topic}",
-        system_instruction=_CHEATSHEET_SYSTEM_PROMPT,
-        schema=_CHEATSHEET_SCHEMA,
-        temperature=0.9,
-    )
+    data = None
+    groq_client = _get_groq_client()
+
+    if groq_client:
+        try:
+            data = _call_groq_json(
+                groq_client,
+                system_prompt=_GROQ_CHEATSHEET_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+        except Exception as e:
+            logger.warning("Groq cheatsheet generation failed, trying Gemini: %s", e)
+
+    if not data:
+        gemini_client = get_gemini_client()
+        if gemini_client:
+            data = _call_gemini_json(
+                gemini_client,
+                contents=f"TOPIC: {topic}",
+                system_instruction=_CHEATSHEET_SYSTEM_PROMPT,
+                schema=_CHEATSHEET_SCHEMA,
+                temperature=0.9,
+            )
+
+    if not data:
+        raise ValueError(
+            "Neither GROQ_API_KEY nor GEMINI_API_KEY is available for cheatsheet generation."
+        )
+
+    # Defensive normalization for cheatsheet items
+    items = data.get("items", [])
+    for it in items:
+        it.setdefault("domain", "github.com")
+        it.setdefault("badge", "PRO PICK")
+        it.setdefault("desc", "High-efficiency developer tool")
+
+    return data

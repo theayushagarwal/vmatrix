@@ -22,17 +22,73 @@ DEVICE_SCALE_FACTOR = 2  # crisp retina-grade output
 EXPECTED_PNG_SIZE = (SLIDE_WIDTH * DEVICE_SCALE_FACTOR, SLIDE_HEIGHT * DEVICE_SCALE_FACTOR)
 
 
-def get_favicon_url(domain: str) -> str:
-    """Returns Google's free high-res favicon URL for any domain."""
+import os
+import json
+import urllib.request
+from functools import lru_cache
+
+@lru_cache(maxsize=256)
+def resolve_brandfetch_logo(clean_domain: str) -> str | None:
+    """Queries Brandfetch v2 API to resolve official brand icon/logo if available."""
+    api_key = os.environ.get("BRANDFETCH_API_KEY")
+    if not api_key:
+        return None
+    try:
+        url = f"https://api.brandfetch.io/v2/brands/{clean_domain}"
+        req = urllib.request.Request(
+            url,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "User-Agent": "ai-social-engine/1.0",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=3.0) as resp:
+            data = json.loads(resp.read().decode("utf-8"))
+            for logo in data.get("logos", []):
+                if logo.get("type") in ("icon", "symbol", "logo"):
+                    for fmt in logo.get("formats", []):
+                        if fmt.get("src"):
+                            return fmt.get("src")
+    except Exception as e:
+        logger.debug("Brandfetch lookup skipped for %s: %s", clean_domain, e)
+    return None
+
+
+def get_logo_url(domain: str) -> str:
+    """
+    Multi-tier high-res logo and icon resolver:
+    1. 🚀 Logo.dev CDN (if LOGODEV_PUBLISHABLE_KEY or LOGODEV_SECRET_KEY is configured)
+    2. 🏢 Brandfetch Brand API (if BRANDFETCH_API_KEY is configured)
+    3. 🌐 Google Favicon high-res endpoint (100% free universal fallback)
+    """
     if not domain:
-        return "https://s2.googleusercontent.com/s2/favicons?domain=github.com&sz=128"
-    clean_domain = domain.replace("https://", "").replace("http://", "").split("/")[0]
+        domain = "github.com"
+    clean_domain = domain.replace("https://", "").replace("http://", "").split("/")[0].strip().lower()
+
+    # Tier 1: Logo.dev (Ultra-fast CDN, returns crisp 128px PNG)
+    logodev_token = os.environ.get("LOGODEV_PUBLISHABLE_KEY") or os.environ.get("LOGODEV_SECRET_KEY")
+    if logodev_token:
+        return f"https://img.logo.dev/{clean_domain}?token={logodev_token}&size=128&format=png"
+
+    # Tier 2: Brandfetch v2 API
+    if os.environ.get("BRANDFETCH_API_KEY"):
+        bf_url = resolve_brandfetch_logo(clean_domain)
+        if bf_url:
+            return bf_url
+
+    # Tier 3: Google Favicon service
     return f"https://s2.googleusercontent.com/s2/favicons?domain={clean_domain}&sz=128"
+
+
+def get_favicon_url(domain: str) -> str:
+    """Alias for backwards compatibility and Jinja template filter."""
+    return get_logo_url(domain)
 
 
 def _get_jinja_env() -> Environment:
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
     env.filters["favicon"] = get_favicon_url
+    env.filters["logo"] = get_logo_url
     return env
 
 

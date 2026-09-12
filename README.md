@@ -98,9 +98,10 @@ The engine continuously monitors 4 live signals for high-signal topic discovery:
 ## 🩹 Self-Healing by Design
 
 - **Multi-Tier Feed Failover** — RSS feeds automatically fall back to resilient search bridges if rate limits (e.g. 429) occur.
+- **Multi-Tier Logo Resolvers** — Logo.dev high-res CDN + Brandfetch Brand API + Google Favicons fallback for crisp tool icons.
 - **Retry with Exponential Backoff** — all external network calls use exponential backoff + jitter.
 - **Render Validation** — Playwright renders are validated for pixel variance to prevent blank frames.
-- **Persistent Semantic Memory** — tracks 30-day post history in `data/post_history.json` to prevent repetitive content.
+- **Persistent Semantic Memory** — tracks 30-day post history in `data/post_history.json` and Supabase PostgreSQL to prevent repetitive content.
 
 ---
 
@@ -116,9 +117,10 @@ ai-social-engine/
 │   ├── feeds.py           # 4 core feeds (Google Trends, TechCrunch, VentureBeat, Hacker News)
 │   ├── funnel.py          # 5-Stage filtering funnel (Blacklist, Niche, LLM, Dedup, Actionability)
 │   ├── memory.py          # 30-day post history & vector cosine deduplication
-│   ├── generator.py       # Gemini 2.5 Flash structured content planner
-│   ├── renderer.py        # Playwright HTML-to-Image 4:5 slide renderer
+│   ├── generator.py       # Groq (openai/gpt-oss-120b) structured content planner
+│   ├── renderer.py        # Playwright 4:5 slide renderer + Logo.dev & Brandfetch resolver
 │   ├── publisher.py       # Cloudinary uploader & Meta Graph API publisher
+│   ├── database.py        # Supabase PostgreSQL storage & memory sync
 │   └── utils.py           # Retry decorator & image validation
 ├── templates/
 │   ├── carousel_slide.html       # Glassmorphic dark-mode educational slide
@@ -137,7 +139,7 @@ playwright install chromium
 
 # 2. Configure environment
 cp .env.example .env
-# fill in GEMINI_API_KEY, CLOUDINARY_*, IG_USER_ID, IG_ACCESS_TOKEN
+# fill in GROQ_API_KEY, LOGODEV_*, BRANDFETCH_*, CLOUDINARY_*, IG_USER_ID, IG_ACCESS_TOKEN
 
 # 3. Run the demo
 streamlit run app.py
@@ -150,10 +152,13 @@ streamlit run app.py
 | Layer | Technology |
 |---|---|
 | Topic Gathering | Google Trends RSS, TechCrunch AI RSS, VentureBeat AI RSS, Hacker News API |
-| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Groq (openai/gpt-oss-120b), Cosine Memory |
-| Content Intelligence | Gemini 2.5 Flash, structured JSON output |
-| Rendering | Playwright (headless Chromium), Jinja2, Tailwind CSS |
+| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Groq (`openai/gpt-oss-120b`), Cosine Memory |
+| Content Intelligence | Groq (`openai/gpt-oss-120b`), structured JSON output (Gemini optional fallback) |
+| Brand Assets & Logos | Logo.dev CDN, Brandfetch v2 API, Google Favicons |
+| Rendering | Playwright (headless Chromium), Jinja2, CSS Glassmorphism |
+| Database & Cloud | Supabase PostgreSQL & Storage |
 | Media Hosting | Cloudinary |
 | Publishing | Meta / Instagram Graph API (carousel containers) |
 | Demo UI | Streamlit |
+
 

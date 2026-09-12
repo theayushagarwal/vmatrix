@@ -153,10 +153,13 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("**System status**")
     _status_row("Groq (gpt-oss-120b)", bool(os.environ.get("GROQ_API_KEY")))
+    _status_row("Logo.dev (Logos/Icons)", bool(os.environ.get("LOGODEV_PUBLISHABLE_KEY") or os.environ.get("LOGODEV_SECRET_KEY")))
+    _status_row("Brandfetch API", bool(os.environ.get("BRANDFETCH_API_KEY")))
     _status_row("Supabase Cloud", bool(os.environ.get("SUPABASE_URL") and (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))))
-    _status_row("Gemini API", bool(os.environ.get("GEMINI_API_KEY")))
     _status_row("Cloudinary", bool(os.environ.get("CLOUDINARY_CLOUD_NAME") and os.environ.get("CLOUDINARY_API_KEY")))
-    _status_row("Instagram", bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")))
+    _status_row("Instagram Live", bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")))
+    if os.environ.get("GEMINI_API_KEY"):
+        _status_row("Gemini API (Fallback)", True)
     st.markdown("---")
     st.markdown("**5-Stage Funnel**")
     st.caption("🔴 Stage 1: Blacklist ($0, 0ms)")
@@ -197,7 +200,7 @@ def load_cached_feeds(geo: str):
 st.markdown("# ⚡ ai-social-engine")
 st.markdown(
     "Turn breaking raw trends into high-converting Instagram carousels via our **5-Stage Filtering Funnel**, "
-    "Gemini structured planner, and Playwright 4K renderer."
+    "**Groq (openai/gpt-oss-120b)** structured planner, **Logo.dev** brand assets, and **Playwright 4K** renderer."
 )
 
 # ---------------------------------------------------------------------------
@@ -379,21 +382,21 @@ def run_pipeline(topic: str, skip_generate: bool = False):
     """
     Runs generate -> render as one pipeline with stage tracking.
     """
-    progress = st.progress(0, text="Warming up Gemini 2.5 Flash…")
+    progress = st.progress(0, text="Initializing Groq (openai/gpt-oss-120b)…")
     content = st.session_state.pending_content if skip_generate else None
 
     if content is None:
         try:
-            progress.progress(20, text="Planning carousel structure…")
+            progress.progress(20, text="Planning structured carousel with Groq…")
             content = generate_carousel_content(topic)
             st.session_state.pending_content = content
         except Exception as e:
             st.session_state.last_failed_stage = "generate"
             progress.empty()
             st.error(
-                f"**Content generation failed** (Gemini): {e}\n\n"
-                "This step already retries transient failures automatically — "
-                "if it still failed, check `GEMINI_API_KEY` and your quota."
+                f"**Content generation failed**: {e}\n\n"
+                "This step retries transient failures automatically — "
+                "if it still failed, check your `GROQ_API_KEY` in `.env`."
             )
             return
 
