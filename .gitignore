@@ -1,9 +1,49 @@
-# Environment variables & secrets
+# ==============================================================================
+# Environment Variables & Secrets
+# ==============================================================================
 .env
-.env.local
+.env.*
 *.env
+*.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# Python cache & bytecode
+# ==============================================================================
+# PDF & Large Documents
+# ==============================================================================
+*.pdf
+*.PDF
+*.docx
+*.pptx
+*.xlsx
+
+# ==============================================================================
+# Media & Export Artifacts
+# ==============================================================================
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Slide rendering & temporary image outputs
+slide_*.png
+infographic.png
+output/
+outputs/
+exports/
+tmp/
+temp/
+scratch/
+
+# ==============================================================================
+# Python & Bytecode
+# ==============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
@@ -24,24 +64,46 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+*.manifest
+*.spec
 
-# Virtual environments
+# ==============================================================================
+# Virtual Environments
+# ==============================================================================
 venv/
 .venv/
 ENV/
 env/
+env.bak/
+venv.bak/
 
-# IDE & OS files
+# ==============================================================================
+# Logs & Databases
+# ==============================================================================
+*.log
+*.sqlite
+*.sqlite3
+*.db
+
+# ==============================================================================
+# Streamlit & Playwright Local State
+# ==============================================================================
+.streamlit/
+playwright-report/
+test-results/
+
+# ==============================================================================
+# IDEs & Operating System Artifacts
+# ==============================================================================
 .vscode/
 .idea/
+*.swp
+*.swo
+*~
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
-
-# Streamlit local state
-.streamlit/
-
-# Generated slide outputs & temp files
-tmp/
-scratch/
-slide_*.png
-infographic.png
