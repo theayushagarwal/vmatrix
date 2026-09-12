@@ -126,6 +126,11 @@ jobs:
           if [ -n "${{ github.event.inputs.topic }}" ]; then
             FLAGS="$FLAGS --topic \"${{ github.event.inputs.topic }}\""
           fi
+          # 1. Audit post analytics to refresh historical resonance feedback loop
+          echo "Running pre-publishing analytics audit..."
+          python autonomous_publisher.py --audit-insights || true
+
+          # 2. Run publishing pipeline
           python autonomous_publisher.py $FLAGS
 
       - name: 💾 Commit Updated Post History Memory
