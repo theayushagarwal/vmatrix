@@ -177,37 +177,13 @@ def _render_html_batch(
 
 def render_carousel_slides(data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
     """
-    Renders all 5 educational listicle slides using templates/carousel_slide.html.
+    Renders all 5 educational listicle slides using the modern pure white theme (render_listicle_slides).
     Uses browser pooling and in-memory rendering (2160x2700 Retina).
+    Enforces pure white aesthetic by default (theme="LIGHT").
     Returns list of saved image paths.
     """
-    output_dir = Path(output_dir)
-    output_dir.mkdir(parents=True, exist_ok=True)
-
-    env = _get_jinja_env()
-    template = env.get_template("carousel_slide.html")
-
-    slides = data.get("slides", [])
-    total = len(slides)
-    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
-
-    # Extract 3 content steps for cover slide preview anchor
-    content_steps = [s for s in slides if s.get("type") == "content"]
-
-    html_items: list[tuple[str, Path, str]] = []
-    for idx, slide in enumerate(slides, start=1):
-        html = template.render(
-            slide=slide,
-            steps=content_steps,
-            series_title=data.get("series_title", ""),
-            category=data.get("category", "TOOLS"),
-            slide_index=idx,
-            slide_total=total,
-        )
-        out_path = output_dir / f"slide_{idx}.{ext}"
-        html_items.append((html, out_path, image_format))
-
-    return _render_html_batch(html_items)
+    data.setdefault("theme", "LIGHT")
+    return render_listicle_slides(data, output_dir, image_format=image_format)
 
 
 def render_rich_flow_slides(flow_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
@@ -522,19 +498,36 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
 
         if s_type == "cover":
             tpl = env.get_template("cover.html")
+            items = slide.get("items") or slide.get("tools") or listicle_data.get("tools", [])
+            if not items:
+                items = []
+                for s in slides:
+                    if s.get("type") == "content":
+                        t_name = s.get("tool_name") or s.get("name") or s.get("title", "")
+                        d_name = s.get("tool_domain") or s.get("domain", "")
+                        if t_name:
+                            items.append({"name": t_name, "domain": d_name})
+
+            subtitle_text = (
+                slide.get("subtitle")
+                or slide.get("hook_line")
+                or listicle_data.get("subtitle")
+                or listicle_data.get("hook_line")
+                or "Complete Step-by-Step Breakdown"
+            )
             html = tpl.render(
                 title=slide.get("title", listicle_data.get("title", "Curated Tech Guide")),
                 cover_title=slide.get("cover_title", listicle_data.get("title", "Curated Tech Guide")),
-                subtitle=slide.get("subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
-                cover_subtitle=slide.get("cover_subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
+                subtitle=subtitle_text,
+                cover_subtitle=subtitle_text,
                 series_title=slide.get("series_title", listicle_data.get("series_title", "TECH GUIDE")),
                 brand_tag=slide.get("brand_tag", listicle_data.get("brand_tag", "VMATRIX // CURATED GUIDE")),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,
                 total_slides=total_slides,
-                items=slide.get("items", listicle_data.get("tools", [])),
-                tools=slide.get("tools", listicle_data.get("tools", [])),
+                items=items,
+                tools=items,
             )
         elif s_type in ("comparison", "vs"):
             tpl = env.get_template("comparison.html")
@@ -583,17 +576,19 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
         else:  # standard "content" slide
             tpl = env.get_template("content.html")
             tool_name = slide.get("tool_name") or slide.get("name", "")
-            domain = slide.get("domain", "")
+            domain = slide.get("domain") or slide.get("tool_domain", "")
             tool_logo = slide.get("tool_logo") or slide.get("logo_url")
             if not tool_logo and tool_name:
                 tool_logo = resolve_logo_url(tool_name, domain=domain, output_dir=output_dir, suffix=f"c_{idx}")
+            step_num = slide.get("step_num") or f"{max(1, idx - 1):02d}"
             html = tpl.render(
                 title=slide.get("title", tool_name),
                 headline=slide.get("headline", ""),
                 description=slide.get("description", ""),
-                step_num=slide.get("step_num", f"{idx:02d}"),
+                step_num=step_num,
                 tool_name=tool_name,
                 tool_logo=tool_logo,
+                domain=domain,
                 key_benefit=slide.get("key_benefit", ""),
                 brand_tag=slide.get("brand_tag", "VMATRIX // TOOL SHOWCASE"),
                 brand_handle=brand_handle,

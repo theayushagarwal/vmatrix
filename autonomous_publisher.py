@@ -41,6 +41,7 @@ from core import (
     generate_cheatsheet_content,
     generate_flow_carousel_content,
     render_carousel_slides,
+    render_listicle_slides,
     render_carousel_flow_slides,
     render_infographic,
     upload_images_to_cloudinary,
@@ -213,11 +214,12 @@ def run_autonomous_post(
     else:  # listicle
         logger.info("[3/5] Planning 5-slide educational listicle with Groq...")
         content_plan = generate_carousel_content(chosen_topic)
+        content_plan.setdefault("theme", "LIGHT")
         series_name = content_plan.get("series_title") or content_plan.get("cover_title", chosen_topic)
         logger.info("  ✓ Planned Listicle Carousel: \"%s\" with %d slides", series_name, len(content_plan.get("slides", [])))
 
         logger.info("[4/5] Rendering 2160x2700 Retina slides via Playwright...")
-        slide_paths = render_carousel_slides(content_plan, tmp_dir, image_format="jpeg")
+        slide_paths = render_listicle_slides(content_plan, tmp_dir, image_format="jpeg")
         logger.info("  ✓ Rendered %d listicle slides in %.2fs", len(slide_paths), time.time() - start_time)
         for p in slide_paths:
             logger.info("    - %s (%d KB)", p.name, p.stat().st_size // 1024)
@@ -249,7 +251,7 @@ def run_autonomous_post(
                     if pipeline_mode == "flow":
                         slide_paths = render_carousel_flow_slides(content_plan, tmp_dir, image_format="jpeg")
                     else:
-                        slide_paths = render_carousel_slides(content_plan, tmp_dir, image_format="jpeg")
+                        slide_paths = render_listicle_slides(content_plan, tmp_dir, image_format="jpeg")
 
     audit_result = audit_slide_images(slide_paths, content_plan)
     if not audit_result.get("passed", True):

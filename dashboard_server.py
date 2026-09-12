@@ -43,6 +43,7 @@ from core import (
     generate_carousel_content,
     generate_flow_carousel_content,
     render_carousel_slides,
+    render_listicle_slides,
     render_carousel_flow_slides,
     publish_to_instagram_carousel,
     publish_to_instagram_photo,
@@ -241,10 +242,12 @@ def generate_carousel_endpoint(req: GenerateRequest):
         logger.info(f"Generating 4K Carousel for '{req.topic}' (mode={req.mode})")
         if req.mode == "flow":
             content = generate_flow_carousel_content(req.topic)
+            content.setdefault("theme", "LIGHT")
             paths = render_carousel_flow_slides(content, SLIDES_OUTPUT_DIR, image_format=req.image_format)
         else:
             content = generate_carousel_content(req.topic)
-            paths = render_carousel_slides(content, SLIDES_OUTPUT_DIR, image_format=req.image_format)
+            content.setdefault("theme", "LIGHT")
+            paths = render_listicle_slides(content, SLIDES_OUTPUT_DIR, image_format=req.image_format)
 
         title = content.get("series_title") or content.get("cover_title") or req.topic
         record_post(title=title, category=content.get("category", "AI & CODING"), hook=content.get("hook_line", ""))
