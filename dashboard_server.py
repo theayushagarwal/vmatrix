@@ -62,6 +62,7 @@ from core import (
     generate_post_comment,
     InstaScraper,
     analyze_post_virality,
+    synthesize_macro_competitor_insights,
     detect_viral_outliers,
     db,
 )
@@ -128,6 +129,12 @@ class OutlierFilterRequest(BaseModel):
 
 class AnalyzePostRequest(BaseModel):
     post_data: Dict[str, Any]
+    force: bool = False
+
+
+class MacroSynthesizeRequest(BaseModel):
+    posts: Optional[List[Dict[str, Any]]] = None
+    force: bool = False
 
 
 class VelocityCheckRequest(BaseModel):
@@ -437,7 +444,7 @@ def detect_outliers_endpoint(req: OutlierFilterRequest):
 @app.post("/api/competitor/analyze")
 def analyze_competitor_post_endpoint(req: AnalyzePostRequest):
     try:
-        analysis = analyze_post_virality(req.post_data)
+        analysis = analyze_post_virality(req.post_data, force=req.force)
         # Update in database if shortcode exists
         sc = req.post_data.get("shortcode")
         if sc and analysis:
@@ -445,6 +452,26 @@ def analyze_competitor_post_endpoint(req: AnalyzePostRequest):
         return {"success": True, "analysis": analysis}
     except Exception as e:
         logger.error(f"Analysis error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.post("/api/competitor/macro-synthesize")
+def macro_synthesize_endpoint(req: MacroSynthesizeRequest):
+    try:
+        result = synthesize_macro_competitor_insights(posts=req.posts, force=req.force)
+        return {"success": True, "synthesis": result}
+    except Exception as e:
+        logger.error(f"Macro synthesize error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/competitor/macro-synthesize")
+def get_macro_synthesize_endpoint():
+    try:
+        result = synthesize_macro_competitor_insights(force=False)
+        return {"success": True, "synthesis": result}
+    except Exception as e:
+        logger.error(f"Macro get error: {e}")
         return {"success": False, "error": str(e)}
 
 

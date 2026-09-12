@@ -115,7 +115,7 @@ from .approval import (
     process_auto_publish_timeouts,
 )
 from .scraper import InstaScraper
-from .competitor_analyzer import analyze_post_virality
+from .competitor_analyzer import analyze_post_virality, synthesize_macro_competitor_insights
 from .outlier import (
     detect_viral_outliers,
     evaluate_3_gates,
@@ -217,6 +217,7 @@ __all__ = [
     "BRAND_SYSTEM_PROMPT",
     "InstaScraper",
     "analyze_post_virality",
+    "synthesize_macro_competitor_insights",
     "detect_viral_outliers",
     "evaluate_3_gates",
     "calculate_time_decay_virality_score",

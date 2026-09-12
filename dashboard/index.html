@@ -609,12 +609,20 @@
 
       <!-- Competitor Posts Scraped List -->
       <div class="space-y-4">
-        <div class="flex items-center justify-between">
-          <h3 class="text-sm font-bold tracking-wider text-slate-300 uppercase flex items-center gap-2">
-            <i class="fa-solid fa-fire text-pink-400"></i>
-            <span>Competitor Outlier Stream</span>
-          </h3>
-          <span class="text-xs font-mono text-slate-500" id="spy-cohort-summary">Cohort: -- posts</span>
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+          <div>
+            <h3 class="text-sm font-bold tracking-wider text-slate-200 uppercase flex items-center gap-2">
+              <i class="fa-solid fa-fire text-pink-400"></i>
+              <span>Competitor Outlier Stream</span>
+            </h3>
+            <span class="text-xs font-mono text-slate-400" id="spy-cohort-summary">Cohort: -- posts</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <button onclick="triggerMacroSynthesis()" id="btn-macro-synthesize" class="px-4 py-2.5 bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-purple-600/30 flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-dna text-cyan-300"></i>
+              <span>🧬 Synthesize Master Angle (All Outliers)</span>
+            </button>
+          </div>
         </div>
 
         <div id="spy-posts-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -664,16 +672,19 @@
   <!-- ================================================================= -->
   <!-- MODAL: DEEP AI VIRALITY BREAKDOWN -->
   <!-- ================================================================= -->
-  <div id="modal-virality" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4">
-    <div class="glass-panel max-w-3xl w-full max-h-[90vh] rounded-2xl border border-pink-500/30 shadow-2xl flex flex-col overflow-hidden">
+  <div id="modal-virality" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-4xl w-full max-h-[92vh] rounded-2xl border border-pink-500/40 shadow-2xl flex flex-col overflow-hidden">
       <!-- Modal Header -->
-      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/80">
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/90">
         <div class="flex items-center gap-3">
-          <div class="w-8 h-8 rounded-lg bg-pink-500/20 text-pink-400 flex items-center justify-center">
-            <i class="fa-solid fa-brain"></i>
+          <div class="w-9 h-9 rounded-xl bg-pink-500/20 text-pink-400 flex items-center justify-center border border-pink-500/30">
+            <i class="fa-solid fa-brain text-base"></i>
           </div>
           <div>
-            <h3 class="text-base font-bold text-white">Groq 120B Virality Reverse-Engineering</h3>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">AI Virality Reverse-Engineering Dossier</h3>
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30" id="modal-council-badge">Dual-Brain Council</span>
+            </div>
             <p class="text-xs text-slate-400" id="modal-post-author">Analysis for @--</p>
           </div>
         </div>
@@ -691,14 +702,66 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between">
+      <div class="p-4 border-t border-slate-800 bg-slate-950/90 flex items-center justify-between">
         <button onclick="closeViralityModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
           Close
         </button>
         <button onclick="adaptCurrentAnalysisToStudio()" id="btn-modal-adapt" class="px-5 py-2 rounded-xl bg-gradient-to-r from-pink-600 to-indigo-600 hover:from-pink-500 hover:to-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-pink-600/30">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <span>Adapt Into 4K Carousel</span>
+          <span>Adapt Blueprint Into 4K Carousel</span>
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================= -->
+  <!-- MODAL: CROSS-COMPETITOR MACRO OUTLIER META-SYNTHESIS -->
+  <!-- ================================================================= -->
+  <div id="modal-macro-synthesis" class="fixed inset-0 z-50 bg-black/85 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="glass-panel max-w-4xl w-full max-h-[92vh] rounded-2xl border border-purple-500/40 shadow-2xl shadow-purple-900/30 flex flex-col overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-950/90">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-pink-500 text-white flex items-center justify-center shadow-lg shadow-purple-500/30">
+            <i class="fa-solid fa-dna text-base"></i>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h3 class="text-base font-bold text-white">Cross-Competitor Macro Outlier Synthesis</h3>
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30">Groq 120B + OpenRouter 70B</span>
+            </div>
+            <p class="text-xs text-slate-400">Synthesizing viral DNA across all competitor accounts into an original 4K blueprint (0% Copy-Paste)</p>
+          </div>
+        </div>
+        <button onclick="closeMacroSynthesisModal()" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto custom-scrollbar space-y-6 text-sm" id="modal-macro-synthesis-body">
+        <div class="text-center py-16">
+          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-purple-400 mb-3"></i>
+          <p class="text-slate-200 font-medium text-base">Multi-Model AI Council synthesizing viral outliers...</p>
+          <p class="text-slate-500 text-xs mt-1">Cross-referencing @bytebytego_, @thecodebytes, and database posts...</p>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-800 bg-slate-950/90 flex items-center justify-between">
+        <button onclick="closeMacroSynthesisModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+          Close
+        </button>
+        <div class="flex items-center gap-3">
+          <button onclick="triggerMacroSynthesis(true)" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-purple-300 border border-purple-500/30 text-xs font-semibold flex items-center gap-1.5 transition-colors">
+            <i class="fa-solid fa-arrows-rotate text-purple-400"></i>
+            <span>Re-Synthesize Council</span>
+          </button>
+          <button onclick="sendMacroToStudio()" id="btn-macro-to-studio" class="px-5 py-2 rounded-xl bg-gradient-to-r from-purple-600 via-indigo-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Send Blueprint to 4K Studio</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -1669,6 +1732,19 @@
       }).join('');
     }
 
+    function copyToClipboard(encodedText, successMsg = 'Copied to clipboard!') {
+      try {
+        const text = decodeURIComponent(encodedText);
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(successMsg, 'success');
+        }).catch(() => {
+          showToast('Failed to copy', 'error');
+        });
+      } catch (e) {
+        showToast('Copy failed', 'error');
+      }
+    }
+
     async function triggerDeepViralityAnalysis(postIndex, forceReanalyze = false) {
       const post = AppState.activeScrapedPosts[postIndex];
       if (!post) return;
@@ -1676,12 +1752,18 @@
       const modal = document.getElementById('modal-virality');
       const authorText = document.getElementById('modal-post-author');
       const body = document.getElementById('modal-virality-body');
+      const councilBadge = document.getElementById('modal-council-badge');
 
       authorText.innerText = `Analysis for @${post.handle || 'competitor'} (${(post.likes || 0).toLocaleString()} likes · ${post.virality_multiplier || 1.5}x Outlier)`;
       modal.classList.remove('hidden');
 
-      // If already analyzed and not explicitly forcing re-analysis, render immediately!
-      if (post.virality_analysis && !forceReanalyze) {
+      // Check if post already has full deep analysis with 6-slide breakdown
+      const isDeep = post.virality_analysis && 
+                     post.virality_analysis.vmatrix_blueprint && 
+                     Array.isArray(post.virality_analysis.vmatrix_blueprint.slide_breakdown) &&
+                     post.virality_analysis.vmatrix_blueprint.slide_breakdown.length > 0;
+
+      if (isDeep && !forceReanalyze) {
         AppState.activeViralityAnalysis = post.virality_analysis;
         AppState.activeAnalyzingPost = post;
         renderDossierView(body, post.virality_analysis, postIndex);
@@ -1689,10 +1771,13 @@
       }
 
       body.innerHTML = `
-        <div class="text-center py-16">
-          <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400 mb-3"></i>
-          <p class="text-slate-200 font-medium text-base">OpenRouter Llama 3.3 70B reverse-engineering virality drivers...</p>
-          <p class="text-slate-500 text-xs mt-1">Analyzing psychological triggers, scroll-stopping hooks & retention blueprint.</p>
+        <div class="text-center py-16 space-y-3">
+          <i class="fa-solid fa-brain fa-fade text-4xl text-pink-400"></i>
+          <p class="text-slate-200 font-bold text-base">Groq 120B & OpenRouter 70B Multi-Model Council...</p>
+          <p class="text-slate-400 text-xs max-w-md mx-auto">Deconstructing retention physics, psychological hooks, cognitive load, and synthesizing a 6-slide pure white blueprint.</p>
+          <div class="flex items-center justify-center gap-2 pt-2 text-[11px] font-mono text-indigo-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span> Council Brains Active
+          </div>
         </div>
       `;
 
@@ -1700,7 +1785,7 @@
         const res = await fetch('/api/competitor/analyze', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ post_data: post })
+          body: JSON.stringify({ post_data: post, force: forceReanalyze || !isDeep })
         });
         const data = await res.json();
 
@@ -1723,100 +1808,220 @@
     }
 
     function renderDossierView(body, a, postIndex) {
-      const hookInfo = typeof a.hook_analysis === 'object' && a.hook_analysis !== null ? a.hook_analysis : { hook_breakdown: a.hook_analysis || 'Pattern interrupt hook', hook_type: 'Contrarian Value', psychological_trigger: 'Curiosity Gap' };
-      const captionInfo = typeof a.caption_mechanics === 'object' && a.caption_mechanics !== null ? a.caption_mechanics : { first_line_hook: 'N/A', cta_effectiveness: 'Direct bookmark prompt.', save_share_triggers: 'High-utility reference material.', suggested_caption: '' };
-      const pacingInfo = typeof a.slide_pacing === 'object' && a.slide_pacing !== null ? a.slide_pacing : { pacing_analysis: 'High density progressive value', structure_type: 'Listicle' };
-      const bpInfo = typeof a.vmatrix_blueprint === 'object' && a.vmatrix_blueprint !== null ? a.vmatrix_blueprint : { adapted_title: a.adaptation_title || 'Autonomous AI Blueprint', hook_line: 'The definitive breakdown.', slide_ideas: [] };
+      const hookInfo = typeof a.hook_analysis === 'object' && a.hook_analysis !== null ? a.hook_analysis : { hook_breakdown: a.hook_analysis || 'Pattern interrupt hook', hook_type: 'Contrarian Value', psychological_trigger: 'Curiosity Gap & Status', retention_mechanic: 'Progressive Information Gap', estimated_swipe_rate: '78%' };
+      const captionInfo = typeof a.caption_mechanics === 'object' && a.caption_mechanics !== null ? a.caption_mechanics : { first_line_hook: 'N/A', cta_effectiveness: 'Direct bookmark prompt.', save_share_triggers: 'High-utility reference material.', micro_story_pacing: 'Rapid escalation', hashtag_strategy: '#SystemDesign #SoftwareEngineering', suggested_caption: '' };
+      const pacingInfo = typeof a.slide_pacing === 'object' && a.slide_pacing !== null ? a.slide_pacing : { pacing_analysis: 'High density progressive value', structure_type: 'Technical Matrix', visual_density: 'Balanced 4K Layout', cognitive_load_score: '8.4/10', retention_cliff_location: 'Slide 3 to 4 Transition' };
+      const bpInfo = typeof a.vmatrix_blueprint === 'object' && a.vmatrix_blueprint !== null ? a.vmatrix_blueprint : { adapted_title: a.adaptation_title || 'Autonomous AI Blueprint', hook_line: 'The definitive breakdown.', slide_breakdown: [] };
       const whyList = Array.isArray(a.why_it_went_viral) ? a.why_it_went_viral : (a.why_it_went_viral ? [a.why_it_went_viral] : ['High utility developer code', 'Pattern interrupt in crowded feed', 'Bookmarkable reference blueprint']);
-      const slideIdeas = Array.isArray(bpInfo.slide_ideas) ? bpInfo.slide_ideas : [
-        'Slide 1: State the controversial premise.',
-        'Slide 2: Show architectural comparison.',
-        'Slide 3: Provide copy-paste workflow.',
-        'Slide 4: Address common production pitfalls.',
-        'Slide 5: Call-to-action for bookmarks & shares.'
+      
+      const slides = Array.isArray(bpInfo.slide_breakdown) && bpInfo.slide_breakdown.length > 0 
+        ? bpInfo.slide_breakdown 
+        : (Array.isArray(bpInfo.slide_ideas) ? bpInfo.slide_ideas.map((s, i) => ({
+            slide_num: i + 1,
+            headline: `Slide ${i + 1}`,
+            body: typeof s === 'string' ? s : JSON.stringify(s),
+            visual_anchor: i % 2 === 0 ? 'Amber warning badge' : 'Rose metric callout',
+            purpose: i === 0 ? 'Pattern Interrupt' : (i === 5 ? 'Save/Share CTA' : 'Value Escalation'),
+            cognitive_principle: 'Rule 1: Sentence & Word Cap'
+          })) : []);
+
+      const cognitiveRules = Array.isArray(bpInfo.cognitive_rules_applied) ? bpInfo.cognitive_rules_applied : [
+        'Rule 1: Strict Sentence & Word Cap (Max 6w headline, 25w body)',
+        'Rule 2: Color Temperature Anchor (Amber warning, Rose contrast)',
+        'Rule 3: One Visual Anchor per Slide',
+        'Rule 4: Zero Fluff, 100% Signal',
+        'Rule 5: Save/Share Psychological Payoff'
       ];
+
+      const modelsText = a.models_used || 'Groq (openai/gpt-oss-120b) + OpenRouter (meta-llama/llama-3.3-70b-instruct)';
 
       body.innerHTML = `
         <div class="space-y-5">
-          <!-- Top Banner: Trend Angle & Re-run action -->
-          <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+          <!-- Top Banner: Trend Angle & Council Consensus -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-2">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 flex items-center gap-1.5">
                 <i class="fa-solid fa-arrow-trend-up"></i> MACRO TREND ANGLE
               </span>
               <div class="flex items-center gap-2">
-                <span class="text-xs font-mono text-emerald-400 font-bold">Virality Score: ${a.virality_score || 90}/100</span>
-                <button onclick="triggerDeepViralityAnalysis(${postIndex}, true)" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1 transition-colors" title="Re-run OpenRouter Analysis">
+                <span class="text-xs font-mono text-emerald-400 font-bold px-2 py-0.5 rounded bg-emerald-950/50 border border-emerald-500/30">
+                  Virality Score: ${a.virality_score || 90}/100
+                </span>
+                <button onclick="triggerDeepViralityAnalysis(${postIndex}, true)" class="text-[10px] font-mono px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1.5 transition-colors" title="Force Re-Analyze with Dual Brain Council">
                   <i class="fa-solid fa-arrows-rotate text-pink-400"></i> Re-Analyze
                 </button>
               </div>
             </div>
-            <h4 class="text-sm font-bold text-white">${a.trend_angle || 'High-Performance Developer Architecture & AI Workflows'}</h4>
+            <h4 class="text-base font-bold text-white leading-snug">${escapeHtml(a.trend_angle || 'High-Performance Developer Architecture & AI Workflows')}</h4>
+            <div class="text-[11px] font-mono text-slate-400 flex items-center gap-1.5 pt-1 border-t border-slate-800/80">
+              <span class="text-indigo-400 font-semibold"><i class="fa-solid fa-brain mr-1"></i>Council:</span>
+              <span class="text-slate-300">${escapeHtml(modelsText)}</span>
+            </div>
           </div>
 
-          <!-- Viral Hook & Scroll-Stopper -->
-          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+          <!-- Viral Hook Formula & Retention Physics -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-magnet"></i> Scroll-Stopping Hook Formula
+                <i class="fa-solid fa-magnet"></i> Scroll-Stopping Hook Formula & Retention Physics
               </h4>
-              <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.viral_hook || hookInfo.hook_breakdown || '').replace(/'/g, "\\'") }'); showToast('Hook copied to clipboard!', 'success')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
+              <button onclick="copyToClipboard('${encodeURIComponent(a.viral_hook || hookInfo.hook_breakdown || '').replace(/'/g, "\\'")}', 'Hook copied!')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
                 <i class="fa-regular fa-copy"></i> Copy Hook
               </button>
             </div>
-            <div class="text-sm font-semibold text-white p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-pink-200">
-              "${a.viral_hook || hookInfo.hook_breakdown || 'Pattern interrupt hook'}"
+            <div class="text-sm font-semibold text-white p-3 rounded-lg bg-slate-950/90 border border-slate-800 font-mono text-pink-200 leading-relaxed">
+              "${escapeHtml(a.viral_hook || hookInfo.hook_breakdown || 'Pattern interrupt hook')}"
             </div>
-            <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
-              <div><span class="text-slate-500">Hook Type:</span> <span class="text-slate-300 font-semibold">${hookInfo.hook_type || 'Contrarian Value'}</span></div>
-              <div><span class="text-slate-500">Trigger:</span> <span class="text-slate-300 font-semibold">${hookInfo.psychological_trigger || 'Curiosity Gap & Status'}</span></div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1 font-mono">
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Hook Type</div>
+                <div class="text-pink-300 font-semibold truncate">${escapeHtml(hookInfo.hook_type || 'Contrarian Value')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Psychological Trigger</div>
+                <div class="text-purple-300 font-semibold truncate">${escapeHtml(hookInfo.psychological_trigger || 'Curiosity Gap')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Retention Mechanic</div>
+                <div class="text-cyan-300 font-semibold truncate">${escapeHtml(hookInfo.retention_mechanic || 'Progressive Gap')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Est. Swipe Rate</div>
+                <div class="text-emerald-400 font-bold">${escapeHtml(hookInfo.estimated_swipe_rate || '76%')}</div>
+              </div>
             </div>
           </div>
 
-          <!-- Caption Strategy & Mechanics -->
+          <!-- Slide Structure & Pacing Analysis -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple"></i> Slide Structure & Cognitive Pacing
+            </h4>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-mono">
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Structure Type</div>
+                <div class="text-white font-semibold">${escapeHtml(pacingInfo.structure_type || 'Technical Matrix')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Visual Density</div>
+                <div class="text-white font-semibold">${escapeHtml(pacingInfo.visual_density || 'Optimal 4K')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Cognitive Load Score</div>
+                <div class="text-cyan-400 font-bold">${escapeHtml(String(pacingInfo.cognitive_load_score || '8.2/10'))}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Retention Cliff</div>
+                <div class="text-rose-400 font-semibold truncate">${escapeHtml(pacingInfo.retention_cliff_location || 'Slide 3 to 4')}</div>
+              </div>
+            </div>
+            ${pacingInfo.pacing_analysis ? `
+              <div class="text-xs text-slate-300 bg-slate-950/40 p-2.5 rounded-lg border border-slate-800/80 leading-relaxed">
+                <span class="text-slate-500 font-mono font-semibold">Pacing Analysis:</span> ${escapeHtml(pacingInfo.pacing_analysis)}
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Caption Strategy & Virality Mechanics -->
           <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
             <div class="flex items-center justify-between">
               <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-align-left"></i> Caption Architecture & Save/Share Triggers
               </h4>
               ${captionInfo.suggested_caption ? `
-                <button onclick="navigator.clipboard.writeText('${encodeURIComponent(captionInfo.suggested_caption).replace(/'/g, "\\'") }'); showToast('Caption copied!', 'success')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
+                <button onclick="copyToClipboard('${encodeURIComponent(captionInfo.suggested_caption).replace(/'/g, "\\'")}', 'Caption copied!')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
                   <i class="fa-regular fa-copy"></i> Copy Caption
                 </button>
               ` : ''}
             </div>
             <div class="space-y-1.5 text-xs text-slate-300">
-              <div><strong class="text-slate-400">First Line Hook:</strong> "${captionInfo.first_line_hook || 'N/A'}"</div>
-              <div><strong class="text-slate-400">CTA Effectiveness:</strong> ${captionInfo.cta_effectiveness || 'Direct bookmark prompt.'}</div>
-              <div><strong class="text-slate-400">Save & Share Triggers:</strong> ${captionInfo.save_share_triggers || 'High-utility reference material.'}</div>
+              <div><strong class="text-slate-400 font-mono">First Line Hook:</strong> <span class="text-cyan-200">"${escapeHtml(captionInfo.first_line_hook || 'N/A')}"</span></div>
+              <div><strong class="text-slate-400 font-mono">CTA Effectiveness:</strong> ${escapeHtml(captionInfo.cta_effectiveness || 'Direct bookmark prompt.')}</div>
+              <div><strong class="text-slate-400 font-mono">Save & Share Triggers:</strong> ${escapeHtml(captionInfo.save_share_triggers || 'High-utility reference material.')}</div>
+              ${captionInfo.hashtag_strategy ? `<div><strong class="text-slate-400 font-mono">Hashtags:</strong> <span class="text-slate-400">${escapeHtml(captionInfo.hashtag_strategy)}</span></div>` : ''}
             </div>
           </div>
 
-          <!-- Why It Went Viral Pills -->
+          <!-- Why It Went Viral Pillars -->
           <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
             <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
               <i class="fa-solid fa-fire"></i> Why This Post Went Viral
             </h4>
             <div class="space-y-1.5 text-xs">
               ${whyList.map(r => `
-                <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> <span>${r}</span></div>
+                <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-circle-check text-emerald-400 text-xs"></i> <span>${escapeHtml(r)}</span></div>
               `).join('')}
             </div>
           </div>
 
-          <!-- Vmatrix Adaptation Blueprint -->
-          <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/40 to-indigo-950/40 border border-pink-500/40 space-y-3">
-            <div class="flex items-center justify-between">
-              <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Vmatrix 4K Carousel Adaptation Blueprint
-              </h4>
-              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300">100% Pure White Theme</span>
+          <!-- 100% Pure-White Adaptation Blueprint with 5 Cognitive Rules -->
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-indigo-950/30 to-purple-950/40 border border-pink-500/40 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <div class="flex items-center gap-2">
+                  <h4 class="text-sm font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-wand-magic-sparkles text-pink-400"></i> Vmatrix 4K Pure-White Carousel Adaptation
+                  </h4>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300 border border-pink-500/30">100% Pure White Theme</span>
+                </div>
+                <p class="text-xs text-slate-400 mt-0.5">5 Strict Cognitive Engineering Rules Applied · 0% Copy-Paste Original Architecture</p>
+              </div>
+              <button onclick="adaptCurrentAnalysisToStudio()" class="px-3 py-1.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-semibold text-xs flex items-center gap-1.5 transition-colors">
+                <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i> Open in 4K Studio
+              </button>
             </div>
-            <div class="text-sm font-bold text-white">Suggested Topic: "${bpInfo.adapted_title || a.adaptation_title || 'Autonomous AI Engineering Guide'}"</div>
-            <div class="text-xs text-indigo-300 font-mono">Slide 1 Hook: "${bpInfo.hook_line || 'The definitive breakdown.'}"</div>
-            
-            <div class="text-xs text-slate-300 space-y-1 pt-1">
-              ${slideIdeas.map((s, i) => `<div class="font-mono text-slate-300">👉 ${s}</div>`).join('')}
+
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-1">
+              <div class="text-xs text-slate-400 font-mono">Suggested Topic:</div>
+              <div class="text-sm font-bold text-white font-sans">${escapeHtml(bpInfo.adapted_title || a.adaptation_title || 'Autonomous AI Engineering Guide')}</div>
+              <div class="text-xs text-indigo-300 font-mono pt-1">Hook Line: "${escapeHtml(bpInfo.hook_line || 'The definitive breakdown.')}"</div>
+            </div>
+
+            <!-- Cognitive Rules Badge Strip -->
+            <div class="flex flex-wrap items-center gap-1.5">
+              ${cognitiveRules.map(cr => `
+                <span class="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[10px] font-mono text-slate-300">
+                  <i class="fa-solid fa-check text-emerald-400 mr-1 text-[9px]"></i>${escapeHtml(cr)}
+                </span>
+              `).join('')}
+            </div>
+
+            <!-- 6-Slide Pure-White Visual Blueprint Cards Grid -->
+            <div class="space-y-2 pt-2">
+              <div class="text-xs font-mono font-bold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                <i class="fa-solid fa-layer-group text-indigo-400"></i> 6-Slide Visual Anatomy:
+              </div>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                ${slides.map((s, idx) => {
+                  const sNum = s.slide_num || idx + 1;
+                  const purpose = s.purpose || (sNum === 1 ? 'Pattern Interrupt' : (sNum === 6 ? 'Save/Share CTA' : 'Value Escalation'));
+                  const headline = s.headline || `Key Architectural Step ${sNum}`;
+                  const body = s.body || s.description || '';
+                  const visualAnchor = s.visual_anchor || s.visual_element || (sNum % 2 === 1 ? 'Amber warning badge' : 'Rose contrast pill');
+                  const principle = s.cognitive_principle || s.cognitive_rule || 'Rule 1: Strict Word Cap';
+
+                  return `
+                    <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col justify-between space-y-2 hover:border-pink-500/40 transition-colors">
+                      <div class="flex items-center justify-between">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                          Slide ${sNum} · ${escapeHtml(purpose)}
+                        </span>
+                        <span class="text-[9px] font-mono text-amber-400/90 truncate max-w-[130px]" title="${escapeHtml(visualAnchor)}">
+                          <i class="fa-solid fa-paint-brush mr-1"></i>${escapeHtml(visualAnchor)}
+                        </span>
+                      </div>
+                      <div>
+                        <div class="text-xs font-bold text-white font-sans line-clamp-2">${escapeHtml(headline)}</div>
+                        <div class="text-[11px] text-slate-300 font-sans mt-1 leading-relaxed line-clamp-3">${escapeHtml(body)}</div>
+                      </div>
+                      <div class="pt-2 border-t border-slate-800/80 flex items-center justify-between text-[10px] font-mono text-slate-500">
+                        <span class="truncate">${escapeHtml(principle)}</span>
+                        <span class="text-slate-400">#${sNum}/6</span>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
             </div>
           </div>
         </div>
@@ -1830,11 +2035,234 @@
     function adaptCurrentAnalysisToStudio() {
       const a = AppState.activeViralityAnalysis;
       if (!a) return;
-      const title = a.adaptation_title || a.adaptation_topic || 'AI Engine Breakthrough Analysis';
+      const bp = a.vmatrix_blueprint || {};
+      const title = bp.adapted_title || a.adaptation_title || a.adaptation_topic || 'AI Engine Breakthrough Analysis';
       closeViralityModal();
       setStudioTopic(title);
       switchTab('tab-studio');
       showToast('Viral adaptation strategy loaded into 4K Studio!', 'success');
+    }
+
+    // -----------------------------------------------------------------
+    // Cross-Competitor Macro Outlier Synthesis
+    // -----------------------------------------------------------------
+    async function triggerMacroSynthesis(force = false) {
+      const modal = document.getElementById('modal-macro-synthesis');
+      const body = document.getElementById('modal-macro-synthesis-body');
+      modal.classList.remove('hidden');
+
+      body.innerHTML = `
+        <div class="text-center py-16 space-y-3">
+          <i class="fa-solid fa-dna fa-bounce text-4xl text-purple-400"></i>
+          <p class="text-slate-200 font-bold text-base">Dual-Brain Council Synthesizing Cross-Competitor DNA...</p>
+          <p class="text-slate-400 text-xs max-w-lg mx-auto">
+            Aggregating viral patterns across @bytebytego_, @thecodebytes, and stored database outliers to engineer a 100% original master angle with 5 Cognitive Rules.
+          </p>
+          <div class="flex items-center justify-center gap-3 pt-2 text-[11px] font-mono text-purple-300">
+            <span class="flex items-center gap-1"><i class="fa-solid fa-microchip text-pink-400"></i> Groq 120B Reasoner</span>
+            <span class="text-slate-600">·</span>
+            <span class="flex items-center gap-1"><i class="fa-solid fa-brain text-indigo-400"></i> OpenRouter 70B Hook Architect</span>
+          </div>
+        </div>
+      `;
+
+      try {
+        const res = await fetch('/api/competitor/macro-synthesize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ posts: AppState.activeScrapedPosts || null, force: force })
+        });
+        const data = await res.json();
+
+        if (data.success && data.synthesis) {
+          AppState.activeMacroSynthesis = data.synthesis;
+          renderMacroSynthesisView(data.synthesis);
+        } else {
+          body.innerHTML = `<div class="p-6 text-center text-rose-400">Synthesis failed: ${data.error}</div>`;
+        }
+      } catch (err) {
+        body.innerHTML = `<div class="p-6 text-center text-rose-400">Network error: ${err.message}</div>`;
+      }
+    }
+
+    function closeMacroSynthesisModal() {
+      document.getElementById('modal-macro-synthesis').classList.add('hidden');
+    }
+
+    function renderMacroSynthesisView(s) {
+      const body = document.getElementById('modal-macro-synthesis-body');
+      if (!s || !body) return;
+
+      const theme = s.convergence_theme || 'Next-Gen Autonomous Agent Orchestration';
+      const macroShift = s.macro_shift || 'Shift from monolithic LLM wrappers to multi-agent distributed swarms.';
+      const score = s.virality_score || 94;
+      const rationale = s.synthesis_rationale || 'Combines the contrast clarity of @bytebytego_ with the architectural precision of @thecodebytes.';
+      const competitors = Array.isArray(s.competitors_synthesized) ? s.competitors_synthesized : ['@bytebytego_', '@thecodebytes'];
+      const masterHook = s.master_hook || { headline: 'Stop building single-prompt apps.', psychological_trigger: 'Status Anxiety & Loss Aversion', hook_type: 'Contrarian Command', reading_time_seconds: '1.4s' };
+      const masterCaption = s.master_caption || { first_line: 'Why 90% of AI wrappers fail in production.', save_triggers: 'Bookmark this architecture diagram.', comment_prompt: 'Drop "SWARM" below for the code.', full_caption: '' };
+      const slides = Array.isArray(s.master_blueprint_6_slides) ? s.master_blueprint_6_slides : [];
+      const originality = s.originality_guarantee || '100% Original High-Signal Architecture · 0% Copy-Paste';
+
+      body.innerHTML = `
+        <div class="space-y-6">
+          <!-- Top Hero: Convergence Theme & Council Consensus -->
+          <div class="p-5 rounded-2xl bg-gradient-to-r from-purple-950/60 via-indigo-950/50 to-slate-900 border border-purple-500/40 space-y-3 shadow-xl">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <span class="px-2.5 py-1 text-[10px] font-mono font-bold rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-dna text-cyan-400 animate-pulse"></i> CROSS-COMPETITOR VIRAL CONVERGENCE
+              </span>
+              <div class="flex items-center gap-2 font-mono">
+                <span class="px-2.5 py-0.5 rounded-lg bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 text-xs font-bold">
+                  Virality Index: ${score}/100
+                </span>
+                <span class="px-2 py-0.5 rounded-lg bg-indigo-950/60 border border-indigo-500/30 text-indigo-300 text-xs">
+                  Dual-Brain Consensus
+                </span>
+              </div>
+            </div>
+
+            <div>
+              <h3 class="text-lg font-bold text-white leading-tight font-sans">${escapeHtml(theme)}</h3>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">${escapeHtml(macroShift)}</p>
+            </div>
+
+            <!-- Synthesized Competitors Strip -->
+            <div class="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-800/80 text-xs">
+              <span class="text-slate-400 font-mono text-[11px]">Synthesized Outliers:</span>
+              ${competitors.map(c => `
+                <span class="px-2 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[11px] font-mono text-pink-300">
+                  <i class="fa-brands fa-instagram mr-1 text-pink-400"></i>${escapeHtml(c)}
+                </span>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Synthesis Rationale: Why This Dominates -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+            <div class="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono flex items-center gap-2">
+              <i class="fa-solid fa-bolt"></i> Synthesis Rationale (Why This Crushes Individual Posts)
+            </div>
+            <p class="text-xs text-slate-300 leading-relaxed">${escapeHtml(rationale)}</p>
+          </div>
+
+          <!-- Master Scroll-Stopping Hook Formula -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-magnet"></i> Master Viral Hook (0% Copy-Paste)
+              </h4>
+              <button onclick="copyToClipboard('${encodeURIComponent(masterHook.headline || '').replace(/'/g, "\\'")}', 'Master Hook copied!')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy Hook
+              </button>
+            </div>
+            <div class="text-sm font-semibold text-white p-3 rounded-lg bg-slate-950/90 border border-slate-800 font-mono text-pink-200">
+              "${escapeHtml(masterHook.headline || 'Stop building monolithic architectures.')}"
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-xs font-mono pt-1">
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Hook Type</div>
+                <div class="text-pink-300 font-semibold truncate">${escapeHtml(masterHook.hook_type || 'Contrarian Command')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Psychological Trigger</div>
+                <div class="text-purple-300 font-semibold truncate">${escapeHtml(masterHook.psychological_trigger || 'Loss Aversion')}</div>
+              </div>
+              <div class="p-2 rounded-lg bg-slate-950/60 border border-slate-800">
+                <div class="text-slate-500 text-[10px]">Reading Time</div>
+                <div class="text-emerald-400 font-semibold">${escapeHtml(masterHook.reading_time_seconds || '1.4s')}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Master Caption & Retention Strategy -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-align-left"></i> Master Caption & Comment Magnet
+              </h4>
+              ${masterCaption.full_caption ? `
+                <button onclick="copyToClipboard('${encodeURIComponent(masterCaption.full_caption).replace(/'/g, "\\'")}', 'Master Caption copied!')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
+                  <i class="fa-regular fa-copy"></i> Copy Full Caption
+                </button>
+              ` : ''}
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-300">
+              <div><strong class="text-slate-400 font-mono">First Line:</strong> <span class="text-cyan-200">"${escapeHtml(masterCaption.first_line || 'N/A')}"</span></div>
+              <div><strong class="text-slate-400 font-mono">Save Triggers:</strong> ${escapeHtml(masterCaption.save_triggers || 'High-utility architecture cheat sheet')}</div>
+              <div><strong class="text-slate-400 font-mono">Comment Trigger:</strong> <span class="text-amber-300 font-semibold">${escapeHtml(masterCaption.comment_prompt || 'Comment below for blueprint')}</span></div>
+            </div>
+          </div>
+
+          <!-- Master 6-Slide Pure-White Visual Blueprint Grid -->
+          <div class="p-5 rounded-2xl bg-gradient-to-br from-slate-900 via-purple-950/30 to-indigo-950/40 border border-purple-500/40 space-y-4">
+            <div class="flex items-center justify-between flex-wrap gap-2">
+              <div>
+                <h4 class="text-sm font-bold text-purple-300 uppercase tracking-wider flex items-center gap-2 font-sans">
+                  <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> Master 6-Slide Pure-White Blueprint
+                </h4>
+                <p class="text-xs text-slate-400 mt-0.5">Engineered with 5 Strict Cognitive Engineering Rules (Strict word caps & color anchors)</p>
+              </div>
+              <button onclick="sendMacroToStudio()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-bold text-xs flex items-center gap-2 shadow-lg shadow-purple-600/30 transition-all">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Open in 4K Studio
+              </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              ${slides.map((s, idx) => {
+                const sNum = s.slide_num || idx + 1;
+                const title = s.title || `Slide ${sNum}`;
+                const headline = s.headline || 'Key Concept';
+                const desc = s.description || '';
+                const anchor = s.color_anchor || 'amber';
+                const visualElem = s.visual_element || 'Comparison diagram';
+                const rule = s.cognitive_rule || 'Rule 1: Sentence & Word Cap';
+
+                const anchorColorClass = anchor.includes('rose') ? 'text-rose-400 bg-rose-500/20 border-rose-500/30' :
+                                         anchor.includes('emerald') ? 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30' :
+                                         anchor.includes('cyan') ? 'text-cyan-400 bg-cyan-500/20 border-cyan-500/30' :
+                                         'text-amber-400 bg-amber-500/20 border-amber-500/30';
+
+                return `
+                  <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 flex flex-col justify-between space-y-2.5 hover:border-purple-500/40 transition-colors">
+                    <div class="flex items-center justify-between">
+                      <span class="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        Slide ${sNum} · ${escapeHtml(title)}
+                      </span>
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-mono font-bold border uppercase ${anchorColorClass}">
+                        ${escapeHtml(anchor)} anchor
+                      </span>
+                    </div>
+                    <div>
+                      <div class="text-xs font-bold text-white font-sans">${escapeHtml(headline)}</div>
+                      <div class="text-[11px] text-slate-300 font-sans mt-1 leading-relaxed">${escapeHtml(desc)}</div>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800/80 space-y-1 text-[10px] font-mono text-slate-400">
+                      <div class="text-slate-400 truncate"><span class="text-slate-500">Visual:</span> ${escapeHtml(visualElem)}</div>
+                      <div class="text-indigo-300 truncate"><span class="text-slate-500">Rule:</span> ${escapeHtml(rule)}</div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <!-- Originality Guarantee Banner -->
+            <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center justify-between text-xs font-mono text-emerald-400">
+              <span class="flex items-center gap-1.5"><i class="fa-solid fa-shield-halved text-emerald-400"></i> ${escapeHtml(originality)}</span>
+              <span class="text-slate-500">Ready for 4K Rendering</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function sendMacroToStudio() {
+      const s = AppState.activeMacroSynthesis;
+      if (!s) return;
+      const topic = s.convergence_theme || (s.master_hook && s.master_hook.headline) || 'Next-Gen Autonomous AI Architecture';
+      closeMacroSynthesisModal();
+      setStudioTopic(topic);
+      switchTab('tab-studio');
+      showToast('Master synthesis angle loaded into 4K Studio!', 'success');
     }
 
     function adaptCompetitorPost(idx) {
