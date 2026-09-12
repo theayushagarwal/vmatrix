@@ -19,7 +19,19 @@ import cloudinary.uploader
 from .utils import retry_with_backoff, logger
 
 GRAPH_API_VERSION = "v19.0"
-GRAPH_API_BASE = f"https://graph.facebook.com/{GRAPH_API_VERSION}"
+
+
+def get_graph_api_base(access_token: str | None = None) -> str:
+    """
+    Dynamically resolves Graph API base URL.
+    Instagram Login User tokens (starting with 'IGAA' or 'IG') use graph.instagram.com.
+    Standard Facebook Page access tokens use graph.facebook.com.
+    """
+    token = access_token or os.environ.get("IG_ACCESS_TOKEN", "")
+    if token.startswith("IG") or token.startswith("EAAG"):
+        return f"https://graph.instagram.com/{GRAPH_API_VERSION}"
+    return os.environ.get("IG_GRAPH_API_BASE", f"https://graph.instagram.com/{GRAPH_API_VERSION}")
+
 
 POLL_INTERVAL_SECONDS = 2
 POLL_MAX_ATTEMPTS = 30
@@ -68,7 +80,8 @@ def _poll_container_status(container_id: str, access_token: str) -> str:
     from Meta is retried a couple of times (their processing occasionally
     flakes on a container and clears up) before we give up for real.
     """
-    status_url = f"{GRAPH_API_BASE}/{container_id}"
+    api_base = get_graph_api_base(access_token)
+    status_url = f"{api_base}/{container_id}"
     consecutive_errors = 0
     for attempt in range(POLL_MAX_ATTEMPTS):
         try:
@@ -112,10 +125,12 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
     if not ig_user_id or not access_token:
         raise ValueError("IG_USER_ID / IG_ACCESS_TOKEN are not set.")
 
+    api_base = get_graph_api_base(access_token)
+
     @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
     def _create_item_container(url: str) -> str:
         resp = requests.post(
-            f"{GRAPH_API_BASE}/{ig_user_id}/media",
+            f"{api_base}/{ig_user_id}/media",
             data={
                 "image_url": url,
                 "is_carousel_item": "true",
@@ -136,7 +151,7 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
     @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
     def _create_parent_container() -> str:
         resp = requests.post(
-            f"{GRAPH_API_BASE}/{ig_user_id}/media",
+            f"{api_base}/{ig_user_id}/media",
             data={
                 "media_type": "CAROUSEL",
                 "caption": caption,
@@ -157,7 +172,7 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
     @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
     def _publish() -> str | None:
         resp = requests.post(
-            f"{GRAPH_API_BASE}/{ig_user_id}/media_publish",
+            f"{api_base}/{ig_user_id}/media_publish",
             data={
                 "creation_id": parent_container_id,
                 "access_token": access_token,
