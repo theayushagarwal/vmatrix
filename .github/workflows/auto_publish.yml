@@ -68,9 +68,26 @@ jobs:
 
       - name: 🚀 Run Autonomous Social Engine Pipeline
         env:
-          # Groq AI
+          # Groq AI (Tier 1 Fast Chief Editor)
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL: ${{ secrets.GROQ_MODEL || 'openai/gpt-oss-120b' }}
+
+          # Cerebras AI (Tier 2 Secondary Brain Failover)
+          CEREBRAS_API_KEY: ${{ secrets.CEREBRAS_API_KEY }}
+          CEREBRAS_MODEL: ${{ secrets.CEREBRAS_MODEL || 'gpt-oss-120b' }}
+
+          # Nvidia NIM (Tier 4 Visual Composition & Layout Audit)
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
+          NVIDIA_VISION_MODEL: ${{ secrets.NVIDIA_VISION_MODEL || 'meta/llama-3.2-11b-vision-instruct' }}
+
+          # GitHub Models Vision API (Tier 3 GPT-4o Vision Inspector)
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN_MODELS || secrets.GITHUB_TOKEN }}
+          GITHUB_VISION_MODEL: ${{ secrets.GITHUB_VISION_MODEL || 'gpt-4o' }}
+
+          # Apify Intelligence Radar (AI Agents & Developer Tools)
+          APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
+          APIFY_DATASET_ID: ${{ secrets.APIFY_DATASET_ID }}
+          APIFY_TASK_ID: ${{ secrets.APIFY_TASK_ID }}
 
           # Logo & Brand Asset Resolvers
           LOGODEV_PUBLISHABLE_KEY: ${{ secrets.LOGODEV_PUBLISHABLE_KEY }}

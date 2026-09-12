@@ -17,6 +17,11 @@ from .feeds import (
     fetch_techcrunch_ai,
     fetch_venturebeat_ai,
     fetch_hacker_news,
+    fetch_apify_trends,
+)
+from .vision_inspector import (
+    audit_slide_images,
+    audit_cheatsheet_image,
 )
 from .funnel import (
     run_filtering_funnel,
@@ -62,6 +67,9 @@ __all__ = [
     "fetch_techcrunch_ai",
     "fetch_venturebeat_ai",
     "fetch_hacker_news",
+    "fetch_apify_trends",
+    "audit_slide_images",
+    "audit_cheatsheet_image",
     "run_filtering_funnel",
     "apply_stage1_blacklist",
     "apply_stage2_niche_scoring",

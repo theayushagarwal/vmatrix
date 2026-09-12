@@ -16,6 +16,7 @@ Stages:
 import os
 import re
 import json
+import requests
 from typing import List, Dict, Any, Tuple, Optional
 
 from google import genai
@@ -280,6 +281,69 @@ You MUST return ONLY valid JSON matching this schema:
     return parsed.get("classifications", [])
 
 
+def _call_cerebras_classifier(titles: List[str]) -> List[Dict[str, Any]]:
+    """
+    Tier 2 Failover: Calls Cerebras inference endpoint to classify headlines when Groq is unavailable.
+    """
+    api_key = os.environ.get("CEREBRAS_API_KEY")
+    if not api_key:
+        return []
+
+    url = "https://api.cerebras.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    json_instructions = """
+You MUST return ONLY valid JSON matching this schema:
+{
+  "classifications": [
+    {
+      "original_title": "string",
+      "category": "PURE_AI" | "PURE_FINANCE" | "MIXED" | "OFF_TOPIC",
+      "is_educational": true or false,
+      "refined_title": "string",
+      "reason": "string"
+    }
+  ]
+}
+"""
+    prompt = f"{_CLASSIFIER_SYSTEM_PROMPT}\n{json_instructions}"
+    candidates = [
+        os.environ.get("CEREBRAS_MODEL", "gpt-oss-120b"),
+        "qwen-3.8-27b",
+        "gemma-4-31b",
+        "llama-3.3-70b",
+    ]
+    seen = set()
+    for model in candidates:
+        if model in seen:
+            continue
+        seen.add(model)
+        try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": f"HEADLINES TO CLASSIFY:\n{json.dumps(titles, indent=2)}"},
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": 0.2,
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=20)
+            if resp.status_code == 200:
+                data = resp.json()
+                content = data["choices"][0]["message"]["content"]
+                parsed = json.loads(content)
+                return parsed.get("classifications", [])
+            else:
+                logger.warning("Cerebras classifier (%s) returned status %d", model, resp.status_code)
+        except Exception as e:
+            logger.warning("Cerebras classifier (%s) error: %s", model, e)
+
+    return []
+
+
 def _fallback_semantic_classify(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Heuristic fallback when neither Groq nor Gemini is available."""
     results = []
@@ -321,7 +385,7 @@ def _call_gemini_classifier(client: genai.Client, titles: List[str]) -> List[Dic
 def apply_stage3_semantic_classifier(items: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Stage 3 Filter: Fast semantic LLM classification using Groq openai/gpt-oss-120b
-    (with automatic fallback to Gemini 2.5 Flash and rule heuristics).
+    (with Cerebras failover, Gemini 2.5 Flash fallback, and rule heuristics).
     """
     if not items:
         return [], []
@@ -329,15 +393,24 @@ def apply_stage3_semantic_classifier(items: List[Dict[str, Any]]) -> Tuple[List[
     titles = [it["title"] for it in items]
     classifications = []
 
-    # 1. Try Groq (openai/gpt-oss-120b)
+    # 1. Try Groq (openai/gpt-oss-120b - Tier 1 Fast Chief Editor)
     groq_client = _get_groq_client()
     if groq_client:
         try:
             classifications = _call_groq_classifier(groq_client, titles)
         except Exception as e:
-            logger.warning("Stage 3 Groq (%s) error, attempting Gemini fallback: %s", DEFAULT_GROQ_MODEL, e)
+            logger.warning("Stage 3 Groq (%s) error, attempting Cerebras failover: %s", DEFAULT_GROQ_MODEL, e)
 
-    # 2. Fallback to Gemini 2.5 Flash (only if ENABLE_GEMINI is explicitly true)
+    # 2. Try Cerebras Failover (Tier 2 Instant Backup Editor)
+    if not classifications:
+        try:
+            classifications = _call_cerebras_classifier(titles)
+            if classifications:
+                logger.info("  ✓ Stage 3 classifications completed via Cerebras failover")
+        except Exception as e:
+            logger.warning("Stage 3 Cerebras error: %s", e)
+
+    # 3. Fallback to Gemini 2.5 Flash (only if ENABLE_GEMINI is explicitly true - Tier 5)
     if not classifications and os.environ.get("ENABLE_GEMINI", "false").lower() in ("true", "1", "yes"):
         gemini_api_key = os.environ.get("GEMINI_API_KEY")
         if gemini_api_key:

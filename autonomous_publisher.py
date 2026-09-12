@@ -46,6 +46,7 @@ from core import (
     upload_images_to_cloudinary,
     publish_to_instagram_carousel,
     publish_to_instagram_photo,
+    audit_slide_images,
     record_post,
     get_time_since_last_post,
 )
@@ -206,6 +207,19 @@ def run_autonomous_post(
         for p in slide_paths:
             logger.info("    - %s (%d KB)", p.name, p.stat().st_size // 1024)
 
+    # --------------------------------------------------------------------------
+    # 2.5 Visual Quality Gate & Composition Audit
+    # --------------------------------------------------------------------------
+    logger.info("[4.5/5] Auditing visual composition & layout safety with Vision Inspector...")
+    audit_result = audit_slide_images(slide_paths, content_plan)
+    if not audit_result.get("passed", True):
+        err_msg = f"Visual Quality Gate Failed ({audit_result.get('score')}/10): {audit_result.get('issues')}"
+        logger.error("❌ %s", err_msg)
+        if not dry_run:
+            raise RuntimeError(err_msg)
+    else:
+        logger.info("  ✓ Visual Quality Gate PASSED: Score %.1f/10 [%s]", audit_result.get("score"), audit_result.get("method"))
+
     # Record to local memory & Supabase PostgreSQL
     record_post(
         title=series_name,
@@ -226,6 +240,8 @@ def run_autonomous_post(
             "weekday": day_name,
             "series_title": series_name,
             "slides_rendered": len(slide_paths),
+            "vision_score": audit_result.get("score"),
+            "vision_method": audit_result.get("method"),
             "elapsed_seconds": round(time.time() - start_time, 2),
         }
         logger.info("✨ DRY RUN FINISHED SUCCESSFULLY in %.2fs", result["elapsed_seconds"])

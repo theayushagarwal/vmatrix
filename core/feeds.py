@@ -317,11 +317,94 @@ def fetch_hacker_news(max_items: int = 8) -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# 5. 🕷️ Apify Intelligence Radar (AI Agents & Dev Tools)
+# ---------------------------------------------------------------------------
+def fetch_apify_trends(max_items: int = 6) -> List[Dict[str, Any]]:
+    """
+    Fetches deep tech radar signals, AI agent tools, and developer scraping actors
+    via the Apify API using APIFY_API_KEY.
+    """
+    import os
+    api_key = os.environ.get("APIFY_API_KEY")
+    if not api_key:
+        return []
+
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Accept": "application/json",
+    }
+
+    # 1. Check if a custom task or dataset ID is specified
+    dataset_id = os.environ.get("APIFY_DATASET_ID")
+    if dataset_id:
+        try:
+            url = f"https://api.apify.com/v2/datasets/{dataset_id}/items?limit={max_items}"
+            resp = requests.get(url, headers=headers, timeout=TIMEOUT_SECONDS)
+            if resp.status_code == 200:
+                raw_items = resp.json()
+                results = []
+                for it in raw_items:
+                    title = it.get("title") or it.get("name") or it.get("headline")
+                    if not title:
+                        continue
+                    desc = it.get("description") or it.get("summary") or "Apify dataset intelligence."
+                    results.append({
+                        "source": "Apify Radar",
+                        "source_icon": "🕷️",
+                        "title": title,
+                        "summary": desc[:140],
+                        "metric": "🕷️ Apify Dataset",
+                        "url": it.get("url") or "https://apify.com",
+                        "category": "AI & CODING",
+                    })
+                if results:
+                    return results
+        except Exception as e:
+            logger.warning("Apify dataset fetch error: %s", e)
+
+    # 2. General AI Agent & Tool Discovery on Apify Store
+    try:
+        url = f"https://api.apify.com/v2/store?search=ai+agents&limit={max_items}"
+        resp = requests.get(url, headers=headers, timeout=TIMEOUT_SECONDS)
+        if resp.status_code == 200:
+            data = resp.json()
+            items = data.get("data", {}).get("items", [])
+            results = []
+            for it in items:
+                title = it.get("title") or it.get("name")
+                if not title:
+                    continue
+                username = it.get("username", "apify")
+                name = it.get("name", "")
+                pricing = it.get("pricingModel", "Free")
+                desc = it.get("description") or "Trending AI agent developer actor."
+                clean_desc = _clean_html_text(desc)
+                if len(clean_desc) > 140:
+                    clean_desc = clean_desc[:137] + "..."
+
+                results.append({
+                    "source": "Apify Radar",
+                    "source_icon": "🕷️",
+                    "title": title,
+                    "summary": clean_desc,
+                    "metric": f"🕷️ Apify Actor ({pricing})",
+                    "url": f"https://apify.com/{username}/{name}" if name else "https://apify.com",
+                    "category": "TOOLS",
+                })
+            if results:
+                return results
+    except Exception as e:
+        logger.warning("Apify store intelligence fetch error: %s", e)
+
+    return []
+
+
+# ---------------------------------------------------------------------------
 # Unified Aggregator
 # ---------------------------------------------------------------------------
 def fetch_all_feeds(geo: str = "IN", max_per_feed: int = 6) -> Dict[str, List[Dict[str, Any]]]:
     """
-    Aggregates all 4 core data feeds into a unified dictionary.
+    Aggregates all 5 core data feeds into a unified dictionary.
     Safe: failures in any single feed are logged and returned gracefully.
     """
     return {
@@ -329,4 +412,6 @@ def fetch_all_feeds(geo: str = "IN", max_per_feed: int = 6) -> Dict[str, List[Di
         "techcrunch_ai": fetch_techcrunch_ai(max_items=max_per_feed),
         "venturebeat_ai": fetch_venturebeat_ai(max_items=max_per_feed),
         "hacker_news": fetch_hacker_news(max_items=max_per_feed),
+        "apify_radar": fetch_apify_trends(max_items=max_per_feed),
     }
+

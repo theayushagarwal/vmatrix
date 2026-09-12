@@ -12,22 +12,31 @@ print("   ⚡ AI-SOCIAL-ENGINE COMPREHENSIVE VERIFICATION     ")
 print("======================================================\n")
 
 # 1. Test Feeds
-print(">>> [1/4] Verifying 4 Core Data Feeds...")
-from core.feeds import fetch_all_feeds, fetch_google_trends, fetch_techcrunch_ai, fetch_venturebeat_ai, fetch_hacker_news
+print(">>> [1/5] Verifying 5 Core Data Feeds (including Apify Intelligence Radar)...")
+from core.feeds import (
+    fetch_all_feeds,
+    fetch_google_trends,
+    fetch_techcrunch_ai,
+    fetch_venturebeat_ai,
+    fetch_hacker_news,
+    fetch_apify_trends,
+)
 
 gt = fetch_google_trends("IN", max_items=2)
 tc = fetch_techcrunch_ai(max_items=2)
 vb = fetch_venturebeat_ai(max_items=2)
 hn = fetch_hacker_news(max_items=2)
+ap = fetch_apify_trends(max_items=2)
 all_feeds = fetch_all_feeds(geo="IN", max_per_feed=3)
 
 print(f"  ✓ Google Trends (IN): {len(gt)} items")
 print(f"  ✓ TechCrunch AI: {len(tc)} items")
 print(f"  ✓ VentureBeat AI: {len(vb)} items")
 print(f"  ✓ Hacker News: {len(hn)} items")
+print(f"  ✓ Apify Intelligence Radar: {len(ap)} items")
 total_items = sum(len(v) for v in all_feeds.values())
-print(f"  ✓ Aggregated Feeds: {total_items} total items across 4 sources")
-assert all(len(v) > 0 for v in all_feeds.values()), "One or more feeds returned 0 items"
+print(f"  ✓ Aggregated Feeds: {total_items} total items across 5 sources")
+assert all(len(v) > 0 for k, v in all_feeds.items() if k != "apify_radar"), "One or more core feeds returned 0 items"
 
 # 2. Test 5-Stage Funnel
 print("\n>>> [2/4] Verifying 5-Stage Filtering Funnel & Vector Memory...")
@@ -117,8 +126,20 @@ info_path = render_infographic(sample_info_data, tmp_dir, image_format="jpeg")
 validate_slide_image(info_path, 2160, 2700)
 print(f"  ✓ Rendered Infographic: {info_path.name} ({info_path.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
 
-# 6. Check Autonomous Scheduler & Single Photo Publisher
-print("\n>>> [6/7] Verifying Slot Resolver & Publishing Exports...")
+# 6. Test Vision Quality Inspector (Pillow Retina & Multi-AI Vision Gate)
+print("\n>>> [6/8] Verifying Vision Quality Gate & Composition Inspector...")
+from core.vision_inspector import audit_slide_images, audit_cheatsheet_image
+
+listicle_audit = audit_slide_images(listicle_paths)
+assert listicle_audit["passed"], f"Listicle visual audit failed: {listicle_audit['issues']}"
+print(f"  ✓ Listicle Visual Audit: PASSED ({listicle_audit['score']}/10 via {listicle_audit['method']})")
+
+info_audit = audit_cheatsheet_image(info_path)
+assert info_audit["passed"], f"Infographic visual audit failed: {info_audit['issues']}"
+print(f"  ✓ Infographic Visual Audit: PASSED ({info_audit['score']}/10 via {info_audit['method']})")
+
+# 7. Check Autonomous Scheduler & Single Photo Publisher
+print("\n>>> [7/8] Verifying Slot Resolver & Publishing Exports...")
 from autonomous_publisher import resolve_slot_and_format
 from core.publisher import publish_to_instagram_photo, publish_to_instagram_carousel
 from core.memory import check_duplicate_guardrails, get_time_since_last_post

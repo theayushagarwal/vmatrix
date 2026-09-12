@@ -9,6 +9,7 @@ markdown fences — the schema is enforced by the model itself.
 
 import os
 import json
+import requests
 from google import genai
 from google.genai import types
 from typing import Optional, Any
@@ -18,6 +19,7 @@ from .utils import retry_with_backoff, logger
 load_dotenv()
 
 DEFAULT_GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+DEFAULT_CEREBRAS_MODEL = os.environ.get("CEREBRAS_MODEL", "gpt-oss-120b")
 GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 
@@ -85,6 +87,54 @@ def _call_groq_json(client: Any, system_prompt: str, user_content: str, temperat
 
     if last_err:
         raise last_err
+
+
+def _call_cerebras_json(system_prompt: str, user_content: str, temperature: float = 0.7) -> Optional[dict]:
+    """
+    Tier 2 Failover: Calls Cerebras inference endpoint with OpenAI-compatible JSON mode.
+    Models attempted: DEFAULT_CEREBRAS_MODEL -> qwen-3.8-27b -> gemma-4-31b -> llama-3.3-70b.
+    """
+    api_key = os.environ.get("CEREBRAS_API_KEY")
+    if not api_key:
+        return None
+
+    url = "https://api.cerebras.ai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    }
+    candidates = [
+        DEFAULT_CEREBRAS_MODEL,
+        "qwen-3.8-27b",
+        "gemma-4-31b",
+        "llama-3.3-70b",
+    ]
+    seen = set()
+    for model in candidates:
+        if model in seen:
+            continue
+        seen.add(model)
+        try:
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+                "response_format": {"type": "json_object"},
+                "temperature": temperature,
+            }
+            resp = requests.post(url, headers=headers, json=payload, timeout=25)
+            if resp.status_code == 200:
+                data = resp.json()
+                raw = data["choices"][0]["message"]["content"]
+                return json.loads(raw)
+            else:
+                logger.warning("Cerebras (%s) returned HTTP %d: %s", model, resp.status_code, resp.text[:120])
+        except Exception as e:
+            logger.warning("Cerebras (%s) call error: %s", model, e)
+
+    return None
 
 
 @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(Exception,))
@@ -320,9 +370,22 @@ def generate_carousel_content(topic: str) -> dict:
                 temperature=0.7,
             )
         except Exception as e:
-            logger.warning("Groq carousel generation failed, trying Gemini: %s", e)
+            logger.warning("Groq carousel generation failed, trying Cerebras failover: %s", e)
 
-    # 2. Try Gemini fallback
+    # 2. Try Cerebras failover (Instant Backup Editor - Tier 2)
+    if not data:
+        try:
+            data = _call_cerebras_json(
+                system_prompt=_GROQ_CAROUSEL_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+            if data:
+                logger.info("  ✓ Generated carousel content via Cerebras failover")
+        except Exception as e:
+            logger.warning("Cerebras carousel generation failed, trying Gemini: %s", e)
+
+    # 3. Try Gemini fallback (Dormant Reserve - Tier 5)
     if not data:
         gemini_client = get_gemini_client()
         if gemini_client:
@@ -340,8 +403,8 @@ def generate_carousel_content(topic: str) -> dict:
 
     if not data:
         raise ValueError(
-            "Neither GROQ_API_KEY nor GEMINI_API_KEY could generate content. "
-            "Please ensure GROQ_API_KEY is configured in your .env file."
+            "Neither Groq, Cerebras, nor Gemini could generate content. "
+            "Please ensure GROQ_API_KEY or CEREBRAS_API_KEY is configured in your .env file."
         )
 
     # Defensive normalization: guarantee cover/outro carry hook_line/subtitle fields
@@ -396,8 +459,22 @@ def generate_cheatsheet_content(topic: str) -> dict:
                 temperature=0.7,
             )
         except Exception as e:
-            logger.warning("Groq cheatsheet generation failed, trying Gemini: %s", e)
+            logger.warning("Groq cheatsheet generation failed, trying Cerebras failover: %s", e)
 
+    # 2. Try Cerebras failover (Instant Backup Editor - Tier 2)
+    if not data:
+        try:
+            data = _call_cerebras_json(
+                system_prompt=_GROQ_CHEATSHEET_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+            if data:
+                logger.info("  ✓ Generated cheatsheet content via Cerebras failover")
+        except Exception as e:
+            logger.warning("Cerebras cheatsheet generation failed, trying Gemini: %s", e)
+
+    # 3. Try Gemini fallback (Dormant Reserve - Tier 5)
     if not data:
         gemini_client = get_gemini_client()
         if gemini_client:
@@ -411,7 +488,7 @@ def generate_cheatsheet_content(topic: str) -> dict:
 
     if not data:
         raise ValueError(
-            "Neither GROQ_API_KEY nor GEMINI_API_KEY is available for cheatsheet generation."
+            "Neither Groq, Cerebras, nor Gemini is available for cheatsheet generation."
         )
 
     # Defensive normalization for cheatsheet items
@@ -490,8 +567,22 @@ def generate_flow_carousel_content(topic: str) -> dict:
                 temperature=0.7,
             )
         except Exception as e:
-            logger.warning("Groq flow carousel generation failed, trying Gemini: %s", e)
+            logger.warning("Groq flow carousel generation failed, trying Cerebras failover: %s", e)
 
+    # 2. Try Cerebras failover (Instant Backup Editor - Tier 2)
+    if not data:
+        try:
+            data = _call_cerebras_json(
+                system_prompt=_GROQ_FLOW_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+            if data:
+                logger.info("  ✓ Generated flow carousel content via Cerebras failover")
+        except Exception as e:
+            logger.warning("Cerebras flow carousel generation failed, trying Gemini: %s", e)
+
+    # 3. Try Gemini fallback (Dormant Reserve - Tier 5)
     if not data:
         gemini_client = get_gemini_client()
         if gemini_client:
@@ -507,7 +598,7 @@ def generate_flow_carousel_content(topic: str) -> dict:
                 logger.error("Gemini flow carousel generation failed: %s", e)
 
     if not data:
-        raise ValueError("Neither Groq nor Gemini could generate flow carousel content. Check your API keys in .env.")
+        raise ValueError("Neither Groq, Cerebras, nor Gemini could generate flow carousel content. Check your API keys in .env.")
 
     # Defensive normalization
     data.setdefault("series_title", "SYSTEM ARCHITECTURE")
