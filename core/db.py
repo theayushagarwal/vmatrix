@@ -119,6 +119,12 @@ class CompetitorDatabase:
         }
         _save_json(COMPETITOR_FOLLOWERS_FILE, cache)
 
+    def upsert_competitor_post(self, post: Dict[str, Any]) -> bool:
+        """Upserts a single approved competitor post to the database."""
+        if not post:
+            return False
+        return self.save_competitor_posts([post])
+
     def save_competitor_posts(self, posts: List[Dict[str, Any]]) -> bool:
         """
         Saves a list of scraped competitor posts to data/competitor_posts.json

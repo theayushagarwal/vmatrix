@@ -222,9 +222,10 @@ class InstaScraper:
 
             if posts:
                 logger.info(f"Successfully scraped {len(posts)} posts from @{handle} via Apify!")
-                db.save_competitor_posts(posts)
+                from schedulers.daily import filter_and_save_competitor_posts
+                filtered_posts = filter_and_save_competitor_posts(handle, posts, niche_name="veltrix")
                 db.log_scrape_attempt(handle, niche, "success")
-                return posts
+                return filtered_posts
             else:
                 db.log_scrape_attempt(handle, niche, "failed", "No valid posts parsed")
                 return self._get_curated_fallback_posts(handle, niche, limit=min(limit, 5))
@@ -350,7 +351,9 @@ class InstaScraper:
             for h in active_handles:
                 posts_for_h = results.get(h, [])
                 if h in succeeded_handles and posts_for_h:
-                    db.save_competitor_posts(posts_for_h)
+                    from schedulers.daily import filter_and_save_competitor_posts
+                    filtered = filter_and_save_competitor_posts(h, posts_for_h, niche_name="veltrix")
+                    results[h] = filtered
                     db.log_scrape_attempt(h, niche, "success")
                 else:
                     db.log_scrape_attempt(h, niche, "failed", "No items matched in dataset")
