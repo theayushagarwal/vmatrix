@@ -24,11 +24,23 @@ DISCLAIMER = "⚠️ Disclaimer: For educational and informational purposes only
 BRAND_SYSTEM_PROMPT = (
     "You are the creative lead of @vmatrix.co, a premier Instagram brand covering AI engineering, "
     "developer tools, system architecture, and tech finance. "
-    "Your audience consists of analytically curious developers, tech enthusiasts, researchers, and students. "
-    "Followers expect sharp, highly specific, technical insights. "
-    "Avoid generic AI clichés (e.g., 'dive deep', 'game-changer', 'revolutionizing the world'). "
-    "Focus on concrete utility, workflow shortcuts, latency metrics, or code mechanics. "
-    "Default tone: confident, precise, beginner-friendly yet technically sound."
+    "Your audience consists of high-school students, beginner coders, college students, and rookie 'vibe coders'. "
+    "Followers expect sharp, highly accessible, zero-fluff technical insights explained simply.\n\n"
+    "COGNITIVE ACCESSIBILITY MANDATE:\n"
+    "1. Explain every concept as if you are explaining a shortcut to a smart friend over coffee.\n"
+    "2. Strict 'Sentence & Word Cap' (Rule 1):\n"
+    "   - Step headline: strictly maximum 6 words.\n"
+    "   - what_it_is: strictly 1 sentence (strictly 10 to 18 words).\n"
+    "   - why_it_matters: strictly 1 sentence (strictly 10 to 15 words).\n"
+    "   - description: strictly maximum 25 words.\n\n"
+    "NEGATIVE PERSONA GUARDRAILS (Rule 4 - Banned Jargon vs Approved Plain Translation):\n"
+    "[BANNED]: 'Decentralized consensus protocol throughput' -> [APPROVED]: 'How fast the network agrees on a transaction'\n"
+    "[BANNED]: 'Container isolation daemon abstraction' -> [APPROVED]: 'A lightweight box that lets code run anywhere'\n"
+    "[BANNED]: 'Dollar-cost averaging with compound alpha' -> [APPROVED]: 'Investing $50 every Monday so you never buy at the peak'\n"
+    "[BANNED]: 'Asynchronous non-blocking event loop' -> [APPROVED]: 'Doing 5 tasks at once without waiting for each one to finish'\n"
+    "[BANNED]: Banned buzzwords: 'paradigm shift', 'leverage synergies', 'revolutionizing the landscape', "
+    "'dive deep', 'game-changer', 'unleash the power', 'tapestry of', 'delve into'.\n"
+    "Default tone: energetic, punchy, beginner-friendly, visual, and technically accurate."
 )
 
 FORBIDDEN_HASHTAGS = {
@@ -184,3 +196,112 @@ def call_secondary_brain(
             logger.warning("Gemini secondary brain fallback failed: %s", e)
 
     return None
+
+
+# --------------------------------------------------------------------------
+# Rule 5: Secondary Brain "Jargon Eraser" & Local Fallback
+# --------------------------------------------------------------------------
+JARGON_REPLACEMENTS = {
+    r"\bparadigm shift\b": "game-changing shift",
+    r"\bleverage synergies\b": "work together seamlessly",
+    r"\brevolutionizing the landscape\b": "transforming how we build",
+    r"\bdive deep\b": "break down",
+    r"\bdelve into\b": "explore",
+    r"\bunleash the power\b": "supercharge",
+    r"\bgame-changer\b": "breakthrough",
+    r"\btapestry of\b": "collection of",
+    r"\bdecentralized consensus protocol throughput\b": "how fast the network agrees on transactions",
+    r"\bcontainer isolation daemon abstraction\b": "a lightweight box that lets code run anywhere",
+    r"\bdollar-cost averaging with compound alpha\b": "investing a fixed amount every week",
+    r"\basynchronous non-blocking event loop\b": "running multiple tasks without waiting for each one",
+}
+
+
+def sanitize_jargon_local(text: str) -> str:
+    """Fast deterministic local sanitizer for banned corporate & academic jargon."""
+    if not text:
+        return ""
+    result = text
+    for pattern, replacement in JARGON_REPLACEMENTS.items():
+        result = re.sub(pattern, replacement, result, flags=re.IGNORECASE)
+    return result
+
+
+def erase_jargon_with_secondary_brain(content_plan: dict) -> dict:
+    """
+    Rule 5: Secondary Brain 'Jargon Eraser'.
+    Passes generated content through Groq / Cerebras / Gemini Llama-3.3 audit to:
+    1. Scrub corporate/academic jargon into plain English relatable metaphors.
+    2. Enforce strict word caps (headline <= 6 words, what_it_is: 10-18 words, why_it_matters: 10-15 words).
+    3. Ensure accessibility for high-school students and rookie vibe coders.
+    """
+    if not isinstance(content_plan, dict):
+        return content_plan
+
+    slides = content_plan.get("slides", [])
+    if not slides:
+        return content_plan
+
+    # Extract only text fields to keep secondary brain token usage low and fast
+    compact_slides = []
+    for s in slides:
+        stype = s.get("type", "content")
+        compact_slides.append({
+            "type": stype,
+            "title": s.get("title") or s.get("headline", ""),
+            "what_it_is": s.get("what_it_is", ""),
+            "why_it_matters": s.get("why_it_matters", ""),
+            "description": s.get("description", ""),
+            "key_benefit": s.get("key_benefit", ""),
+        })
+
+    audit_prompt = (
+        "You are an elite Instagram copywriter and design auditor for @vmatrix.co.\n"
+        "ACCESSIBILITY RULE:\n"
+        "Ensure the language is simple, clean, and engaging for high-school students, beginner coders, and rookie 'vibe coders'.\n"
+        "Strip out any academic corporate jargon (e.g. 'paradigm shift', 'leverage synergies', 'revolutionizing the landscape').\n"
+        "Explain the concept as if you are explaining a shortcut to a smart friend.\n"
+        "HARD CONSTRAINTS (RULE 1):\n"
+        "- Each step headline/title must be strictly maximum 6 words.\n"
+        "- what_it_is must be exactly 1 sentence (strictly 10 to 18 words).\n"
+        "- why_it_matters must be exactly 1 sentence (strictly 10 to 15 words).\n"
+        "- Each step description must be strictly maximum 25 words.\n\n"
+        f"Here are the content slides:\n{json.dumps(compact_slides, indent=2)}\n\n"
+        "Rewrite the text fields to be 100% compliant and crystal clear. "
+        "Return ONLY a JSON object: {\"slides\": [ ... ]} with the same number of items."
+    )
+
+    try:
+        raw_res = call_secondary_brain(audit_prompt, temperature=0.2, response_mime_type="application/json")
+        if raw_res:
+            if "{" in raw_res and "}" in raw_res:
+                json_part = raw_res[raw_res.find("{"):raw_res.rfind("}") + 1]
+                audited = json.loads(json_part)
+                audited_slides = audited.get("slides", [])
+                if len(audited_slides) == len(slides):
+                    for orig, refined in zip(slides, audited_slides):
+                        if refined.get("title"):
+                            orig["title"] = sanitize_jargon_local(refined["title"])
+                            if "headline" in orig:
+                                orig["headline"] = orig["title"]
+                        if refined.get("what_it_is"):
+                            orig["what_it_is"] = sanitize_jargon_local(refined["what_it_is"])
+                        if refined.get("why_it_matters"):
+                            orig["why_it_matters"] = sanitize_jargon_local(refined["why_it_matters"])
+                        if refined.get("description"):
+                            orig["description"] = sanitize_jargon_local(refined["description"])
+                        if refined.get("key_benefit"):
+                            orig["key_benefit"] = refined["key_benefit"]
+                    logger.info("  ✓ Secondary Brain Jargon Eraser successfully scrubbed and refined %d slides.", len(slides))
+                    return content_plan
+    except Exception as e:
+        logger.warning("Secondary brain jargon erasure failed (%s). Applying local sanitization fallback.", e)
+
+    # Local fallback sanitization
+    for s in slides:
+        for k in ("title", "headline", "description", "what_it_is", "why_it_matters", "hook_line", "subtitle"):
+            if s.get(k):
+                s[k] = sanitize_jargon_local(s[k])
+
+    return content_plan
+

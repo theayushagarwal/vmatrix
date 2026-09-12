@@ -102,6 +102,42 @@ def render_listicle_carousel(
     return render_listicle_slides(listicle_data, output_dir, image_format=image_format)
 
 
+# --------------------------------------------------------------------------
+# Cognitive Engineering Rules (Rule 1 & Rule 4 Prompts & Utilities)
+# --------------------------------------------------------------------------
+COGNITIVE_RULES_PROMPT = """
+# The LLM prompt forces rigid brevity:
+"what_it_is must be exactly 1 sentence (strictly 10 to 18 words)."
+"why_it_matters must be exactly 1 sentence (strictly 10 to 15 words)."
+"Each step headline must be strictly maximum 6 words."
+"Each step description must be strictly maximum 25 words."
+Why this works: The human brain evaluates a social media slide in 1.8 seconds.
+If it sees a block of 60 words, it skips. If it sees a 12-word punchline,
+the brain reads it subconsciously before it can even decide to scroll away.
+"""
+
+
+def generate_cognitive_listicle_plan(topic: str) -> Dict[str, Any]:
+    """
+    Generates a 5-slide educational listicle plan strictly obeying all 5 Cognitive Engineering Rules:
+    1. Word & sentence caps (headline <= 6 words, what_it_is 10-18 words, why_it_matters 10-15 words).
+    2. 3-Tier Visual Hierarchy with brand logos.
+    3. Color Marker Study-Note Psychology (amber and rose highlighter fields).
+    4. Relatable Metaphors instead of academic jargon.
+    5. Secondary Brain Jargon Eraser pass.
+    """
+    from core.generator import generate_carousel_content
+    from core.text_auditor import verify_cognitive_rules
+
+    plan = generate_carousel_content(topic)
+    audit = verify_cognitive_rules(plan)
+    if not audit["compliant"]:
+        from core.utils import logger
+        logger.info("Cognitive audit found adjustments: %s", audit["violations"])
+
+    return plan
+
+
 __all__ = [
     "resolve_logo",
     "resolve_logo_url",
@@ -111,4 +147,6 @@ __all__ = [
     "render_comparison_slide",
     "render_code_slide",
     "render_listicle_slides",
+    "COGNITIVE_RULES_PROMPT",
+    "generate_cognitive_listicle_plan",
 ]

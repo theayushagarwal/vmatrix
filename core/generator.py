@@ -15,6 +15,7 @@ from google.genai import types
 from typing import Optional, Any
 from dotenv import load_dotenv
 from .utils import retry_with_backoff, logger
+from .llm_utils import erase_jargon_with_secondary_brain
 
 load_dotenv()
 
@@ -181,6 +182,8 @@ _CAROUSEL_SCHEMA = {
                     "type": {"type": "string", "enum": ["cover", "content", "outro"]},
                     "step_num": {"type": "string"},
                     "title": {"type": "string"},
+                    "what_it_is": {"type": "string"},
+                    "why_it_matters": {"type": "string"},
                     "subtitle": {"type": "string"},
                     "description": {"type": "string"},
                     "key_benefit": {"type": "string"},
@@ -280,44 +283,51 @@ RICH_SLIDE_SCHEMA = types.Schema(
 # --------------------------------------------------------------------------
 # Prompts
 # --------------------------------------------------------------------------
-_CAROUSEL_SYSTEM_PROMPT = """You are an elite Instagram content strategist who writes viral,
-high-value educational carousels for a page that covers AI & coding, personal finance, and
-productivity tools. You write tight, punchy, zero-fluff copy that a busy professional would
-actually stop scrolling for.
+_CAROUSEL_SYSTEM_PROMPT = """You are an elite Instagram content strategist for @vmatrix.co who writes
+viral, high-value educational carousels for high-school students, beginner coders, and rookie 'vibe coders'.
+Your copy must be crystal-clear, instantly readable, and 100% fluff-free.
 
-Given a TOPIC, produce a 5-slide carousel plan as JSON matching the provided schema, with this
-exact slide sequence:
+COGNITIVE ENGINEERING PRINCIPLES (MANDATORY):
+1. RULE 1 - HARD SENTENCE & WORD CAPS (No Fluff Allowed):
+   - Each step headline: strictly maximum 6 words (e.g. '01 // Docker Containerization').
+   - what_it_is: strictly 1 sentence (strictly 10 to 18 words, simple jargon-free definition).
+   - why_it_matters: strictly 1 sentence (strictly 10 to 15 words, real-world payoff/benefit).
+   - description: strictly maximum 25 words (punchy takeaway).
 
-1. Slide 1 (type="cover"): a bold, scroll-stopping title, the hook_line, and a one-line subtitle
-   that frames the value of the carousel.
-2. Slides 2-4 (type="content"): three concrete steps or tools. Each needs a step_num ("01","02","03"),
-   a short punchy title, a description of 25 words or fewer, a key_benefit badge (2-4 words,
-   e.g. "SAVES 3 HRS/WK"), a tool_name, and a tool_domain (bare domain, e.g. "github.com") used
-   to fetch a favicon. If the topic isn't tool-based, still invent a plausible representative
-   tool/resource per step.
-3. Slide 5 (type="outro"): a title that recaps the value, a cta_keyword (ONE short word/phrase,
-   e.g. "CODE", "SAVE", "BUILD") that the audience should comment to get the resource, and an
-   action_text describing what happens when they do (e.g. "Comment 'CODE' and I'll DM you the repo").
+2. RULE 4 - RELATABLE METAPHORS INSTEAD OF TECHNICAL JARGON:
+   - Explain every concept as if you are explaining a shortcut to a smart friend over coffee.
+   - BANNED ACADEMIC JARGON vs APPROVED RELATABLE METAPHORS:
+     [BANNED]: 'Decentralized consensus protocol throughput' -> [APPROVED]: 'How fast the network agrees on a transaction'
+     [BANNED]: 'Container isolation daemon abstraction' -> [APPROVED]: 'A lightweight box that lets code run anywhere'
+     [BANNED]: 'Dollar-cost averaging with compound alpha' -> [APPROVED]: 'Investing $50 every Monday so you never buy at the peak'
+     [BANNED]: 'Asynchronous non-blocking event loop' -> [APPROVED]: 'Doing 5 tasks at once without waiting for each one to finish'
+     [BANNED]: Never use buzzwords: 'paradigm shift', 'leverage synergies', 'revolutionizing the landscape', 'dive deep', 'game-changer', 'delve into'.
+
+Given a TOPIC, produce a 5-slide carousel plan as JSON matching the provided schema, with this exact sequence:
+1. Slide 1 (type="cover"): a bold, scroll-stopping title (max 6 words), hook_line (8-12 words), and a one-line subtitle framing the guide.
+2. Slides 2-4 (type="content"): three concrete steps or tools. Each needs step_num ("01","02","03"),
+   headline/title (max 6 words), what_it_is (10-18 words), why_it_matters (10-15 words), description (<=25 words),
+   key_benefit badge (2-4 words, e.g. "SAVES 3 HRS/WK"), tool_name, and tool_domain (bare domain e.g. "github.com").
+3. Slide 5 (type="outro"): a recap title, cta_keyword (ONE short word e.g. "CODE", "FLOW", "BUILD"), and action_text.
 
 Also produce:
 - series_title: a bold 3-5 word series name.
-- category: one of "AI & CODING", "FINANCE", "TOOLS" — whichever best fits the topic.
-- caption: a clean, scannable Instagram caption with short paragraphs, at most 2 emojis total,
-  and exactly 5 targeted, relevant hashtags at the end.
+- category: one of "AI & CODING", "FINANCE", "TOOLS".
+- caption: a clean, scannable Instagram caption with short paragraphs, at most 2 emojis total, and exactly 5 targeted hashtags at the end.
 
 Return ONLY valid JSON matching the schema. No markdown fences, no commentary.
 """
 
 _CHEATSHEET_SYSTEM_PROMPT = """You are an elite Instagram content strategist who writes viral,
 high-value single-image cheatsheets/comparison grids for a page covering AI & coding, personal
-finance, and productivity tools.
+finance, and productivity tools for beginner coders and students.
 
 Given a TOPIC, produce a single-page infographic plan as JSON matching the schema:
 - title: bold 3-6 word headline.
 - hook_line: catchy 6-10 word supporting line.
 - category: one of "AI & CODING", "FINANCE", "TOOLS".
 - items: exactly 6 cards, each with a name, a bare domain for a favicon (tool_domain style, e.g.
-  "notion.so"), a desc of 12 words or fewer, and a badge (2-3 words status/label, e.g. "FREE TIER",
+  "notion.so"), a desc of strictly 12 words or fewer (simple plain English), and a badge (2-3 words status/label, e.g. "FREE TIER",
   "BEST VALUE", "PRO PICK").
 - caption: a clean Instagram caption, short paragraphs, at most 2 emojis, 5 targeted hashtags.
 
@@ -335,15 +345,17 @@ You MUST return ONLY valid JSON matching this exact structure:
   "slides": [
     {
       "type": "cover",
-      "title": "string",
+      "title": "string (strictly max 6 words)",
       "hook_line": "string",
       "subtitle": "string"
     },
     {
       "type": "content",
       "step_num": "01",
-      "title": "string",
-      "description": "string (<=25 words)",
+      "title": "string (strictly max 6 words)",
+      "what_it_is": "string (strictly 1 sentence, 10 to 18 words, simple jargon-free definition)",
+      "why_it_matters": "string (strictly 1 sentence, 10 to 15 words, real-world benefit/payoff)",
+      "description": "string (strictly max 25 words)",
       "key_benefit": "string (2-4 words)",
       "tool_name": "string",
       "tool_domain": "bare domain e.g. cursor.com"
@@ -351,8 +363,10 @@ You MUST return ONLY valid JSON matching this exact structure:
     {
       "type": "content",
       "step_num": "02",
-      "title": "string",
-      "description": "string (<=25 words)",
+      "title": "string (strictly max 6 words)",
+      "what_it_is": "string (strictly 1 sentence, 10 to 18 words, simple jargon-free definition)",
+      "why_it_matters": "string (strictly 1 sentence, 10 to 15 words, real-world benefit/payoff)",
+      "description": "string (strictly max 25 words)",
       "key_benefit": "string (2-4 words)",
       "tool_name": "string",
       "tool_domain": "bare domain"
@@ -360,8 +374,10 @@ You MUST return ONLY valid JSON matching this exact structure:
     {
       "type": "content",
       "step_num": "03",
-      "title": "string",
-      "description": "string (<=25 words)",
+      "title": "string (strictly max 6 words)",
+      "what_it_is": "string (strictly 1 sentence, 10 to 18 words, simple jargon-free definition)",
+      "why_it_matters": "string (strictly 1 sentence, 10 to 15 words, real-world benefit/payoff)",
+      "description": "string (strictly max 25 words)",
       "key_benefit": "string (2-4 words)",
       "tool_name": "string",
       "tool_domain": "bare domain"
@@ -484,9 +500,21 @@ def generate_carousel_content(topic: str) -> dict:
             slide.setdefault("key_benefit", "PRO TIP")
             slide.setdefault("tool_name", "Tool")
             slide.setdefault("tool_domain", "github.com")
+            if not slide.get("what_it_is"):
+                desc = slide.get("description", "A lightweight developer tool that streamlines your workflow.")
+                slide["what_it_is"] = desc
+            if not slide.get("why_it_matters"):
+                benefit = slide.get("key_benefit", "Saves developer time")
+                slide["why_it_matters"] = f"Eliminates hours of manual boilerplate work: {benefit}."
         elif stype == "outro":
             slide.setdefault("cta_keyword", "GUIDE")
             slide.setdefault("action_text", "Comment below and get the complete resource.")
+
+    # Rule 5: Pass through Secondary Brain Jargon Eraser
+    try:
+        data = erase_jargon_with_secondary_brain(data)
+    except Exception as e:
+        logger.warning("Jargon eraser pass encountered warning: %s", e)
 
     return data
 
@@ -551,14 +579,27 @@ def generate_cheatsheet_content(topic: str) -> dict:
     return data
 
 
-_GROQ_FLOW_PROMPT = """You are an elite system architect and technical Instagram creator.
+_GROQ_FLOW_PROMPT = """You are an elite system architect and technical Instagram creator for @vmatrix.co.
 Given a technical TOPIC, produce a complete System Architecture Flowchart Carousel plan as JSON.
+
+COGNITIVE ENGINEERING PRINCIPLES (MANDATORY):
+1. RULE 1 - HARD SENTENCE & WORD CAPS:
+   - Each slide 'headline': strictly maximum 6 words (e.g. '01 // Docker Containerization').
+   - 'description': strictly 1 sentence (strictly 10 to 18 words, max 25 words).
+   - Each diagram node: 2-3 words.
+2. RULE 2 - 3-TIER VISUAL BRAIN ANCHOR:
+   - Tier 1: Big Bold Hook (headline, max 6 words).
+   - Tier 2: Interactive diagram (flowchart, stack, or grid) with 3-4 steps and tools with SimpleIcon logos.
+   - Tier 3: One-sentence description + active stack.
+3. RULE 4 - RELATABLE METAPHORS:
+   - Write for high-school students, beginner coders, and rookie 'vibe coders'.
+   - Avoid dense corporate/academic jargon. Explain concepts using real-world analogies.
 
 EXACT JSON SCHEMA REQUIRED:
 {
   "theme": "LIGHT" | "DARK",
   "series_title": "string (3-5 words, e.g. SYSTEM BLUEPRINT)",
-  "cover_title": "string (bold headline, 4-7 words)",
+  "cover_title": "string (bold headline, max 6 words)",
   "cover_subtitle": "string (punchy subtitle, 8-14 words)",
   "category": "AI & CODING" | "TOOLS" | "FINANCE",
   "cta_keyword": "string (ONE word e.g. FLOW or GUIDE)",
@@ -567,8 +608,8 @@ EXACT JSON SCHEMA REQUIRED:
   ],
   "slides": [
     {
-      "headline": "string (e.g. Ingestion & WebSocket Gateway)",
-      "description": "string (tight explanation, max 25 words)",
+      "headline": "string (strictly max 6 words, e.g. Ingestion & WebSocket Gateway)",
+      "description": "string (strictly 1 sentence, 10 to 18 words, max 25 words)",
       "tools": [
         {"name": "string", "logo": "simpleicon-slug"}
       ],
@@ -724,6 +765,12 @@ def generate_flow_carousel_content(topic: str) -> dict:
     outro.setdefault("title", "Ready to Build This Pipeline?")
     outro.setdefault("cta_keyword", data.get("cta_keyword", "FLOW"))
     outro.setdefault("action_text", f"Comment '{data.get('cta_keyword', 'FLOW')}' and I'll DM you the complete starter repo.")
+
+    # Rule 5: Pass through Secondary Brain Jargon Eraser
+    try:
+        data = erase_jargon_with_secondary_brain(data)
+    except Exception as e:
+        logger.warning("Flow jargon eraser pass encountered warning: %s", e)
 
     return data
 

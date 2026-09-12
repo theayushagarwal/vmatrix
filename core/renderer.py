@@ -7,6 +7,7 @@ slides with real CSS (grid, blur, gradients, web fonts) instead of fighting
 Pillow's primitive drawing API.
 """
 
+import re
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader, ChoiceLoader
 
@@ -581,9 +582,13 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
             if not tool_logo and tool_name:
                 tool_logo = resolve_logo_url(tool_name, domain=domain, output_dir=output_dir, suffix=f"c_{idx}")
             step_num = slide.get("step_num") or f"{max(1, idx - 1):02d}"
+            raw_title = slide.get("title") or slide.get("headline") or tool_name
+            clean_title = re.sub(r"^\s*0?\d+\s*[/:\-]\s*", "", raw_title).strip()
             html = tpl.render(
-                title=slide.get("title", tool_name),
-                headline=slide.get("headline", ""),
+                title=clean_title,
+                headline=clean_title,
+                what_it_is=slide.get("what_it_is", ""),
+                why_it_matters=slide.get("why_it_matters", ""),
                 description=slide.get("description", ""),
                 step_num=step_num,
                 tool_name=tool_name,

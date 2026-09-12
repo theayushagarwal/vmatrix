@@ -43,6 +43,7 @@ from .text_auditor import (
     verify_text_content,
     validate_caption,
     auto_fix_caption,
+    verify_cognitive_rules,
 )
 from .media_generator import (
     has_border_bleed,

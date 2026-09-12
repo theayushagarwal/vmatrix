@@ -214,3 +214,52 @@ def auto_fix_caption(caption: str) -> str:
     # 3. Reassemble with Disclaimer and Hashtags isolated at bottom
     hashtags_str = " ".join(dict.fromkeys(found_hashtags))
     return f"{clean_body}\n\n{DISCLAIMER}\n\n{hashtags_str}".strip()
+
+
+# --------------------------------------------------------------------------
+# Cognitive Engineering Rules Validator (Rule 1 Hard Limits)
+# --------------------------------------------------------------------------
+def verify_cognitive_rules(content_plan: dict) -> dict:
+    """
+    Validates that slides adhere strictly to the 5 Cognitive Engineering Rules:
+    - Headline: max 6 words
+    - what_it_is: strictly 1 sentence, 10 to 18 words
+    - why_it_matters: strictly 1 sentence, 10 to 15 words
+    - description: strictly max 25 words
+    """
+    violations = []
+    slides = content_plan.get("slides", []) if isinstance(content_plan, dict) else []
+
+    for idx, s in enumerate(slides, start=1):
+        if not isinstance(s, dict):
+            continue
+        title = s.get("title") or s.get("headline", "")
+        if title:
+            word_count = len(title.split())
+            if word_count > 6:
+                violations.append(f"Slide {idx} headline exceeds 6 words ({word_count} words): '{title}'")
+
+        what = s.get("what_it_is", "")
+        if what:
+            words = what.split()
+            if len(words) > 20:
+                violations.append(f"Slide {idx} 'what_it_is' exceeds 18 words cap ({len(words)} words)")
+
+        why = s.get("why_it_matters", "")
+        if why:
+            words = why.split()
+            if len(words) > 18:
+                violations.append(f"Slide {idx} 'why_it_matters' exceeds 15 words cap ({len(words)} words)")
+
+        desc = s.get("description", "")
+        if desc:
+            words = desc.split()
+            if len(words) > 28:
+                violations.append(f"Slide {idx} description exceeds 25 words cap ({len(words)} words)")
+
+    return {
+        "compliant": len(violations) == 0,
+        "violations": violations,
+        "total_slides_checked": len(slides),
+    }
+

@@ -135,6 +135,72 @@
             max-width: 920px;
         }
         .light-theme .desc-card { box-shadow: 0 4px 20px rgba(99, 102, 241, 0.08); }
+
+        /* Rule 3: Study Note Highlighters (Tilted Marker Psychology) */
+        .study-notes-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-width: 920px;
+        }
+        .study-note-card {
+            background: var(--card-bg);
+            border: 1.5px solid var(--card-border);
+            border-radius: 20px;
+            padding: 24px 32px;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.06);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+        .study-note-card.card-what {
+            border-left: 6px solid #f59e0b;
+        }
+        .study-note-card.card-why {
+            border-left: 6px solid #f43f5e;
+        }
+        .marker-header {
+            position: relative;
+            display: inline-block;
+            font-size: 19px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: #0f172a;
+            z-index: 2;
+            margin-bottom: 8px;
+            width: fit-content;
+        }
+        .marker-header::before {
+            content: '';
+            position: absolute;
+            inset: -2px -8px -2px -8px;
+            z-index: -1;
+            border-radius: 4px;
+        }
+        /* Tilted study highlighter behind headers */
+        .header-what::before {
+            background: #ffe082; /* Warm Amber Study Highlighter */
+            transform: rotate(-0.5deg) skewX(-10deg);
+        }
+        .header-why::before {
+            background: #ffcdd2; /* Soft Rose Alert Highlighter */
+            transform: rotate(0.8deg) skewX(-8deg);
+        }
+        .dark-theme .header-what::before {
+            background: #d97706;
+        }
+        .dark-theme .header-why::before {
+            background: #e11d48;
+        }
+        .dark-theme .marker-header {
+            color: #ffffff;
+        }
+        .note-text {
+            font-size: 25px;
+            font-weight: 500;
+            line-height: 1.45;
+            color: var(--desc-color);
+        }
         .meta-chips-row {
             display: flex;
             align-items: center;
@@ -199,9 +265,26 @@
             {% endif %}
         </div>
         <h2 class="slide-title">{{ title | default(headline, true) }}</h2>
+        {% if what_it_is or why_it_matters %}
+        <div class="study-notes-container">
+            {% if what_it_is %}
+            <div class="study-note-card card-what">
+                <div class="marker-header header-what">WHAT IT IS</div>
+                <p class="note-text">{{ what_it_is }}</p>
+            </div>
+            {% endif %}
+            {% if why_it_matters %}
+            <div class="study-note-card card-why">
+                <div class="marker-header header-why">WHY IT MATTERS</div>
+                <p class="note-text">{{ why_it_matters }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
         <div class="desc-card">
             {{ description }}
         </div>
+        {% endif %}
         <div class="meta-chips-row">
             {% if tool_name %}
             <div class="tag-chip">⚙️ {{ tool_name }}</div>
