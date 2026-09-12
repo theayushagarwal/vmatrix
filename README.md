@@ -36,8 +36,8 @@ When gathering real-time data from search trends and news feeds, 90% of raw head
                               │ (~10 items left)
                               ▼
 ┌───────────────────────────────────────────────────────────┐
-│ 🧠 STAGE 3: Semantic LLM Classifier (Fast 0.5s Check)     │
-│ • Cost: <$0.0001 | Classifies PURE_AI, PURE_FINANCE, MIXED│
+│ 🧠 STAGE 3: Semantic LLM Classifier (Groq / Fast 0.3s)    │
+│ • Groq openai/gpt-oss-120b | PURE_AI, PURE_FINANCE, MIXED │
 └─────────────────────────────┬─────────────────────────────┘
                               │ (~5 items left)
                               ▼
@@ -150,9 +150,10 @@ streamlit run app.py
 | Layer | Technology |
 |---|---|
 | Topic Gathering | Google Trends RSS, TechCrunch AI RSS, VentureBeat AI RSS, Hacker News API |
-| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Gemini 2.5 Flash Classifier, Cosine Memory |
+| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Groq (openai/gpt-oss-120b), Cosine Memory |
 | Content Intelligence | Gemini 2.5 Flash, structured JSON output |
 | Rendering | Playwright (headless Chromium), Jinja2, Tailwind CSS |
 | Media Hosting | Cloudinary |
 | Publishing | Meta / Instagram Graph API (carousel containers) |
 | Demo UI | Streamlit |
+

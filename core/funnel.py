@@ -231,8 +231,57 @@ For each headline:
 """
 
 
+DEFAULT_GROQ_MODEL = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+
+
+def _get_groq_client() -> Optional[Any]:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        return None
+    try:
+        from groq import Groq
+        return Groq(api_key=api_key)
+    except Exception as e:
+        logger.warning("Could not initialize Groq client: %s", e)
+        return None
+
+
+@retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
+def _call_groq_classifier(client: Any, titles: List[str], model: str = DEFAULT_GROQ_MODEL) -> List[Dict[str, Any]]:
+    """
+    Calls Groq with openai/gpt-oss-120b to perform ultra-fast sub-second semantic classification.
+    """
+    json_instructions = """
+You MUST return ONLY valid JSON matching this schema:
+{
+  "classifications": [
+    {
+      "original_title": "string",
+      "category": "PURE_AI" | "PURE_FINANCE" | "MIXED" | "OFF_TOPIC",
+      "is_educational": true or false,
+      "refined_title": "string",
+      "reason": "string"
+    }
+  ]
+}
+"""
+    prompt = f"{_CLASSIFIER_SYSTEM_PROMPT}\n{json_instructions}"
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"HEADLINES TO CLASSIFY:\n{json.dumps(titles, indent=2)}"}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.2,
+    )
+    content = completion.choices[0].message.content
+    parsed = json.loads(content)
+    return parsed.get("classifications", [])
+
+
 def _fallback_semantic_classify(items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Heuristic fallback when Gemini is unavailable."""
+    """Heuristic fallback when neither Groq nor Gemini is available."""
     results = []
     for it in items:
         cat = it.get("category", "AI & CODING")
@@ -271,27 +320,38 @@ def _call_gemini_classifier(client: genai.Client, titles: List[str]) -> List[Dic
 
 def apply_stage3_semantic_classifier(items: List[Dict[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
-    Stage 3 Filter: Batched semantic LLM classification to filter false positives
-    and reject OFF_TOPIC / non-educational trends.
+    Stage 3 Filter: Fast semantic LLM classification using Groq openai/gpt-oss-120b
+    (with automatic fallback to Gemini 2.5 Flash and rule heuristics).
     """
     if not items:
         return [], []
 
     titles = [it["title"] for it in items]
-    api_key = os.environ.get("GEMINI_API_KEY")
-
     classifications = []
-    if api_key:
+
+    # 1. Try Groq (openai/gpt-oss-120b)
+    groq_client = _get_groq_client()
+    if groq_client:
         try:
-            client = genai.Client(api_key=api_key)
-            classifications = _call_gemini_classifier(client, titles)
+            classifications = _call_groq_classifier(groq_client, titles)
         except Exception as e:
-            logger.warning("Stage 3 Gemini Classifier error, falling back to heuristics: %s", e)
+            logger.warning("Stage 3 Groq (%s) error, attempting Gemini fallback: %s", DEFAULT_GROQ_MODEL, e)
+
+    # 2. Fallback to Gemini 2.5 Flash
+    if not classifications:
+        gemini_api_key = os.environ.get("GEMINI_API_KEY")
+        if gemini_api_key:
+            try:
+                client = genai.Client(api_key=gemini_api_key)
+                classifications = _call_gemini_classifier(client, titles)
+            except Exception as e:
+                logger.warning("Stage 3 Gemini Classifier error, falling back to heuristics: %s", e)
+                classifications = _fallback_semantic_classify(items)
+        else:
             classifications = _fallback_semantic_classify(items)
-    else:
-        classifications = _fallback_semantic_classify(items)
 
     class_map = {c.get("original_title", ""): c for c in classifications}
+
 
     passed = []
     dropped = []
