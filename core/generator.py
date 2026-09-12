@@ -47,26 +47,42 @@ def get_gemini_client() -> Optional[genai.Client]:
         return None
 
 
-@retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(Exception,))
+GROQ_MODELS_CHAIN = [
+    os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b"),
+    "openai/gpt-oss-20b",
+    "qwen/qwen3.8-27b",
+]
+
+
+@retry_with_backoff(max_attempts=2, base_delay=1.0, exceptions=(Exception,))
 def _call_groq_json(client: Any, system_prompt: str, user_content: str, temperature: float = 0.7) -> dict:
     """
-    Retried call to Groq with openai/gpt-oss-120b using native json_object mode.
+    Calls Groq using native json_object mode with automatic multi-model failover:
+    openai/gpt-oss-120b -> openai/gpt-oss-20b -> qwen/qwen3.8-27b.
     """
-    completion = client.chat.completions.create(
-        model=DEFAULT_GROQ_MODEL,
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_content},
-        ],
-        response_format={"type": "json_object"},
-        temperature=temperature,
-    )
-    content = completion.choices[0].message.content
-    try:
-        return json.loads(content)
-    except (json.JSONDecodeError, TypeError) as e:
-        logger.warning("Groq returned non-JSON response, will retry: %s", e)
-        raise
+    last_err = None
+    for model_candidate in GROQ_MODELS_CHAIN:
+        try:
+            completion = client.chat.completions.create(
+                model=model_candidate,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_content},
+                ],
+                response_format={"type": "json_object"},
+                temperature=temperature,
+            )
+            content = completion.choices[0].message.content
+            return json.loads(content)
+        except (json.JSONDecodeError, TypeError) as e:
+            logger.warning("Groq (%s) non-JSON response: %s, attempting next model", model_candidate, e)
+            last_err = e
+        except Exception as e:
+            logger.warning("Groq (%s) call failed: %s, attempting next model", model_candidate, e)
+            last_err = e
+
+    if last_err:
+        raise last_err
 
 
 @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(Exception,))
@@ -402,5 +418,136 @@ def generate_cheatsheet_content(topic: str) -> dict:
         it.setdefault("domain", "github.com")
         it.setdefault("badge", "PRO PICK")
         it.setdefault("desc", "High-efficiency developer tool")
+
+    return data
+
+
+_GROQ_FLOW_PROMPT = """You are an elite system architect and technical Instagram creator.
+Given a technical TOPIC, produce a complete 5-slide System Architecture Flowchart Carousel plan as JSON.
+
+EXACT JSON SCHEMA REQUIRED:
+{
+  "series_title": "string (3-5 words, e.g. SYSTEM BLUEPRINT)",
+  "cover_title": "string (bold headline, 4-7 words)",
+  "cover_subtitle": "string (punchy subtitle, 8-14 words)",
+  "category": "AI & CODING" | "TOOLS" | "FINANCE",
+  "cta_keyword": "string (ONE word e.g. FLOW or BUILD)",
+  "tools": [
+    {"name": "string", "domain": "domain.com"}
+  ],
+  "slides": [
+    {
+      "headline": "string (e.g. 01: Ingestion & Gateway)",
+      "description": "string (tight explanation, max 25 words)",
+      "active_node_name": "string (e.g. API Gateway)",
+      "status_badge": "string (e.g. LATENCY < 15MS or STREAMING)",
+      "nodes": [
+        {"name": "string", "role": "string", "domain": "domain.com", "is_active": boolean}
+      ],
+      "bullets": [
+        "string (concrete architecture spec)",
+        "string (concrete architecture spec)",
+        "string (concrete architecture spec)"
+      ]
+    }
+  ],
+  "outro": {
+    "title": "string (e.g. Ready to Deploy This Pipeline?)",
+    "cta_keyword": "string (ONE word)",
+    "action_text": "string (e.g. Comment 'FLOW' and I will DM you the complete architecture repo & setup instructions.)"
+  },
+  "caption": "string (clean Instagram caption with exactly 5 hashtags)"
+}
+
+Rules:
+1. 'slides' array MUST contain exactly 3 technical flow steps (representing step 1, 2, 3 of the pipeline).
+2. 'nodes' array inside each slide MUST contain exactly 3 or 4 connected pipeline nodes, where only ONE node has is_active=true matching that slide's step.
+3. 'tools' array MUST contain 3-4 key tools with valid domain names (e.g. nextjs.org, fastapi.tiangolo.com, groq.com, supabase.com, redis.io, docker.com, postgresql.org).
+4. Return ONLY valid JSON.
+"""
+
+
+def generate_flow_carousel_content(topic: str) -> dict:
+    """
+    Generates structured system architecture flowchart carousel plan:
+    - series_title, cover_title, cover_subtitle, category, cta_keyword
+    - tools: 4 key tools/frameworks
+    - slides: 3 concrete pipeline flow steps with node diagrams and specs
+    - outro: CTA keyword and action text
+    - caption: Instagram caption
+    """
+    data = None
+    groq_client = _get_groq_client()
+
+    if groq_client:
+        try:
+            data = _call_groq_json(
+                groq_client,
+                system_prompt=_GROQ_FLOW_PROMPT,
+                user_content=f"TOPIC: {topic}",
+                temperature=0.7,
+            )
+        except Exception as e:
+            logger.warning("Groq flow carousel generation failed, trying Gemini: %s", e)
+
+    if not data:
+        gemini_client = get_gemini_client()
+        if gemini_client:
+            try:
+                data = _call_gemini_json(
+                    gemini_client,
+                    contents=f"TOPIC: {topic}",
+                    system_instruction=_GROQ_FLOW_PROMPT,
+                    schema=_CAROUSEL_SCHEMA,
+                    temperature=0.7,
+                )
+            except Exception as e:
+                logger.error("Gemini flow carousel generation failed: %s", e)
+
+    if not data:
+        raise ValueError("Neither Groq nor Gemini could generate flow carousel content. Check your API keys in .env.")
+
+    # Defensive normalization
+    data.setdefault("series_title", "SYSTEM ARCHITECTURE")
+    data.setdefault("cover_title", topic)
+    data.setdefault("cover_subtitle", "Complete Step-by-Step Technical Blueprint")
+    data.setdefault("cta_keyword", "FLOW")
+    data.setdefault("category", "AI & CODING")
+
+    tools = data.get("tools", [])
+    if not tools:
+        data["tools"] = [
+            {"name": "FastAPI", "domain": "fastapi.tiangolo.com"},
+            {"name": "Groq", "domain": "groq.com"},
+            {"name": "Supabase", "domain": "supabase.com"},
+            {"name": "Docker", "domain": "docker.com"}
+        ]
+
+    slides = data.get("slides", [])
+    if not slides:
+        raise ValueError("Flow carousel generated 0 flow slides.")
+
+    for idx, s in enumerate(slides):
+        s.setdefault("headline", f"Phase {idx+1}: Architecture Flow")
+        s.setdefault("description", "Pipeline processing step.")
+        s.setdefault("active_node_name", f"Node {idx+1}")
+        s.setdefault("status_badge", "ACTIVE")
+        nodes = s.get("nodes", [])
+        if not nodes:
+            s["nodes"] = [
+                {"name": "Ingress", "role": "Gateway", "domain": "fastapi.tiangolo.com", "is_active": idx == 0},
+                {"name": "Compute", "role": "LPU Engine", "domain": "groq.com", "is_active": idx == 1},
+                {"name": "Storage", "role": "Postgres", "domain": "supabase.com", "is_active": idx == 2},
+            ]
+        s.setdefault("bullets", [
+            "High-throughput asynchronous event handling",
+            "Low-latency streaming payload serialization",
+            "Automatic connection pooling with graceful backoff"
+        ])
+
+    outro = data.setdefault("outro", {})
+    outro.setdefault("title", "Ready to Build This Pipeline?")
+    outro.setdefault("cta_keyword", data.get("cta_keyword", "FLOW"))
+    outro.setdefault("action_text", f"Comment '{data.get('cta_keyword', 'FLOW')}' and I'll DM you the complete starter repo.")
 
     return data

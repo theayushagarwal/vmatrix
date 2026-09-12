@@ -69,26 +69,34 @@ logo_url = get_logo_url("cursor.com")
 print(f"  ✓ Resolved Logo for cursor.com: {logo_url}")
 assert "logo.dev" in logo_url or "googleusercontent" in logo_url, "Logo resolution returned invalid URL"
 
-# 4. Test Content Planning with Groq (openai/gpt-oss-120b)
-print("\n>>> [4/5] Verifying Groq Structured Content Generator (openai/gpt-oss-120b)...")
-from core.generator import generate_carousel_content, generate_cheatsheet_content
+# 4. Test Content Planning with Groq (openai/gpt-oss-120b & failover)
+print("\n>>> [4/6] Verifying Groq Structured Content Generator...")
+from core.generator import generate_carousel_content, generate_cheatsheet_content, generate_flow_carousel_content
 
 planned_carousel = generate_carousel_content("3 Python Tips for AI Engineers")
-print(f"  ✓ Generated Series: \"{planned_carousel.get('series_title')}\"")
-print(f"  ✓ Category: {planned_carousel.get('category')}")
-print(f"  ✓ Slides Planned: {len(planned_carousel.get('slides', []))} slides")
+print(f"  ✓ Listicle Series: \"{planned_carousel.get('series_title')}\" ({len(planned_carousel.get('slides', []))} slides)")
 assert len(planned_carousel.get("slides", [])) >= 5, "Carousel must have at least 5 slides"
 
-# 5. Test Slide Rendering Engine
-print("\n>>> [5/5] Verifying Playwright Slide Rendering Engine...")
-from core.renderer import render_carousel_slides, render_infographic
-from core.utils import validate_png
+planned_flow = generate_flow_carousel_content("Building a Real-Time Voice AI Agent")
+print(f"  ✓ Architecture Flow: \"{planned_flow.get('cover_title')}\" ({len(planned_flow.get('slides', []))} steps)")
+assert len(planned_flow.get("slides", [])) >= 3, "Flow carousel must have at least 3 steps"
+
+# 5. Test Slide Rendering Engine (Batch In-Memory 95% JPEG)
+print("\n>>> [5/6] Verifying Playwright Batch In-Memory Slide Rendering (2160x2700 Retina)...")
+from core.renderer import render_carousel_slides, render_carousel_flow_slides, render_infographic
+from core.utils import validate_slide_image
 
 tmp_dir = Path(tempfile.mkdtemp(prefix="verify-slides-"))
-slide_paths = render_carousel_slides(planned_carousel, tmp_dir)
-print(f"  ✓ Rendered {len(slide_paths)} 4:5 slides successfully:")
-for p in slide_paths:
-    validate_png(p, 2160, 2700)
+listicle_paths = render_carousel_slides(planned_carousel, tmp_dir, image_format="jpeg")
+print(f"  ✓ Rendered {len(listicle_paths)} Listicle slides (JPEG):")
+for p in listicle_paths:
+    validate_slide_image(p, 2160, 2700)
+    print(f"    - {p.name} ({p.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
+
+flow_paths = render_carousel_flow_slides(planned_flow, tmp_dir, image_format="jpeg")
+print(f"  ✓ Rendered {len(flow_paths)} Architecture Flow slides (JPEG):")
+for p in flow_paths:
+    validate_slide_image(p, 2160, 2700)
     print(f"    - {p.name} ({p.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
 
 sample_info_data = {
@@ -105,8 +113,8 @@ sample_info_data = {
     ]
 }
 
-info_path = render_infographic(sample_info_data, tmp_dir)
-validate_png(info_path, 2160, 2700)
+info_path = render_infographic(sample_info_data, tmp_dir, image_format="jpeg")
+validate_slide_image(info_path, 2160, 2700)
 print(f"  ✓ Rendered Infographic: {info_path.name} ({info_path.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
 
 # 6. Check UI Compilation & Syntax

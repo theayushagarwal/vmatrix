@@ -19,7 +19,9 @@ from dotenv import load_dotenv
 from core import (
     generate_carousel_content,
     generate_cheatsheet_content,
+    generate_flow_carousel_content,
     render_carousel_slides,
+    render_carousel_flow_slides,
     render_infographic,
     upload_images_to_cloudinary,
     publish_to_instagram_carousel,
@@ -186,6 +188,8 @@ if "feed_geo" not in st.session_state:
     st.session_state.feed_geo = "IN"
 if "funnel_results" not in st.session_state:
     st.session_state.funnel_results = None
+if "carousel_mode" not in st.session_state:
+    st.session_state.carousel_mode = "listicle"
 
 # ---------------------------------------------------------------------------
 # Feed Caching
@@ -362,6 +366,24 @@ for i, preset in enumerate(PRESETS):
 
 st.session_state.topic = topic_input or st.session_state.topic
 
+mode_col1, mode_col2 = st.columns([3, 1])
+with mode_col1:
+    selected_mode = st.radio(
+        "Carousel Format",
+        options=["listicle", "flow"],
+        format_func=lambda x: "📋 Listicle / Tool Cards (5 Slides)" if x == "listicle" else "🗺️ System Architecture Flow (5 Slides)",
+        horizontal=True,
+        index=0 if st.session_state.carousel_mode == "listicle" else 1,
+    )
+    st.session_state.carousel_mode = selected_mode
+with mode_col2:
+    export_fmt = st.selectbox(
+        "Slide Export Format",
+        options=["jpeg", "png"],
+        format_func=lambda x: "⚡ JPEG (95% Fast Retina)" if x == "jpeg" else "🖼️ PNG (Lossless)",
+        index=0,
+    )
+
 generate_clicked = st.button("✨ Generate Carousel", type="primary", use_container_width=True)
 
 st.markdown("---")
@@ -378,32 +400,41 @@ if "last_failed_stage" not in st.session_state:
 if "pending_content" not in st.session_state:
     st.session_state.pending_content = None
 
-def run_pipeline(topic: str, skip_generate: bool = False):
+def run_pipeline(topic: str, skip_generate: bool = False, img_format: str = "jpeg"):
     """
     Runs generate -> render as one pipeline with stage tracking.
+    Supports both Listicle Tool Cards and Architecture Flowchart carousels.
     """
+    mode = st.session_state.carousel_mode
     progress = st.progress(0, text="Initializing Groq (openai/gpt-oss-120b)…")
     content = st.session_state.pending_content if skip_generate else None
 
     if content is None:
         try:
-            progress.progress(20, text="Planning structured carousel with Groq…")
-            content = generate_carousel_content(topic)
+            if mode == "flow":
+                progress.progress(20, text="Planning System Architecture Flowchart with Groq…")
+                content = generate_flow_carousel_content(topic)
+            else:
+                progress.progress(20, text="Planning structured carousel with Groq…")
+                content = generate_carousel_content(topic)
             st.session_state.pending_content = content
         except Exception as e:
             st.session_state.last_failed_stage = "generate"
             progress.empty()
             st.error(
                 f"**Content generation failed**: {e}\n\n"
-                "This step retries transient failures automatically — "
+                "This step retries transient failures automatically with multi-model failover — "
                 "if it still failed, check your `GROQ_API_KEY` in `.env`."
             )
             return
 
     try:
-        progress.progress(55, text="Rendering slides with Playwright…")
+        progress.progress(55, text="Rendering 4K Retina slides with batch Playwright…")
         tmp_dir = Path(tempfile.mkdtemp(prefix="ai-social-"))
-        slide_paths = render_carousel_slides(content, tmp_dir)
+        if mode == "flow":
+            slide_paths = render_carousel_flow_slides(content, tmp_dir, image_format=img_format)
+        else:
+            slide_paths = render_carousel_slides(content, tmp_dir, image_format=img_format)
 
         progress.progress(100, text="Done.")
         st.session_state.content = content
@@ -413,20 +444,20 @@ def run_pipeline(topic: str, skip_generate: bool = False):
 
         # Automatically record to 30-day post history memory for deduplication
         record_post(
-            title=content.get("series_title") or topic,
+            title=content.get("series_title") or content.get("cover_title") or topic,
             category=content.get("category", "AI & CODING"),
-            hook=content.get("hook_line", ""),
+            hook=content.get("hook_line") or content.get("cover_subtitle", ""),
         )
 
-        st.success(f"Generated \"{content.get('series_title', 'your carousel')}\" — 5 slides ready & recorded to memory.")
+        display_title = content.get("series_title") or content.get("cover_title", "your carousel")
+        st.success(f"Generated \"{display_title}\" — 5 slides ready & recorded to memory.")
     except Exception as e:
         st.session_state.last_failed_stage = "render"
         progress.empty()
         st.error(
             f"**Slide rendering failed** (Playwright): {e}\n\n"
             "Each slide render is retried automatically and checked for a "
-            "blank/broken frame before being accepted — this means every "
-            "retry also failed the same way. The content plan itself was "
+            "blank/broken frame before being accepted. The content plan itself was "
             "generated successfully and won't be regenerated on retry."
         )
 
@@ -436,22 +467,24 @@ if generate_clicked:
         st.warning("Enter a topic first or pick one from the Funnel/Radar above.")
     else:
         st.session_state.pending_content = None
-        run_pipeline(st.session_state.topic)
+        run_pipeline(st.session_state.topic, img_format=export_fmt)
 
 if st.session_state.last_failed_stage == "generate":
     if st.button("🔁 Retry content generation", use_container_width=True):
-        run_pipeline(st.session_state.topic)
+        run_pipeline(st.session_state.topic, img_format=export_fmt)
 elif st.session_state.last_failed_stage == "render":
     if st.button("🔁 Retry rendering (reuses existing content plan)", use_container_width=True):
-        run_pipeline(st.session_state.topic, skip_generate=True)
+        run_pipeline(st.session_state.topic, skip_generate=True, img_format=export_fmt)
 
 # ---------------------------------------------------------------------------
 # Tab 1: structured JSON
 # ---------------------------------------------------------------------------
 with tab_content:
     if st.session_state.content:
-        st.markdown(f"### {st.session_state.content.get('series_title', '')}")
-        st.caption(st.session_state.content.get("hook_line", ""))
+        title_text = st.session_state.content.get('series_title') or st.session_state.content.get('cover_title', '')
+        hook_text = st.session_state.content.get('hook_line') or st.session_state.content.get('cover_subtitle', '')
+        st.markdown(f"### {title_text}")
+        st.caption(hook_text)
         st.json(st.session_state.content)
     else:
         st.info("Generate a carousel to see the structured content plan here.")

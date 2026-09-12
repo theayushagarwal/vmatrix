@@ -72,22 +72,15 @@ def retry_with_backoff(
     return decorator
 
 
-def validate_png(
+def validate_slide_image(
     path: Path,
     expected_width: int | None = None,
     expected_height: int | None = None,
     min_std_dev: float = 3.0,
 ) -> None:
     """
-    Sanity-checks a rendered PNG so a silently-broken render (missing CSS,
-    a template exception swallowed by the browser, a blank white/black
-    frame) never gets uploaded and published as if it were a good slide.
-
-    Raises RenderValidationError if the file is missing, isn't a valid
-    image, doesn't match the expected pixel dimensions, or looks like a
-    near-uniform blank frame (very low pixel variance = almost certainly a
-    broken layout, since a real designed slide has text, gradients, and
-    panel edges).
+    Sanity-checks a rendered slide image (PNG or JPEG) so a silently-broken render
+    (missing CSS, a template exception, a blank white/black frame) never gets uploaded.
     """
     from PIL import Image, ImageStat
 
@@ -95,10 +88,14 @@ def validate_png(
     if not path.exists() or path.stat().st_size == 0:
         raise RenderValidationError(f"Render produced no file: {path}")
 
+    # Slide images at 2160x2700 should be at least 20KB even with aggressive compression
+    if path.stat().st_size < 20_000:
+        raise RenderValidationError(f"Render file size too small ({path.stat().st_size} bytes): {path}")
+
     try:
         img = Image.open(path)
         img.verify()
-        img = Image.open(path)  # reopen after verify() invalidates the handle
+        img = Image.open(path)  # reopen after verify() invalidates handle
     except Exception as e:
         raise RenderValidationError(f"Render is not a valid image ({path}): {e}")
 
@@ -113,6 +110,9 @@ def validate_png(
     if stat.stddev[0] < min_std_dev:
         raise RenderValidationError(
             f"Render for {path} looks blank/near-uniform (stddev={stat.stddev[0]:.2f}). "
-            "This usually means the HTML template failed to paint (broken CSS, "
-            "missing template variable, or an unhandled slide type)."
+            "This usually means the HTML template failed to paint."
         )
+
+
+# Backward compatibility alias
+validate_png = validate_slide_image

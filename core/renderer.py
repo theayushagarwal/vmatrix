@@ -92,42 +92,51 @@ def _get_jinja_env() -> Environment:
     return env
 
 
+from .utils import retry_with_backoff, validate_slide_image, RenderValidationError, logger
+
+validate_png = validate_slide_image
+
 @retry_with_backoff(max_attempts=3, base_delay=1.5, exceptions=(PlaywrightError, RenderValidationError, TimeoutError))
-def _render_html_to_png(html_content: str, output_path: Path) -> Path:
+def _render_html_batch(
+    html_items: list[tuple[str, Path, str]],
+) -> list[Path]:
     """
-    Renders HTML to a PNG and self-heals in two ways:
-      1. Uses wait_until="load" (not "networkidle") so a blocked/slow external
-         resource — e.g. Google Fonts or a favicon behind a flaky network —
-         can never hang the render indefinitely; fonts/icons that arrive late
-         just fall back to the CSS font stack or the onerror monogram instead
-         of stalling the whole pipeline.
-      2. Validates the resulting PNG (right dimensions, not a blank frame)
-         before handing it back, and retries the whole render (via the
-         decorator) if the check fails — covering the class of bug where the
-         browser silently paints a broken/empty page instead of raising.
+    Renders a batch of HTML strings using a single pooled Chromium browser process.
+    html_items: list of (html_content, output_path, image_format ['jpeg'|'png'])
+    5x faster than launching Chromium per slide, zero temp file residue on disk.
     """
+    saved_paths: list[Path] = []
     with sync_playwright() as p:
-        browser = p.chromium.launch(args=["--force-color-profile=srgb"])
+        browser = p.chromium.launch(headless=True, args=["--force-color-profile=srgb"])
         try:
-            page = browser.new_page(
+            context = browser.new_context(
                 viewport={"width": SLIDE_WIDTH, "height": SLIDE_HEIGHT},
                 device_scale_factor=DEVICE_SCALE_FACTOR,
             )
-            page.set_content(html_content, wait_until="load", timeout=20000)
-            page.wait_for_timeout(300)  # allow web fonts / favicons to settle
-            page.screenshot(path=str(output_path), type="png")
+            page = context.new_page()
+
+            for html_content, output_path, img_format in html_items:
+                page.set_content(html_content, wait_until="load", timeout=20000)
+                page.wait_for_timeout(350)  # allow web fonts / favicons / gradients to settle
+
+                if img_format.lower() in ("jpg", "jpeg"):
+                    page.screenshot(path=str(output_path), type="jpeg", quality=95)
+                else:
+                    page.screenshot(path=str(output_path), type="png")
+
+                validate_slide_image(output_path, *EXPECTED_PNG_SIZE)
+                saved_paths.append(output_path)
         finally:
             browser.close()
 
-    validate_png(output_path, *EXPECTED_PNG_SIZE)
-    return output_path
+    return saved_paths
 
 
-def render_carousel_slides(data: dict, output_dir: Path) -> list[Path]:
+def render_carousel_slides(data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
     """
-    Renders all 5 slides using templates/carousel_slide.html.
-    Viewport: width=1080, height=1350, device_scale_factor=2 (crisp Retina output).
-    Returns list of saved PNG paths: [slide_1.png, slide_2.png, ..., slide_5.png].
+    Renders all 5 educational listicle slides using templates/carousel_slide.html.
+    Uses browser pooling and in-memory rendering (2160x2700 Retina).
+    Returns list of saved image paths.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -137,8 +146,9 @@ def render_carousel_slides(data: dict, output_dir: Path) -> list[Path]:
 
     slides = data.get("slides", [])
     total = len(slides)
-    saved_paths: list[Path] = []
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
 
+    html_items: list[tuple[str, Path, str]] = []
     for idx, slide in enumerate(slides, start=1):
         html = template.render(
             slide=slide,
@@ -147,17 +157,84 @@ def render_carousel_slides(data: dict, output_dir: Path) -> list[Path]:
             slide_index=idx,
             slide_total=total,
         )
-        out_path = output_dir / f"slide_{idx}.png"
-        _render_html_to_png(html, out_path)
-        saved_paths.append(out_path)
+        out_path = output_dir / f"slide_{idx}.{ext}"
+        html_items.append((html, out_path, image_format))
 
-    return saved_paths
+    return _render_html_batch(html_items)
 
 
-def render_infographic(data: dict, output_dir: Path) -> Path:
+def render_carousel_flow_slides(flow_data: dict, output_dir: Path, image_format: str = "jpeg") -> list[Path]:
+    """
+    Renders 5-slide System Architecture Flowchart Carousel using templates/carousel_flow.html:
+    1. Cover Slide: Blueprint title, hook, tech stack chips with Logo.dev icons
+    2-4. Flow Diagram Slides: Connected architecture nodes, status pills, specs
+    5. Outro Slide: Call-to-Action keyword trigger box
+    Uses pooled Chromium instance for high-speed in-memory rendering.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    env = _get_jinja_env()
+    template = env.get_template("carousel_flow.html")
+
+    slides_data = flow_data.get("slides", [])
+    total_slides = len(slides_data) + 2  # Cover + N flow slides + Outro
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+    html_items: list[tuple[str, Path, str]] = []
+
+    # 1. Cover Slide
+    cover_html = template.render(
+        is_cover=True,
+        is_outro=False,
+        slide_index=1,
+        total_slides=total_slides,
+        category=flow_data.get("category", "AI & CODING"),
+        series_title=flow_data.get("series_title", "SYSTEM ARCHITECTURE"),
+        cover_title=flow_data.get("cover_title", flow_data.get("title", "System Blueprint")),
+        cover_subtitle=flow_data.get("cover_subtitle", flow_data.get("hook_line", "Step-by-step Technical Flow")),
+        tools=flow_data.get("tools", []),
+    )
+    html_items.append((cover_html, output_dir / f"flow_slide_1.{ext}", image_format))
+
+    # 2. Flow Diagram Content Slides
+    for idx, s in enumerate(slides_data):
+        slide_index = idx + 2
+        slide_html = template.render(
+            is_cover=False,
+            is_outro=False,
+            slide_index=slide_index,
+            total_slides=total_slides,
+            category=flow_data.get("category", "AI & CODING"),
+            headline=s.get("headline", f"Phase {idx+1}: Pipeline Execution"),
+            description=s.get("description", ""),
+            active_node_name=s.get("active_node_name", ""),
+            status_badge=s.get("status_badge", "ACTIVE"),
+            nodes=s.get("nodes", []),
+            bullets=s.get("bullets", []),
+        )
+        html_items.append((slide_html, output_dir / f"flow_slide_{slide_index}.{ext}", image_format))
+
+    # 3. Outro CTA Slide
+    outro = flow_data.get("outro", {})
+    outro_html = template.render(
+        is_cover=False,
+        is_outro=True,
+        slide_index=total_slides,
+        total_slides=total_slides,
+        category=flow_data.get("category", "AI & CODING"),
+        series_title=flow_data.get("series_title", "COMPLETE BLUEPRINT"),
+        title=outro.get("title", "Ready to Build This Pipeline?"),
+        cta_keyword=outro.get("cta_keyword", flow_data.get("cta_keyword", "FLOW")),
+        action_text=outro.get("action_text", "Drop 'FLOW' below and get the complete starter repo."),
+    )
+    html_items.append((outro_html, output_dir / f"flow_slide_{total_slides}.{ext}", image_format))
+
+    return _render_html_batch(html_items)
+
+
+def render_infographic(data: dict, output_dir: Path, image_format: str = "jpeg") -> Path:
     """
     Renders single-page cheatsheet using templates/single_infographic.html.
-    Returns the path to infographic.png.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -172,6 +249,7 @@ def render_infographic(data: dict, output_dir: Path) -> Path:
         items=data.get("items", []),
     )
 
-    out_path = output_dir / "infographic.png"
-    _render_html_to_png(html, out_path)
-    return out_path
+    ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
+    out_path = output_dir / f"infographic.{ext}"
+    results = _render_html_batch([(html, out_path, image_format)])
+    return results[0]
