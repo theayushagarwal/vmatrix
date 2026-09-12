@@ -129,6 +129,19 @@ class AnalyzePostRequest(BaseModel):
     post_data: Dict[str, Any]
 
 
+class VelocityCheckRequest(BaseModel):
+    dry_run: bool = False
+    force_publish: bool = False
+
+
+# In-memory record of the last velocity check
+LAST_VELOCITY_CHECK = {
+    "status": "idle",
+    "timestamp": None,
+    "result": None,
+}
+
+
 # ---------------------------------------------------------------------------
 # API Routes: Telemetry & Status
 # ---------------------------------------------------------------------------
@@ -190,6 +203,33 @@ def run_funnel_endpoint(req: FunnelRequest):
     except Exception as e:
         logger.error(f"Funnel execution error: {e}")
         return {"success": False, "error": str(e)}
+
+
+@app.post("/api/trends/velocity-check")
+def run_velocity_check_endpoint(req: VelocityCheckRequest = VelocityCheckRequest()):
+    """
+    Triggers an on-demand Google Trends Velocity Watchdog cycle.
+    Evaluates real-time search spikes with Groq Secondary Brain.
+    """
+    try:
+        from trend_checker import run_trend_check
+        res = run_trend_check(dry_run=req.dry_run, force_publish=req.force_publish)
+        global LAST_VELOCITY_CHECK
+        LAST_VELOCITY_CHECK = {
+            "status": "completed",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "result": res,
+        }
+        return {"success": True, "data": res}
+    except Exception as e:
+        logger.error(f"Velocity check execution error: {e}")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/trends/velocity-status")
+def get_velocity_status_endpoint():
+    """Returns the most recent trend velocity check telemetry."""
+    return {"success": True, "watchdog": LAST_VELOCITY_CHECK}
 
 
 # ---------------------------------------------------------------------------

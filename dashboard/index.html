@@ -218,6 +218,42 @@
         </div>
       </div>
 
+      <!-- HOURLY TREND VELOCITY WATCHDOG CARD -->
+      <div class="glass-panel p-5 rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-950/20 via-slate-900 to-indigo-950/20 relative overflow-hidden">
+        <div class="absolute -right-10 -top-10 w-40 h-40 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 relative z-10">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
+              <span class="px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center gap-1.5">
+                <i class="fa-solid fa-bolt text-amber-400"></i> HOURLY TREND VELOCITY WATCHDOG
+              </span>
+              <span class="text-xs font-mono text-slate-400">Runs every 60 mins (:00) on GitHub Actions</span>
+            </div>
+            <h3 class="text-base font-bold text-white">Instant Breakthrough Auto-Upload Pipeline</h3>
+            <p class="text-xs text-slate-300 max-w-2xl">
+              Monitors real-time Google Trends spikes. When an explosive AI/Tech trend is detected (Urgency &ge; 7/10), it immediately dispatches GitHub Actions, bypasses the manual queue, and auto-publishes to <span class="text-indigo-400 font-semibold">@vmatrix.co</span>.
+            </p>
+          </div>
+
+          <div class="flex items-center gap-3 flex-shrink-0">
+            <label class="flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+              <input type="checkbox" id="check-dryrun" checked class="rounded bg-slate-900 border-slate-700 text-amber-500 focus:ring-0">
+              <span>Dry Run</span>
+            </label>
+            <button onclick="triggerVelocityCheck()" id="btn-velocity-check" class="px-4 py-2.5 bg-gradient-to-r from-amber-500 to-indigo-600 hover:from-amber-400 hover:to-indigo-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-amber-500/20 flex items-center gap-2 transition-all">
+              <i class="fa-solid fa-satellite-dish"></i>
+              <span>Run Velocity Check Now</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Watchdog Live Result Banner -->
+        <div id="velocity-result-banner" class="mt-4 p-3.5 rounded-xl bg-slate-950/80 border border-slate-800 text-xs font-mono hidden">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+
       <!-- Funnel Progress Stages Indicator -->
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3" id="funnel-stats-row">
         <div class="glass-card p-4 rounded-xl border-l-4 border-l-blue-500">
@@ -791,6 +827,73 @@
 
     // -----------------------------------------------------------------
     // Tab 1: Trend Radar & 5-Stage Funnel
+    // -----------------------------------------------------------------
+    // HOURLY TREND VELOCITY WATCHDOG TRIGGER
+    // -----------------------------------------------------------------
+    async function triggerVelocityCheck() {
+      const btn = document.getElementById('btn-velocity-check');
+      const isDryRun = document.getElementById('check-dryrun').checked;
+      const banner = document.getElementById('velocity-result-banner');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i><span>Scanning Spikes...</span>`;
+
+      try {
+        showToast('Scanning Google Trends RSS & querying Groq Secondary Brain...', 'info');
+        const res = await fetch('/api/trends/velocity-check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ dry_run: isDryRun, force_publish: false })
+        });
+        const data = await res.json();
+
+        if (data.success && data.data) {
+          const d = data.data;
+          const evalRes = d.evaluation;
+          banner.classList.remove('hidden');
+
+          if (evalRes && evalRes.spike_detected) {
+            banner.className = "mt-4 p-4 rounded-xl bg-amber-950/40 border border-amber-500/50 text-xs font-mono space-y-2";
+            banner.innerHTML = `
+              <div class="flex items-center justify-between">
+                <span class="text-amber-400 font-bold text-sm flex items-center gap-1.5">
+                  <i class="fa-solid fa-fire text-amber-500"></i> BREAKTHROUGH DETECTED: "${evalRes.winning_trend}"
+                </span>
+                <span class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-bold">Urgency: ${evalRes.urgency_score}/10</span>
+              </div>
+              <p class="text-slate-300 font-sans text-xs">${evalRes.reasoning || 'Spiked search volume detected on Google Trends.'}</p>
+              <div class="flex flex-wrap items-center gap-4 text-[11px] text-slate-400 pt-1 border-t border-amber-500/20">
+                <span>🔥 Volume: <strong class="text-white">${evalRes.search_volume || 'High Spikes'}</strong></span>
+                <span>📂 Category: <strong class="text-white">${evalRes.category || 'AI & CODING'}</strong></span>
+                <span>⚡ Action: <strong class="${d.action_taken === 'dispatched' ? 'text-emerald-400' : 'text-amber-300'}">${(d.action_taken || '').toUpperCase()}</strong></span>
+                <span>⏱️ Scanned in: <strong class="text-white">${d.elapsed_seconds}s</strong></span>
+              </div>
+            `;
+            showToast(`🔥 Breakthrough Spike Detected: ${evalRes.winning_trend}`, 'success');
+          } else {
+            banner.className = "mt-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-xs font-mono space-y-1";
+            banner.innerHTML = `
+              <div class="flex items-center justify-between text-slate-300">
+                <span class="flex items-center gap-1.5 text-emerald-400 font-bold">
+                  <i class="fa-solid fa-circle-check"></i> Watchdog Scan Complete · No Explosive Spikes Detected
+                </span>
+                <span class="text-slate-500 text-[11px]">${new Date().toLocaleTimeString()}</span>
+              </div>
+              <p class="text-slate-400 font-sans text-xs mt-1">Evaluated ${d.candidates_count} trending topics across US & IN feeds against 24h deduplication memory. All normal; schedule remains standard.</p>
+            `;
+            showToast('Scan complete. No breakthrough spikes detected.', 'info');
+          }
+        } else {
+          showToast(`Velocity check error: ${data.error || 'Failed to check trends'}`, 'error');
+        }
+      } catch (err) {
+        showToast(`Request failed: ${err.message}`, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-satellite-dish"></i><span>Run Velocity Check Now</span>`;
+      }
+    }
+
     // -----------------------------------------------------------------
     async function triggerFunnelRun() {
       const btn = document.getElementById('btn-run-funnel');

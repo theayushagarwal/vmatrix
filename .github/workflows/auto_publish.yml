@@ -5,6 +5,9 @@ on:
     - cron: '30 1 * * *'
     # 🌆 Evening Slot: 7:00 PM IST (13:30 UTC) - Educational Listicle / Architecture Flow
     - cron: '30 13 * * *'
+  repository_dispatch:
+    types:
+      - trend_velocity_post
   workflow_dispatch:
     inputs:
       slot:
@@ -114,17 +117,23 @@ jobs:
           ENABLE_GEMINI: ${{ secrets.ENABLE_GEMINI || 'false' }}
         run: |
           FLAGS=""
-          if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
-            FLAGS="$FLAGS --dry-run"
-          fi
-          if [ -n "${{ github.event.inputs.slot }}" ]; then
-            FLAGS="$FLAGS --slot ${{ github.event.inputs.slot }}"
-          fi
-          if [ -n "${{ github.event.inputs.format }}" ]; then
-            FLAGS="$FLAGS --format ${{ github.event.inputs.format }}"
-          fi
-          if [ -n "${{ github.event.inputs.topic }}" ]; then
-            FLAGS="$FLAGS --topic \"${{ github.event.inputs.topic }}\""
+          if [ "${{ github.event_name }}" = "repository_dispatch" ]; then
+            echo "⚡ INSTANT BREAKTHROUGH PIPELINE TRIGGERED VIA REPOSITORY_DISPATCH"
+            echo "🔥 Winning Spiked Trend: ${{ github.event.client_payload.trend }}"
+            FLAGS="--force-topic \"${{ github.event.client_payload.trend }}\""
+          else
+            if [ "${{ github.event.inputs.dry_run }}" = "true" ]; then
+              FLAGS="$FLAGS --dry-run"
+            fi
+            if [ -n "${{ github.event.inputs.slot }}" ]; then
+              FLAGS="$FLAGS --slot ${{ github.event.inputs.slot }}"
+            fi
+            if [ -n "${{ github.event.inputs.format }}" ]; then
+              FLAGS="$FLAGS --format ${{ github.event.inputs.format }}"
+            fi
+            if [ -n "${{ github.event.inputs.topic }}" ]; then
+              FLAGS="$FLAGS --topic \"${{ github.event.inputs.topic }}\""
+            fi
           fi
           # 1. Audit post analytics to refresh historical resonance feedback loop
           echo "Running pre-publishing analytics audit..."

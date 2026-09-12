@@ -136,6 +136,13 @@ def run_autonomous_post(
     chosen_category = "AI & CODING"
     chosen_hook = ""
 
+    if chosen_topic:
+        logger.info("⚡ Trend-Velocity / Forced Topic detected: \"%s\"", chosen_topic)
+        logger.info("⚡ Bypassing manual review for trend-velocity / forced topic post. Publishing immediately!")
+        if queue_for_approval:
+            logger.info("⚡ Overriding queue_for_approval=False for urgent breaking trend post.")
+            queue_for_approval = False
+
     # --------------------------------------------------------------------------
     # 1. Topic Discovery via 4 Core Feeds & 5-Stage Funnel
     # --------------------------------------------------------------------------
@@ -423,6 +430,7 @@ def main():
     )
     parser.add_argument("--dry-run", action="store_true", help="Run full pipeline without publishing to Instagram")
     parser.add_argument("--topic", type=str, default=None, help="Force a specific topic instead of radar discovery")
+    parser.add_argument("--force-topic", type=str, default=None, help="Alias for --topic: immediately publishes emergency trend breakthrough")
     parser.add_argument("--geo", type=str, default="IN", help="Trends region (IN or US)")
     parser.add_argument(
         "--queue-for-approval",
@@ -460,9 +468,11 @@ def main():
         print("=" * 60)
         return
 
+    effective_topic = args.force_topic or args.topic
+
     res = run_autonomous_post(
         dry_run=args.dry_run,
-        forced_topic=args.topic,
+        forced_topic=effective_topic,
         slot=args.slot,
         format_override=args.format,
         geo=args.geo,
