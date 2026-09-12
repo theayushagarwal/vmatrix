@@ -186,3 +186,57 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
     post_id = _publish()
 
     return {"success": True, "post_id": post_id, "container_id": parent_container_id}
+
+
+def publish_to_instagram_photo(image_url: str, caption: str) -> dict:
+    """
+    Publishes a single photo post to Instagram via Meta Graph API:
+    1. Create media container with image_url and caption.
+    2. Poll container status until FINISHED.
+    3. Publish via media_publish endpoint.
+    Returns: dict with post_id and success status.
+    """
+    ig_user_id = os.environ.get("IG_USER_ID")
+    access_token = os.environ.get("IG_ACCESS_TOKEN")
+    if not ig_user_id or not access_token:
+        raise ValueError("IG_USER_ID / IG_ACCESS_TOKEN are not set.")
+
+    api_base = get_graph_api_base(access_token)
+
+    @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
+    def _create_photo_container() -> str:
+        resp = requests.post(
+            f"{api_base}/{ig_user_id}/media",
+            data={
+                "image_url": image_url,
+                "caption": caption,
+                "access_token": access_token,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json()["id"]
+
+    # 1. Create photo container
+    container_id = _create_photo_container()
+
+    # 2. Poll photo container status
+    _poll_container_status(container_id, access_token)
+
+    @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
+    def _publish() -> str | None:
+        resp = requests.post(
+            f"{api_base}/{ig_user_id}/media_publish",
+            data={
+                "creation_id": container_id,
+                "access_token": access_token,
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        return resp.json().get("id")
+
+    # 3. Publish
+    post_id = _publish()
+
+    return {"success": True, "post_id": post_id, "container_id": container_id}

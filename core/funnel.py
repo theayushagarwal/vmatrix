@@ -22,7 +22,7 @@ from google import genai
 from google.genai import types
 
 from .utils import retry_with_backoff, logger
-from .memory import check_max_similarity, record_post
+from .memory import check_max_similarity, check_duplicate_guardrails, record_post
 
 
 
@@ -399,8 +399,10 @@ def apply_stage4_vector_deduplication(
     history_days: int = 30,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
-    Stage 4 Filter: Compares candidate embeddings against past 30 days of posts.
-    Drops anything with Cosine Similarity > threshold (0.80).
+    Stage 4 Filter: Production Vector Anti-Duplication & Guardrails.
+    - 15-Post Rule: never repeat within the last 15 posts (similarity >= 0.70).
+    - 24h Trend Cooldown: never repeat within 24 hours of similar topic (similarity >= 0.65).
+    - 30-Day Memory: general check against 30-day history (similarity >= 0.80).
     """
     passed = []
     dropped = []
@@ -408,15 +410,22 @@ def apply_stage4_vector_deduplication(
     for item in items:
         title = item.get("refined_title") or item.get("title", "")
         max_sim, matched_title = check_max_similarity(title, days=history_days)
+        is_dup, guardrail_reason = check_duplicate_guardrails(
+            candidate_title=title,
+            max_recent_posts=15,
+            recent_similarity_threshold=0.70,
+            cooldown_hours=24.0,
+            cooldown_similarity_threshold=0.65,
+            days_back=history_days,
+            general_similarity_threshold=similarity_threshold,
+        )
 
         item_copy = dict(item)
         item_copy["max_history_similarity"] = round(max_sim, 3)
         item_copy["matched_past_post"] = matched_title
 
-        if max_sim > similarity_threshold:
-            item_copy["drop_reason"] = (
-                f"Stage 4: Duplicate of recent post ({max_sim:.2f} > {similarity_threshold}) — '{matched_title}'"
-            )
+        if is_dup:
+            item_copy["drop_reason"] = f"Stage 4: {guardrail_reason}"
             dropped.append(item_copy)
         else:
             passed.append(item_copy)

@@ -179,3 +179,81 @@ def check_max_similarity(candidate_title: str, days: int = 30) -> tuple[float, O
             matched_title = item.get("title")
 
     return max_sim, matched_title
+
+
+def get_time_since_last_post() -> Optional[float]:
+    """
+    Returns the hours elapsed since the most recent post was recorded,
+    or None if no post exists in history.
+    """
+    history = load_post_history()
+    if not history:
+        return None
+    last_ts = history[0].get("timestamp", 0)
+    if not last_ts:
+        return None
+    return max(0.0, (time.time() - last_ts) / 3600.0)
+
+
+def check_duplicate_guardrails(
+    candidate_title: str,
+    max_recent_posts: int = 15,
+    recent_similarity_threshold: float = 0.70,
+    cooldown_hours: float = 24.0,
+    cooldown_similarity_threshold: float = 0.65,
+    days_back: int = 30,
+    general_similarity_threshold: float = 0.80,
+) -> tuple[bool, str]:
+    """
+    Production anti-duplication & velocity guardrails:
+    1. 15-Post Rule: Checks the last 15 posts in history. If similarity >= 0.70, rejected.
+    2. 24h Trend Cooldown: If a similar topic (>= 0.65) was posted within 24 hours, rejected.
+    3. 30-Day General Memory: If any post in the last 30 days has similarity >= 0.80, rejected.
+
+    Returns: (is_duplicate: bool, reason: str)
+    """
+    history = load_post_history()
+    if not history:
+        return False, "History empty — pass"
+
+    cand_vec = get_text_embedding(candidate_title)
+    now = time.time()
+    cooldown_cutoff = now - (cooldown_hours * 3600.0)
+    days_cutoff = now - (days_back * 86400.0)
+
+    # 1. 15-Post check (strict threshold)
+    last_n_items = history[:max_recent_posts]
+    for idx, item in enumerate(last_n_items, start=1):
+        item_vec = item.get("embedding")
+        if not item_vec:
+            continue
+        sim = cosine_similarity(cand_vec, item_vec)
+        if sim >= recent_similarity_threshold:
+            return True, f"15-Post Rule: Similar ({sim:.2f} >= {recent_similarity_threshold}) to post #{idx} ('{item.get('title')}')"
+
+    # 2. 24h Trend Cooldown check
+    for item in history:
+        ts = item.get("timestamp", 0)
+        if ts < cooldown_cutoff:
+            continue
+        item_vec = item.get("embedding")
+        if not item_vec:
+            continue
+        sim = cosine_similarity(cand_vec, item_vec)
+        if sim >= cooldown_similarity_threshold:
+            hrs_ago = round((now - ts) / 3600.0, 1)
+            return True, f"24h Trend Cooldown: Topic matches post from {hrs_ago}h ago ('{item.get('title')}', sim={sim:.2f})"
+
+    # 3. 30-Day General Memory check
+    for item in history:
+        ts = item.get("timestamp", 0)
+        if ts < days_cutoff:
+            continue
+        item_vec = item.get("embedding")
+        if not item_vec:
+            continue
+        sim = cosine_similarity(cand_vec, item_vec)
+        if sim >= general_similarity_threshold:
+            return True, f"30-Day Memory: High similarity ({sim:.2f} >= {general_similarity_threshold}) with '{item.get('title')}'"
+
+    return False, "Passed all deduplication guardrails"

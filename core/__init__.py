@@ -10,7 +10,7 @@ from .renderer import (
     get_logo_url,
     get_favicon_url,
 )
-from .publisher import upload_images_to_cloudinary, publish_to_instagram_carousel
+from .publisher import upload_images_to_cloudinary, publish_to_instagram_carousel, publish_to_instagram_photo
 from .feeds import (
     fetch_all_feeds,
     fetch_google_trends,
@@ -33,6 +33,8 @@ from .memory import (
     get_recent_posts,
     load_post_history,
     check_max_similarity,
+    check_duplicate_guardrails,
+    get_time_since_last_post,
     get_text_embedding,
     cosine_similarity,
 )
@@ -54,6 +56,7 @@ __all__ = [
     "get_favicon_url",
     "upload_images_to_cloudinary",
     "publish_to_instagram_carousel",
+    "publish_to_instagram_photo",
     "fetch_all_feeds",
     "fetch_google_trends",
     "fetch_techcrunch_ai",
@@ -71,6 +74,8 @@ __all__ = [
     "get_recent_posts",
     "load_post_history",
     "check_max_similarity",
+    "check_duplicate_guardrails",
+    "get_time_since_last_post",
     "get_text_embedding",
     "cosine_similarity",
     "get_supabase_client",

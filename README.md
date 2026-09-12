@@ -155,10 +155,39 @@ streamlit run app.py
 | Filtering Funnel | Regex Blacklist, Lexicon Scorer, Groq (`openai/gpt-oss-120b`), Cosine Memory |
 | Content Intelligence | Groq (`openai/gpt-oss-120b`), structured JSON output (Gemini optional fallback) |
 | Brand Assets & Logos | Logo.dev CDN, Brandfetch v2 API, Google Favicons |
-| Rendering | Playwright (headless Chromium), Jinja2, CSS Glassmorphism |
-| Database & Cloud | Supabase PostgreSQL & Storage |
-| Media Hosting | Cloudinary |
-| Publishing | Meta / Instagram Graph API (carousel containers) |
+| Rendering | Playwright (headless Chromium), Jinja2, CSS Glassmorphism (2160x2700 Retina) |
+| Database & Cloud | Supabase PostgreSQL & Vector Embeddings |
+| Media Hosting | Cloudinary CDN |
+| Publishing | Meta / Instagram Graph API (Single Photo & 5-Slide Carousels) |
+| Automation | GitHub Actions Cron + Post History Memory Synchronization |
 | Demo UI | Streamlit |
+
+---
+
+## ⏰ Automated Publishing Schedule & Weekly Calendar
+
+The autonomous engine publishes **twice per day** timed around peak engagement windows:
+
+| Slot | Time (IST) | Time (UTC) | GitHub Actions Cron | Content Format |
+|---|---|---|---|---|
+| 🌅 **Morning Slot** | 7:00 AM IST | 01:30 UTC | `30 1 * * *` | 📸 **Single Photo Cheatsheet / Infographic** |
+| 🌆 **Evening Slot (Prime)** | 7:00 PM IST | 13:30 UTC | `30 13 * * *` | 🎨 **Deep Educational Carousel / Architecture Flow** |
+
+### 📅 7-Day Weekly Rotation Matrix
+
+| Day | 🌅 Morning Slot (7:00 AM IST) | 🌆 Evening Slot (7:00 PM IST) | Strategy |
+|---|---|---|---|
+| **Monday (0)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Clean start to the week: Quick tip + 5-slide tool listicle |
+| **Tuesday (1)** | 📸 Single Photo Cheatsheet | 🎨 Educational Carousel | Narrative educational breakdown |
+| **Wednesday (2)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Mid-week boost: Single photo cheatsheet + educational list |
+| **Thursday (3)** | 📸 Single Photo Cheatsheet | 🗺️ Architecture Flowchart | Deep technical day: System architecture flow diagram |
+| **Friday (4)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Weekend prep: Productivity / code cheatsheet + tool listicle |
+| **Saturday (5)** | 📸 Single Photo Cheatsheet | 🗺️ Architecture Flowchart | Complex system flow diagram & architecture blueprint |
+| **Sunday (6)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Weekly recap cheatsheet + educational tool listicle |
+
+### 🛡️ Production Deduplication Guardrails
+1. **15-Post Rule**: Topic embedding cannot exceed 0.70 cosine similarity with any of the previous 15 posts.
+2. **24h Trend Cooldown**: Topic embedding cannot exceed 0.65 similarity with any post published within the last 24 hours.
+3. **30-Day General Memory**: Topic embedding cannot exceed 0.80 similarity with any post across the entire 30-day database.
 
 

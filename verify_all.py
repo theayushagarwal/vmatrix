@@ -117,8 +117,22 @@ info_path = render_infographic(sample_info_data, tmp_dir, image_format="jpeg")
 validate_slide_image(info_path, 2160, 2700)
 print(f"  ✓ Rendered Infographic: {info_path.name} ({info_path.stat().st_size / 1024:.1f} KB, 2160x2700 Retina)")
 
-# 6. Check UI Compilation & Syntax
-print("\n>>> Verifying Streamlit App Compilation...")
+# 6. Check Autonomous Scheduler & Single Photo Publisher
+print("\n>>> [6/7] Verifying Slot Resolver & Publishing Exports...")
+from autonomous_publisher import resolve_slot_and_format
+from core.publisher import publish_to_instagram_photo, publish_to_instagram_carousel
+from core.memory import check_duplicate_guardrails, get_time_since_last_post
+
+s_morn, f_morn = resolve_slot_and_format(slot="morning")
+assert s_morn == "morning" and f_morn == "photo", f"Morning slot failed: {s_morn}, {f_morn}"
+print(f"  ✓ Morning Slot Resolution: {s_morn} -> {f_morn} (Single Photo Infographic)")
+
+is_dup, guard_msg = check_duplicate_guardrails("5 Essential Docker Commands for Developers")
+assert is_dup, "Guardrails should detect recently recorded Docker post as duplicate"
+print(f"  ✓ Anti-Duplication Guardrail Check: Caught duplicate ('{guard_msg}')")
+
+# 7. Check UI Compilation & Syntax
+print("\n>>> [7/7] Verifying Streamlit App Compilation...")
 import py_compile
 py_compile.compile("app.py")
 print("  ✓ app.py compiled with zero syntax/import errors")
