@@ -364,8 +364,9 @@ def publish_direct_endpoint(req: PublishDirectRequest):
 def scrape_competitor_endpoint(req: CompetitorScrapeRequest):
     try:
         scraper = InstaScraper()
+        clean_handle = req.handle.strip().lstrip("@")
         posts = scraper.scrape(
-            handle=req.handle,
+            handle=clean_handle,
             niche=req.niche,
             limit=req.limit,
             force=req.force,
@@ -407,7 +408,8 @@ def analyze_competitor_post_endpoint(req: AnalyzePostRequest):
 @app.get("/api/competitor/posts")
 def get_stored_competitor_posts(handle: Optional[str] = None, niche: Optional[str] = None, limit: int = 40):
     try:
-        posts = db.get_competitor_posts(handle=handle, niche=niche, limit=limit)
+        clean_handle = handle.strip().lstrip("@") if handle else None
+        posts = db.get_competitor_posts(handle=clean_handle, niche=niche, limit=limit)
         return {"success": True, "posts": posts, "count": len(posts)}
     except Exception as e:
         logger.error(f"Get stored posts error: {e}")

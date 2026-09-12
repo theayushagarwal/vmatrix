@@ -1446,31 +1446,46 @@ with tab_competitors:
 
             # Render AI Analysis breakdown if available
             cur_analysis = p_analysis or st.session_state.get(f"analysis_{p_shortcode}")
-            if cur_analysis:
-                h_info = cur_analysis.get("hook_analysis", {})
-                p_info = cur_analysis.get("slide_pacing", {})
-                c_info = cur_analysis.get("caption_mechanics", {})
-                v_score_disp = cur_analysis.get("virality_score", 85)
-                why_reasons = cur_analysis.get("why_it_went_viral", [])
-                bp = cur_analysis.get("vmatrix_blueprint", {})
+            if cur_analysis and isinstance(cur_analysis, dict):
+                h_info = cur_analysis.get("hook_analysis") or {}
+                if isinstance(h_info, str):
+                    h_info = {"hook_breakdown": h_info, "psychological_trigger": "High Curiosity"}
+                p_info = cur_analysis.get("slide_pacing") or {}
+                if isinstance(p_info, str):
+                    p_info = {"pacing_analysis": p_info, "educational_density": "High"}
+                c_info = cur_analysis.get("caption_mechanics") or {}
+                if isinstance(c_info, str):
+                    c_info = {"cta_effectiveness": c_info, "save_share_triggers": "Reference material"}
+                v_score_disp = cur_analysis.get("virality_score") or 85
+                why_reasons = cur_analysis.get("why_it_went_viral") or []
+                if isinstance(why_reasons, str):
+                    why_reasons = [why_reasons]
+                bp = cur_analysis.get("vmatrix_blueprint") or {}
+                if isinstance(bp, str):
+                    bp = {"adapted_title": bp, "hook_line": "Key Breakdown", "competitive_advantage": "Clean pure-white 4K layout"}
+
+                trend_angle_disp = cur_analysis.get("trend_angle") or ""
+                viral_hook_disp = cur_analysis.get("viral_hook") or ""
 
                 st.markdown(
                     f"""
                     <div style="background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,27,75,0.5) 100%); border: 1px solid rgba(129,140,248,0.4); border-radius: 16px; padding: 20px 24px; margin-top: 14px; margin-bottom: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
-                            <span style="font-weight: 800; color: #818cf8; font-size: 1.1rem; letter-spacing: -0.02em;">🔬 AI Intelligence Dossier</span>
+                            <span style="font-weight: 800; color: #818cf8; font-size: 1.1rem; letter-spacing: -0.02em;">🔬 OpenRouter AI Intelligence Dossier</span>
                             <span style="font-weight: 800; color: #4ade80; font-size: 1.0rem; background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3); padding: 3px 10px; border-radius: 999px;">Score: {v_score_disp}/100</span>
                         </div>
+                        {f'<div style="background: rgba(99,102,241,0.15); border: 1px solid rgba(129,140,248,0.3); padding: 8px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.88rem;"><strong style="color: #a5b4fc;">📈 Trend Angle:</strong> <span style="color: #ffffff;">{trend_angle_disp}</span></div>' if trend_angle_disp else ''}
+                        {f'<div style="background: rgba(244,63,94,0.12); border: 1px solid rgba(244,63,94,0.3); padding: 8px 14px; border-radius: 8px; margin-bottom: 12px; font-size: 0.88rem;"><strong style="color: #fb7185;">🧲 Scroll-Stopping Hook:</strong> <span style="color: #ffffff; font-style: italic;">"{viral_hook_disp}"</span></div>' if viral_hook_disp else ''}
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.86rem;">
                             <div style="background: rgba(15,23,42,0.5); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
                                 <strong style="color: #f3f4f8;">🎯 Hook Psychology:</strong>
-                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{h_info.get('hook_breakdown', '')}</div>
-                                <div style="color: #a78bfa; font-size: 0.80rem; margin-top: 6px;"><em>Trigger: {h_info.get('psychological_trigger', '')}</em></div>
+                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{h_info.get('hook_breakdown', h_info.get('hook_type', 'Pattern Interrupt'))}</div>
+                                <div style="color: #a78bfa; font-size: 0.80rem; margin-top: 6px;"><em>Trigger: {h_info.get('psychological_trigger', 'Curiosity Gap')}</em></div>
                             </div>
                             <div style="background: rgba(15,23,42,0.5); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
                                 <strong style="color: #f3f4f8;">📊 Slide Pacing & Structure:</strong>
-                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{p_info.get('pacing_analysis', '')}</div>
-                                <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 6px;"><em>Density: {p_info.get('educational_density', '')}</em></div>
+                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{p_info.get('pacing_analysis', p_info.get('structure_type', 'Progressive'))}</div>
+                                <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 6px;"><em>Density: {p_info.get('educational_density', 'High')}</em></div>
                             </div>
                         </div>
                         <div style="margin-top: 12px; font-size: 0.86rem; background: rgba(15,23,42,0.4); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">

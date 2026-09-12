@@ -497,7 +497,7 @@
           <div class="flex items-center gap-3">
             <div class="relative">
               <i class="fa-brands fa-instagram absolute left-3.5 top-3 text-slate-400 text-sm"></i>
-              <input type="text" id="spy-handle-input" placeholder="e.g. levelsio" value="levelsio" class="bg-slate-900 border border-slate-700 text-sm rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-pink-500 font-mono w-48 sm:w-60">
+              <input type="text" id="spy-handle-input" placeholder="e.g. codewithharry" value="codewithharry" class="bg-slate-900 border border-slate-700 text-sm rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-pink-500 font-mono w-48 sm:w-60">
             </div>
             <button onclick="triggerCompetitorScrape()" id="btn-scrape-competitor" class="px-5 py-2.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-pink-600/30 flex items-center gap-2 transition-all">
               <i class="fa-solid fa-radar"></i>
@@ -509,11 +509,18 @@
         <!-- Preset Handle Chips -->
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
           <span class="text-[11px] font-mono text-slate-400">Quick Targets:</span>
-          <button onclick="setSpyHandle('levelsio')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@levelsio</button>
-          <button onclick="setSpyHandle('thesamur_ai')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@thesamur_ai</button>
-          <button onclick="setSpyHandle('aisavvy')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@aisavvy</button>
-          <button onclick="setSpyHandle('rowancheung')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@rowancheung</button>
-          <button onclick="setSpyHandle('marketingharry')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-pink-300 hover:text-white transition-colors">@marketingharry</button>
+          <button onclick="setSpyHandle('codewithharry')" class="px-2.5 py-1 rounded-lg bg-pink-950/50 hover:bg-pink-900/70 border border-pink-500/50 text-[11px] text-pink-300 hover:text-white font-semibold transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-fire text-pink-400"></i> @codewithharry (102k Likes · Analyzed)
+          </button>
+          <button onclick="setSpyHandle('thesamur_ai')" class="px-2.5 py-1 rounded-lg bg-pink-950/40 hover:bg-pink-900/60 border border-pink-500/40 text-[11px] text-pink-300 hover:text-white transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-bolt text-indigo-400"></i> @thesamur_ai (4 Posts)
+          </button>
+          <button onclick="setSpyHandle('all')" class="px-2.5 py-1 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/40 text-[11px] text-indigo-300 hover:text-white transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-database text-cyan-400"></i> View All Saved Posts
+          </button>
+          <button onclick="setSpyHandle('levelsio')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@levelsio</button>
+          <button onclick="setSpyHandle('aisavvy')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@aisavvy</button>
+          <button onclick="setSpyHandle('rowancheung')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@rowancheung</button>
         </div>
 
         <!-- Scrape Options Row -->
@@ -699,6 +706,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       refreshSystemStatus();
       loadApprovalQueue();
+      loadSpyPosts('codewithharry');
       // Auto-poll approval queue every 8 seconds
       setInterval(loadApprovalQueue, 8000);
     });
@@ -725,6 +733,8 @@
 
       if (tabId === 'tab-db') {
         loadDatabasePosts();
+      } else if (tabId === 'tab-spy') {
+        loadSpyPosts();
       }
     }
 
@@ -1264,11 +1274,86 @@
     // Tab 4: Competitor Outlier Spy (Phase 2 Core Feature)
     // -----------------------------------------------------------------
     function setSpyHandle(handle) {
-      document.getElementById('spy-handle-input').value = handle;
+      const clean = handle === 'all' ? '' : handle.replace(/^@/, '').trim();
+      document.getElementById('spy-handle-input').value = clean;
+      loadSpyPosts(clean || 'all');
+    }
+
+    async function loadSpyPosts(handle) {
+      const container = document.getElementById('spy-posts-grid');
+      let targetHandle = handle !== undefined ? handle : document.getElementById('spy-handle-input').value.trim();
+      targetHandle = targetHandle.replace(/^@/, '').trim();
+
+      container.innerHTML = `
+        <div class="col-span-full text-center py-16 text-slate-400">
+          <i class="fa-solid fa-circle-notch fa-spin text-2xl text-pink-400 mb-2"></i>
+          <p class="text-xs font-mono">Retrieving competitor intelligence from database...</p>
+        </div>
+      `;
+
+      try {
+        let url = '/api/competitor/posts?limit=30';
+        if (targetHandle && targetHandle !== 'all') {
+          url += `&handle=${encodeURIComponent(targetHandle)}`;
+        }
+        const res = await fetch(url);
+        const data = await res.json();
+
+        let posts = (data.success && data.posts) ? data.posts : [];
+
+        // If specific handle returned 0 posts, fallback to fetching all stored posts to never leave dashboard empty
+        if (posts.length === 0 && targetHandle && targetHandle !== 'all') {
+          const allRes = await fetch('/api/competitor/posts?limit=30');
+          const allData = await allRes.json();
+          if (allData.success && allData.posts && allData.posts.length > 0) {
+            showToast(`No local posts for @${targetHandle} yet. Showing all stored posts (${allData.posts.length} available).`, 'info');
+            posts = allData.posts;
+          }
+        }
+
+        if (posts.length > 0) {
+          // Check outliers math
+          try {
+            const outlierRes = await fetch('/api/competitor/outliers', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ posts: posts, multiplier_threshold: 1.5, min_cohort_size: 2 })
+            });
+            const outlierData = await outlierRes.json();
+            if (outlierData.success && outlierData.data && outlierData.data.processed_posts) {
+              posts = outlierData.data.processed_posts;
+              const medianVal = (outlierData.data.overall_median || 0).toFixed(2);
+              document.getElementById('spy-cohort-summary').innerText = `Cohort: ${posts.length} posts | Median ER: ${medianVal}%`;
+            } else {
+              document.getElementById('spy-cohort-summary').innerText = `Cohort: ${posts.length} posts`;
+            }
+          } catch (e) {
+            document.getElementById('spy-cohort-summary').innerText = `Cohort: ${posts.length} posts`;
+          }
+
+          AppState.activeScrapedPosts = posts;
+          renderCompetitorPosts(posts, targetHandle || 'competitors');
+        } else {
+          container.innerHTML = `
+            <div class="col-span-full glass-card p-12 rounded-2xl text-center">
+              <div class="w-14 h-14 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-pink-400 text-xl mb-3">
+                <i class="fa-solid fa-ghost"></i>
+              </div>
+              <h4 class="text-base font-semibold text-slate-200">No Posts Stored Yet</h4>
+              <p class="text-xs text-slate-400 max-w-md mx-auto mt-1">
+                Enter an Instagram handle above and click <strong class="text-pink-400">Scrape & Analyze</strong> to retrieve competitor intelligence via Apify.
+              </p>
+            </div>
+          `;
+          document.getElementById('spy-cohort-summary').innerText = `Cohort: 0 posts`;
+        }
+      } catch (err) {
+        container.innerHTML = `<div class="col-span-full p-6 text-center text-rose-400 text-xs">Error loading posts: ${err.message}</div>`;
+      }
     }
 
     async function triggerCompetitorScrape() {
-      const handle = document.getElementById('spy-handle-input').value.trim();
+      const handle = document.getElementById('spy-handle-input').value.trim().replace(/^@/, '');
       const niche = document.getElementById('spy-niche-select').value;
       const limit = parseInt(document.getElementById('spy-limit-select').value, 10);
       const force = document.getElementById('spy-force-toggle').checked;
@@ -1294,13 +1379,16 @@
         const scrapeData = await scrapeRes.json();
 
         if (!scrapeData.success) {
-          showToast(`Scraper message: ${scrapeData.error || 'Scrape did not return posts'}`, 'warning');
+          showToast(`Scraper notice: ${scrapeData.error || 'Scrape did not return new posts'}`, 'warning');
+          // Load stored posts anyway so the UI is not empty
+          await loadSpyPosts(handle);
           return;
         }
 
         const rawPosts = scrapeData.posts || [];
         if (rawPosts.length === 0) {
-          showToast(`No posts returned for @${handle}. May be private or empty profile.`, 'warning');
+          showToast(`No posts returned for @${handle}. Loading existing database records...`, 'warning');
+          await loadSpyPosts(handle);
           return;
         }
 
@@ -1322,10 +1410,11 @@
 
         AppState.activeScrapedPosts = processedPosts;
         renderCompetitorPosts(processedPosts, handle);
-        showToast(`Analyzed ${processedPosts.length} posts for @${handle}!`, 'success');
+        showToast(`Loaded ${processedPosts.length} posts for @${handle}!`, 'success');
 
       } catch (err) {
         showToast(`Scrape error: ${err.message}`, 'error');
+        await loadSpyPosts(handle);
       } finally {
         btn.disabled = false;
         btn.innerHTML = `<i class="fa-solid fa-radar"></i><span>Scrape & Analyze</span>`;
@@ -1351,6 +1440,9 @@
         const mediaUrl = post.display_url || post.media_url || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600';
         const caption = post.caption || 'No caption available.';
         const er = (post.engagement_rate || 0).toFixed(2);
+        const postHandle = (post.handle || handle || '').replace(/^@/, '');
+        const hasAnalysis = !!post.virality_analysis;
+        const analysisScore = (post.virality_analysis && post.virality_analysis.virality_score) || 85;
 
         return `
           <div class="glass-card rounded-2xl overflow-hidden border ${isOutlier ? 'border-pink-500 shadow-xl shadow-pink-500/10' : 'border-slate-800'} flex flex-col justify-between">
@@ -1358,8 +1450,8 @@
             <div class="relative w-full aspect-video bg-slate-950 overflow-hidden group">
               <img src="${mediaUrl}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600'">
               
-              <!-- Outlier Badge -->
-              <div class="absolute top-3 left-3">
+              <!-- Outlier Badge & Dossier Badge -->
+              <div class="absolute top-3 left-3 flex flex-col gap-1.5 items-start">
                 ${isOutlier ? `
                   <span class="px-2.5 py-1 rounded-lg bg-pink-600/90 backdrop-blur text-white text-xs font-bold shadow-lg flex items-center gap-1.5">
                     <i class="fa-solid fa-fire"></i> VIRAL OUTLIER ${multiplier}x
@@ -1369,6 +1461,11 @@
                     ⚪ Normal Cohort
                   </span>
                 `}
+                ${hasAnalysis ? `
+                  <span class="px-2 py-0.5 rounded-lg bg-indigo-950/90 backdrop-blur text-indigo-300 text-[10px] font-mono border border-indigo-500/40 flex items-center gap-1">
+                    <i class="fa-solid fa-brain text-indigo-400"></i> AI Dossier (${analysisScore}/100)
+                  </span>
+                ` : ''}
               </div>
 
               <!-- Metrics Pill -->
@@ -1383,7 +1480,7 @@
             <div class="p-5 space-y-3 flex-1 flex flex-col justify-between">
               <div class="space-y-2">
                 <div class="flex items-center justify-between text-[11px] font-mono text-slate-400">
-                  <span>@${handle}</span>
+                  <span class="text-pink-300 font-semibold">@${postHandle}</span>
                   <span>${post.posted_at ? new Date(post.posted_at).toLocaleDateString() : 'Recent'}</span>
                 </div>
                 <p class="text-xs text-slate-300 line-clamp-3 font-sans">${caption}</p>
@@ -1391,9 +1488,9 @@
 
               <!-- Action Buttons -->
               <div class="pt-3 border-t border-slate-800/80 space-y-2">
-                <button onclick="triggerDeepViralityAnalysis(${idx})" class="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-pink-600/30 to-purple-600/30 hover:from-pink-600/50 hover:to-purple-600/50 border border-pink-500/40 text-pink-300 hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
+                <button onclick="triggerDeepViralityAnalysis(${idx})" class="w-full py-2 px-3 rounded-xl ${hasAnalysis ? 'bg-gradient-to-r from-purple-600/40 to-indigo-600/40 hover:from-purple-600/60 hover:to-indigo-600/60 border border-indigo-500/50 text-indigo-200' : 'bg-gradient-to-r from-pink-600/30 to-purple-600/30 hover:from-pink-600/50 hover:to-purple-600/50 border border-pink-500/40 text-pink-300'} hover:text-white font-semibold text-xs flex items-center justify-center gap-2 transition-all">
                   <i class="fa-solid fa-brain"></i>
-                  <span>Deep AI Virality Breakdown</span>
+                  <span>${hasAnalysis ? 'View AI Virality Dossier' : 'Deep AI Virality Breakdown'}</span>
                 </button>
                 <button onclick="adaptCompetitorPost(${idx})" class="w-full py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center justify-center gap-2 transition-colors">
                   <i class="fa-solid fa-wand-magic-sparkles"></i>
@@ -1406,7 +1503,7 @@
       }).join('');
     }
 
-    async function triggerDeepViralityAnalysis(postIndex) {
+    async function triggerDeepViralityAnalysis(postIndex, forceReanalyze = false) {
       const post = AppState.activeScrapedPosts[postIndex];
       if (!post) return;
 
@@ -1414,12 +1511,21 @@
       const authorText = document.getElementById('modal-post-author');
       const body = document.getElementById('modal-virality-body');
 
-      authorText.innerText = `Analysis for @${post.handle || 'competitor'} (${post.likes || 0} likes · ${post.virality_multiplier || 1.5}x Outlier)`;
+      authorText.innerText = `Analysis for @${post.handle || 'competitor'} (${(post.likes || 0).toLocaleString()} likes · ${post.virality_multiplier || 1.5}x Outlier)`;
       modal.classList.remove('hidden');
+
+      // If already analyzed and not explicitly forcing re-analysis, render immediately!
+      if (post.virality_analysis && !forceReanalyze) {
+        AppState.activeViralityAnalysis = post.virality_analysis;
+        AppState.activeAnalyzingPost = post;
+        renderDossierView(body, post.virality_analysis, postIndex);
+        return;
+      }
+
       body.innerHTML = `
         <div class="text-center py-16">
           <i class="fa-solid fa-circle-notch fa-spin text-3xl text-pink-400 mb-3"></i>
-          <p class="text-slate-200 font-medium text-base">Groq 120B reverse-engineering virality drivers...</p>
+          <p class="text-slate-200 font-medium text-base">OpenRouter Llama 3.3 70B reverse-engineering virality drivers...</p>
           <p class="text-slate-500 text-xs mt-1">Analyzing psychological triggers, scroll-stopping hooks & retention blueprint.</p>
         </div>
       `;
@@ -1434,101 +1540,121 @@
 
         if (data.success && data.analysis) {
           const a = data.analysis;
+          post.virality_analysis = a;
           AppState.activeViralityAnalysis = a;
           AppState.activeAnalyzingPost = post;
-
-          body.innerHTML = `
-            <div class="space-y-5">
-              <!-- Top Banner: Trend Angle -->
-              <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-1.5">
-                <div class="flex items-center justify-between">
-                  <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                    <i class="fa-solid fa-arrow-trend-up"></i> MACRO TREND ANGLE
-                  </span>
-                  <span class="text-xs font-mono text-emerald-400 font-bold">Virality Score: ${a.virality_score || 90}/100</span>
-                </div>
-                <h4 class="text-sm font-bold text-white">${a.trend_angle || 'High-Performance Developer Architecture & AI Workflows'}</h4>
-              </div>
-
-              <!-- Viral Hook & Scroll-Stopper -->
-              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-magnet"></i> Scroll-Stopping Hook Formula
-                  </h4>
-                  <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.viral_hook || '').replace(/'/g, "\\'") }'); showToast('Hook copied to clipboard!', 'success')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
-                    <i class="fa-regular fa-copy"></i> Copy Hook
-                  </button>
-                </div>
-                <div class="text-sm font-semibold text-white p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-pink-200">
-                  "${a.viral_hook || (a.hook_analysis ? a.hook_analysis.hook_breakdown : 'Pattern interrupt hook')}"
-                </div>
-                <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
-                  <div><span class="text-slate-500">Hook Type:</span> <span class="text-slate-300 font-semibold">${(a.hook_analysis && a.hook_analysis.hook_type) || 'Contrarian Value'}</span></div>
-                  <div><span class="text-slate-500">Trigger:</span> <span class="text-slate-300 font-semibold">${(a.hook_analysis && a.hook_analysis.psychological_trigger) || 'Curiosity Gap & Status'}</span></div>
-                </div>
-              </div>
-
-              <!-- Caption Strategy & Mechanics -->
-              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-align-left"></i> Caption Architecture & Save/Share Triggers
-                  </h4>
-                  ${a.caption_mechanics && a.caption_mechanics.suggested_caption ? `
-                    <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.caption_mechanics.suggested_caption).replace(/'/g, "\\'") }'); showToast('Caption copied!', 'success')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
-                      <i class="fa-regular fa-copy"></i> Copy Caption
-                    </button>
-                  ` : ''}
-                </div>
-                <div class="space-y-1.5 text-xs text-slate-300">
-                  <div><strong class="text-slate-400">First Line Hook:</strong> "${(a.caption_mechanics && a.caption_mechanics.first_line_hook) || 'N/A'}"</div>
-                  <div><strong class="text-slate-400">CTA Effectiveness:</strong> ${(a.caption_mechanics && a.caption_mechanics.cta_effectiveness) || 'Direct bookmark prompt.'}</div>
-                  <div><strong class="text-slate-400">Save & Share Triggers:</strong> ${(a.caption_mechanics && a.caption_mechanics.save_share_triggers) || 'High-utility reference material.'}</div>
-                </div>
-              </div>
-
-              <!-- Why It Went Viral Pills -->
-              <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
-                <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
-                  <i class="fa-solid fa-fire"></i> Why This Post Went Viral
-                </h4>
-                <div class="space-y-1.5 text-xs">
-                  ${(a.why_it_went_viral || ['High utility developer code', 'Pattern interrupt in crowded feed', 'Bookmarkable reference blueprint']).map(r => `
-                    <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> <span>${r}</span></div>
-                  `).join('')}
-                </div>
-              </div>
-
-              <!-- Vmatrix Adaptation Blueprint -->
-              <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/40 to-indigo-950/40 border border-pink-500/40 space-y-3">
-                <div class="flex items-center justify-between">
-                  <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i> Vmatrix 4K Carousel Adaptation Blueprint
-                  </h4>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300">100% Pure White Theme</span>
-                </div>
-                <div class="text-sm font-bold text-white">Suggested Topic: "${(a.vmatrix_blueprint && a.vmatrix_blueprint.adapted_title) || a.adaptation_title || 'Autonomous AI Engineering Guide'}"</div>
-                <div class="text-xs text-indigo-300 font-mono">Slide 1 Hook: "${(a.vmatrix_blueprint && a.vmatrix_blueprint.hook_line) || 'The definitive breakdown.'}"</div>
-                
-                <div class="text-xs text-slate-300 space-y-1 pt-1">
-                  ${((a.vmatrix_blueprint && a.vmatrix_blueprint.slide_ideas) || a.adaptation_steps || [
-                    'Slide 1: State the controversial premise.',
-                    'Slide 2: Show architectural comparison.',
-                    'Slide 3: Provide copy-paste workflow.',
-                    'Slide 4: Address common production pitfalls.',
-                    'Slide 5: Call-to-action for bookmarks & shares.'
-                  ]).map((s, i) => `<div class="font-mono text-slate-300">👉 ${s}</div>`).join('')}
-                </div>
-              </div>
-            </div>
-          `;
+          renderDossierView(body, a, postIndex);
+          // Re-render post cards to update badge
+          if (AppState.activeScrapedPosts && AppState.activeScrapedPosts.length) {
+            renderCompetitorPosts(AppState.activeScrapedPosts, post.handle);
+          }
         } else {
           body.innerHTML = `<div class="p-6 text-center text-rose-400">Analysis failed: ${data.error}</div>`;
         }
       } catch (err) {
         body.innerHTML = `<div class="p-6 text-center text-rose-400">Network error: ${err.message}</div>`;
       }
+    }
+
+    function renderDossierView(body, a, postIndex) {
+      const hookInfo = typeof a.hook_analysis === 'object' && a.hook_analysis !== null ? a.hook_analysis : { hook_breakdown: a.hook_analysis || 'Pattern interrupt hook', hook_type: 'Contrarian Value', psychological_trigger: 'Curiosity Gap' };
+      const captionInfo = typeof a.caption_mechanics === 'object' && a.caption_mechanics !== null ? a.caption_mechanics : { first_line_hook: 'N/A', cta_effectiveness: 'Direct bookmark prompt.', save_share_triggers: 'High-utility reference material.', suggested_caption: '' };
+      const pacingInfo = typeof a.slide_pacing === 'object' && a.slide_pacing !== null ? a.slide_pacing : { pacing_analysis: 'High density progressive value', structure_type: 'Listicle' };
+      const bpInfo = typeof a.vmatrix_blueprint === 'object' && a.vmatrix_blueprint !== null ? a.vmatrix_blueprint : { adapted_title: a.adaptation_title || 'Autonomous AI Blueprint', hook_line: 'The definitive breakdown.', slide_ideas: [] };
+      const whyList = Array.isArray(a.why_it_went_viral) ? a.why_it_went_viral : (a.why_it_went_viral ? [a.why_it_went_viral] : ['High utility developer code', 'Pattern interrupt in crowded feed', 'Bookmarkable reference blueprint']);
+      const slideIdeas = Array.isArray(bpInfo.slide_ideas) ? bpInfo.slide_ideas : [
+        'Slide 1: State the controversial premise.',
+        'Slide 2: Show architectural comparison.',
+        'Slide 3: Provide copy-paste workflow.',
+        'Slide 4: Address common production pitfalls.',
+        'Slide 5: Call-to-action for bookmarks & shares.'
+      ];
+
+      body.innerHTML = `
+        <div class="space-y-5">
+          <!-- Top Banner: Trend Angle & Re-run action -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-purple-950/40 via-indigo-950/40 to-slate-900 border border-indigo-500/30 space-y-1.5">
+            <div class="flex items-center justify-between">
+              <span class="px-2 py-0.5 text-[10px] font-mono font-bold rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                <i class="fa-solid fa-arrow-trend-up"></i> MACRO TREND ANGLE
+              </span>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-mono text-emerald-400 font-bold">Virality Score: ${a.virality_score || 90}/100</span>
+                <button onclick="triggerDeepViralityAnalysis(${postIndex}, true)" class="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 flex items-center gap-1 transition-colors" title="Re-run OpenRouter Analysis">
+                  <i class="fa-solid fa-arrows-rotate text-pink-400"></i> Re-Analyze
+                </button>
+              </div>
+            </div>
+            <h4 class="text-sm font-bold text-white">${a.trend_angle || 'High-Performance Developer Architecture & AI Workflows'}</h4>
+          </div>
+
+          <!-- Viral Hook & Scroll-Stopper -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-pink-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-magnet"></i> Scroll-Stopping Hook Formula
+              </h4>
+              <button onclick="navigator.clipboard.writeText('${encodeURIComponent(a.viral_hook || hookInfo.hook_breakdown || '').replace(/'/g, "\\'") }'); showToast('Hook copied to clipboard!', 'success')" class="text-xs text-pink-400 hover:text-pink-300 font-mono flex items-center gap-1">
+                <i class="fa-regular fa-copy"></i> Copy Hook
+              </button>
+            </div>
+            <div class="text-sm font-semibold text-white p-2.5 rounded-lg bg-slate-950/80 border border-slate-800 font-mono text-pink-200">
+              "${a.viral_hook || hookInfo.hook_breakdown || 'Pattern interrupt hook'}"
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-1">
+              <div><span class="text-slate-500">Hook Type:</span> <span class="text-slate-300 font-semibold">${hookInfo.hook_type || 'Contrarian Value'}</span></div>
+              <div><span class="text-slate-500">Trigger:</span> <span class="text-slate-300 font-semibold">${hookInfo.psychological_trigger || 'Curiosity Gap & Status'}</span></div>
+            </div>
+          </div>
+
+          <!-- Caption Strategy & Mechanics -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2.5">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-align-left"></i> Caption Architecture & Save/Share Triggers
+              </h4>
+              ${captionInfo.suggested_caption ? `
+                <button onclick="navigator.clipboard.writeText('${encodeURIComponent(captionInfo.suggested_caption).replace(/'/g, "\\'") }'); showToast('Caption copied!', 'success')" class="text-xs text-cyan-400 hover:text-cyan-300 font-mono flex items-center gap-1">
+                  <i class="fa-regular fa-copy"></i> Copy Caption
+                </button>
+              ` : ''}
+            </div>
+            <div class="space-y-1.5 text-xs text-slate-300">
+              <div><strong class="text-slate-400">First Line Hook:</strong> "${captionInfo.first_line_hook || 'N/A'}"</div>
+              <div><strong class="text-slate-400">CTA Effectiveness:</strong> ${captionInfo.cta_effectiveness || 'Direct bookmark prompt.'}</div>
+              <div><strong class="text-slate-400">Save & Share Triggers:</strong> ${captionInfo.save_share_triggers || 'High-utility reference material.'}</div>
+            </div>
+          </div>
+
+          <!-- Why It Went Viral Pills -->
+          <div class="p-4 rounded-xl bg-slate-900/90 border border-slate-800 space-y-2">
+            <h4 class="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-2">
+              <i class="fa-solid fa-fire"></i> Why This Post Went Viral
+            </h4>
+            <div class="space-y-1.5 text-xs">
+              ${whyList.map(r => `
+                <div class="flex items-center gap-2 text-slate-300"><i class="fa-solid fa-check text-emerald-400 text-[10px]"></i> <span>${r}</span></div>
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Vmatrix Adaptation Blueprint -->
+          <div class="p-4 rounded-xl bg-gradient-to-r from-pink-950/40 via-purple-950/40 to-indigo-950/40 border border-pink-500/40 space-y-3">
+            <div class="flex items-center justify-between">
+              <h4 class="text-xs font-bold text-pink-300 uppercase tracking-wider flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Vmatrix 4K Carousel Adaptation Blueprint
+              </h4>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-pink-500/20 text-pink-300">100% Pure White Theme</span>
+            </div>
+            <div class="text-sm font-bold text-white">Suggested Topic: "${bpInfo.adapted_title || a.adaptation_title || 'Autonomous AI Engineering Guide'}"</div>
+            <div class="text-xs text-indigo-300 font-mono">Slide 1 Hook: "${bpInfo.hook_line || 'The definitive breakdown.'}"</div>
+            
+            <div class="text-xs text-slate-300 space-y-1 pt-1">
+              ${slideIdeas.map((s, i) => `<div class="font-mono text-slate-300">👉 ${s}</div>`).join('')}
+            </div>
+          </div>
+        </div>
+      `;
     }
 
     function closeViralityModal() {

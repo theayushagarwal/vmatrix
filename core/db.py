@@ -50,13 +50,13 @@ class CompetitorDatabase:
     def get_last_scraped_time(self, handle: str, niche: str) -> Optional[str]:
         """Returns the ISO timestamp of the last successful scrape for handle and niche."""
         history = _load_json(SCRAPE_HISTORY_FILE, [])
-        clean_handle = handle.lower().strip()
+        clean_handle = handle.lower().strip().lstrip("@")
         clean_niche = niche.lower().strip()
 
         # Find latest success
         for entry in reversed(history):
             if (
-                entry.get("handle", "").lower() == clean_handle
+                entry.get("handle", "").lower().strip().lstrip("@") == clean_handle
                 and entry.get("niche", "").lower() == clean_niche
                 and entry.get("status") == "success"
             ):
@@ -66,14 +66,14 @@ class CompetitorDatabase:
     def get_scrape_count_last_24h(self, handle: str, niche: str) -> int:
         """Returns the number of scrape attempts for handle in niche during the last 24 hours."""
         history = _load_json(SCRAPE_HISTORY_FILE, [])
-        clean_handle = handle.lower().strip()
+        clean_handle = handle.lower().strip().lstrip("@")
         clean_niche = niche.lower().strip()
         cutoff = time.time() - 86400.0
 
         count = 0
         for entry in history:
             if (
-                entry.get("handle", "").lower() == clean_handle
+                entry.get("handle", "").lower().strip().lstrip("@") == clean_handle
                 and entry.get("niche", "").lower() == clean_niche
                 and entry.get("epoch", 0) >= cutoff
             ):
@@ -85,7 +85,7 @@ class CompetitorDatabase:
         history = _load_json(SCRAPE_HISTORY_FILE, [])
         now_ts = datetime.now(timezone.utc).isoformat()
         entry = {
-            "handle": handle.lower().strip(),
+            "handle": handle.lower().strip().lstrip("@"),
             "niche": niche,
             "status": status,
             "error": error,
@@ -99,7 +99,7 @@ class CompetitorDatabase:
     def needs_followers_refresh(self, handle: str) -> bool:
         """Returns True if the handle's follower count hasn't been refreshed in the last 7 days."""
         cache = _load_json(COMPETITOR_FOLLOWERS_FILE, {})
-        clean_handle = handle.lower().strip()
+        clean_handle = handle.lower().strip().lstrip("@")
         info = cache.get(clean_handle)
         if not info:
             return True
@@ -111,7 +111,7 @@ class CompetitorDatabase:
     def save_competitor_followers(self, handle: str, followers: int) -> None:
         """Saves or updates cached follower count for a competitor handle."""
         cache = _load_json(COMPETITOR_FOLLOWERS_FILE, {})
-        clean_handle = handle.lower().strip()
+        clean_handle = handle.lower().strip().lstrip("@")
         cache[clean_handle] = {
             "followers": followers,
             "updated_at": time.time(),
@@ -131,6 +131,8 @@ class CompetitorDatabase:
         by_shortcode = {p.get("shortcode"): p for p in existing if p.get("shortcode")}
 
         for p in posts:
+            if p.get("handle"):
+                p["handle"] = p.get("handle", "").lower().strip().lstrip("@")
             sc = p.get("shortcode")
             if sc:
                 if sc in by_shortcode:
@@ -151,7 +153,7 @@ class CompetitorDatabase:
                     sc = post.get("shortcode")
                     row = {
                         "shortcode": sc or f"post_{abs(hash(post.get('post_url', '')))}",
-                        "handle": post.get("handle", ""),
+                        "handle": post.get("handle", "").lower().strip().lstrip("@"),
                         "niche": post.get("niche", "AI & CODING"),
                         "post_url": post.get("post_url", ""),
                         "media_url": post.get("media_url", ""),
@@ -189,7 +191,8 @@ class CompetitorDatabase:
 
         filtered = local_posts
         if handle:
-            filtered = [p for p in filtered if p.get("handle", "").lower() == handle.lower().strip()]
+            clean_handle = handle.lower().strip().lstrip("@")
+            filtered = [p for p in filtered if p.get("handle", "").lower().strip().lstrip("@") == clean_handle]
         if niche:
             filtered = [p for p in filtered if p.get("niche", "").lower() == niche.lower().strip()]
 
@@ -200,7 +203,8 @@ class CompetitorDatabase:
                 try:
                     q = client.table("competitor_posts").select("*").order("likes", desc=True).limit(limit)
                     if handle:
-                        q = q.eq("handle", handle.lower().strip())
+                        clean_handle = handle.lower().strip().lstrip("@")
+                        q = q.eq("handle", clean_handle)
                     if niche:
                         q = q.eq("niche", niche)
                     res = q.execute()
