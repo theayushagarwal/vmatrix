@@ -337,8 +337,8 @@ def apply_stage3_semantic_classifier(items: List[Dict[str, Any]]) -> Tuple[List[
         except Exception as e:
             logger.warning("Stage 3 Groq (%s) error, attempting Gemini fallback: %s", DEFAULT_GROQ_MODEL, e)
 
-    # 2. Fallback to Gemini 2.5 Flash
-    if not classifications:
+    # 2. Fallback to Gemini 2.5 Flash (only if ENABLE_GEMINI is explicitly true)
+    if not classifications and os.environ.get("ENABLE_GEMINI", "false").lower() in ("true", "1", "yes"):
         gemini_api_key = os.environ.get("GEMINI_API_KEY")
         if gemini_api_key:
             try:
@@ -349,6 +349,8 @@ def apply_stage3_semantic_classifier(items: List[Dict[str, Any]]) -> Tuple[List[
                 classifications = _fallback_semantic_classify(items)
         else:
             classifications = _fallback_semantic_classify(items)
+    elif not classifications:
+        classifications = _fallback_semantic_classify(items)
 
     class_map = {c.get("original_title", ""): c for c in classifications}
 
@@ -498,29 +500,71 @@ def _call_gemini_actionability(client: genai.Client, topics: List[str]) -> List[
     return parsed.get("evaluations", [])
 
 
+def _call_groq_actionability(client: Any, topics: List[str], model: str = DEFAULT_GROQ_MODEL) -> List[Dict[str, Any]]:
+    """Evaluates candidates for educational format fit and step actionability using Groq."""
+    json_instructions = """
+You MUST return ONLY valid JSON matching this schema:
+{
+  "evaluations": [
+    {
+      "title": "string",
+      "actionability_score": 8,
+      "hook_angle": "string",
+      "step_ideas": ["step 1", "step 2", "step 3", "step 4"],
+      "is_winning_candidate": true
+    }
+  ]
+}
+"""
+    prompt = f"{_ACTIONABILITY_SYSTEM_PROMPT}\n{json_instructions}"
+    completion = client.chat.completions.create(
+        model=model,
+        messages=[
+            {"role": "system", "content": prompt},
+            {"role": "user", "content": f"TOPICS TO EVALUATE:\n{json.dumps(topics, indent=2)}"}
+        ],
+        response_format={"type": "json_object"},
+        temperature=0.3,
+    )
+    content = completion.choices[0].message.content
+    parsed = json.loads(content)
+    return parsed.get("evaluations", [])
+
+
 def apply_stage5_actionability_scoring(
     items: List[Dict[str, Any]],
     min_score: int = 7,
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     """
     Stage 5 Filter: Assesses educational format fit and step actionability (1-10).
-    Returns ranked winning post topics ready for immediate carousel generation.
+    Uses Groq as primary scorer, with fallback heuristics, and only checks Gemini if ENABLE_GEMINI=true.
     """
     if not items:
         return [], []
 
     titles = [it.get("refined_title") or it.get("title", "") for it in items]
-    api_key = os.environ.get("GEMINI_API_KEY")
-
     evals = []
-    if api_key:
+
+    # 1. Primary: Groq
+    groq_client = _get_groq_client()
+    if groq_client:
         try:
-            client = genai.Client(api_key=api_key)
-            evals = _call_gemini_actionability(client, titles)
+            evals = _call_groq_actionability(groq_client, titles)
         except Exception as e:
-            logger.warning("Stage 5 Actionability error, falling back: %s", e)
-            evals = _fallback_actionability(items)
-    else:
+            logger.warning("Stage 5 Groq Actionability error: %s", e)
+
+    # 2. Secondary: Gemini (only if ENABLE_GEMINI is explicitly true)
+    if not evals and os.environ.get("ENABLE_GEMINI", "false").lower() in ("true", "1", "yes"):
+        gemini_api_key = os.environ.get("GEMINI_API_KEY")
+        if gemini_api_key:
+            try:
+                client = genai.Client(api_key=gemini_api_key)
+                evals = _call_gemini_actionability(client, titles)
+            except Exception as e:
+                logger.warning("Stage 5 Gemini Actionability error, falling back: %s", e)
+
+    # 3. Fallback heuristics
+    if not evals:
         evals = _fallback_actionability(items)
 
     eval_map = {e.get("title", ""): e for e in evals}

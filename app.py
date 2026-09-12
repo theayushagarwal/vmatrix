@@ -160,8 +160,12 @@ with st.sidebar:
     _status_row("Supabase Cloud", bool(os.environ.get("SUPABASE_URL") and (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))))
     _status_row("Cloudinary", bool(os.environ.get("CLOUDINARY_CLOUD_NAME") and os.environ.get("CLOUDINARY_API_KEY")))
     _status_row("Instagram Live", bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")))
+    gemini_enabled = os.environ.get("ENABLE_GEMINI", "false").lower() in ("true", "1", "yes")
     if os.environ.get("GEMINI_API_KEY"):
-        _status_row("Gemini API (Fallback)", True)
+        if gemini_enabled:
+            _status_row("Gemini API (Active)", True)
+        else:
+            _status_row("Gemini API (In Reserve / Dormant)", True)
     st.markdown("---")
     st.markdown("**5-Stage Funnel**")
     st.caption("🔴 Stage 1: Blacklist ($0, 0ms)")

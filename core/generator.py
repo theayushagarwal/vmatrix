@@ -37,6 +37,8 @@ def _get_groq_client() -> Optional[Any]:
 
 
 def get_gemini_client() -> Optional[genai.Client]:
+    if os.environ.get("ENABLE_GEMINI", "false").lower() not in ("true", "1", "yes"):
+        return None
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         return None
