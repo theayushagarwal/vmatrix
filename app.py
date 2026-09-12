@@ -395,6 +395,22 @@ st.markdown(
 )
 
 # ---------------------------------------------------------------------------
+# Session state initialization
+# ---------------------------------------------------------------------------
+if "content" not in st.session_state:
+    st.session_state.content = None
+if "slide_paths" not in st.session_state:
+    st.session_state.slide_paths = None
+if "topic" not in st.session_state:
+    st.session_state.topic = ""
+if "feed_geo" not in st.session_state:
+    st.session_state.feed_geo = "IN"
+if "funnel_results" not in st.session_state:
+    st.session_state.funnel_results = None
+if "carousel_mode" not in st.session_state:
+    st.session_state.carousel_mode = "listicle"
+
+# ---------------------------------------------------------------------------
 # Section 1: 🎯 5-Stage Filtering Funnel (Curator Auto-Pilot)
 # ---------------------------------------------------------------------------
 with st.expander("🎯 **5-Stage Filtering Funnel (Auto-Pilot Curator)** — Turn 100+ raw trends into vetted winners", expanded=True):
@@ -413,7 +429,7 @@ with st.expander("🎯 **5-Stage Filtering Funnel (Auto-Pilot Curator)** — Tur
     with col_funnel_info:
         st.caption("Filters raw signals through: **Blacklist** → **Positive Niche Scoring** → **Semantic LLM** → **Vector Anti-Dup (Cosine)** → **Actionability Fit**")
 
-    if st.session_state.funnel_results:
+    if st.session_state.get("funnel_results"):
         f_res = st.session_state.funnel_results
         sc = f_res.get("stage_counts", {})
         
