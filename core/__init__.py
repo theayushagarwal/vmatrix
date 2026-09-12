@@ -113,6 +113,9 @@ from .approval import (
     reject_queued_post,
     process_auto_publish_timeouts,
 )
+from .scraper import InstaScraper
+from .competitor_analyzer import analyze_post_virality
+from .db import db
 from .utils import RenderValidationError
 
 __all__ = [
@@ -202,4 +205,7 @@ __all__ = [
     "passes_shadowban_check",
     "DISCLAIMER",
     "BRAND_SYSTEM_PROMPT",
+    "InstaScraper",
+    "analyze_post_virality",
+    "db",
 ]

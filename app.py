@@ -50,6 +50,9 @@ from core import (
     audit_published_posts_insights,
     get_top_performing_topics,
     calculate_topic_resonance_boost,
+    InstaScraper,
+    analyze_post_virality,
+    db,
 )
 
 load_dotenv()
@@ -423,13 +426,14 @@ generate_clicked = st.button("✨ Generate Carousel", type="primary", use_contai
 
 st.markdown("---")
 
-tab_queue, tab_content, tab_preview, tab_publish, tab_analytics = st.tabs(
+tab_queue, tab_content, tab_preview, tab_publish, tab_analytics, tab_competitors = st.tabs(
     [
         "⏱️ 30-Min Approval Queue",
         "📋 Content Generation",
         "🖼️ Visual Carousel Preview",
         "🚀 Live Publishing",
         "📈 Analytics & Supabase Feedback",
+        "🕵️ Competitor Spy & Virality AI",
     ]
 )
 
@@ -1004,5 +1008,226 @@ with tab_analytics:
                     for t_idx, u in enumerate(slide_urls[:5]):
                         with th_cols[t_idx]:
                             st.image(u, caption=f"Slide {t_idx+1}", use_container_width=True)
+
+# ---------------------------------------------------------------------------
+# Tab 5: Competitor Spy & AI Virality Reverse-Engineering
+# ---------------------------------------------------------------------------
+with tab_competitors:
+    st.markdown("### 🕵️ Competitor Spy & AI Virality Reverse-Engineering")
+    st.markdown(
+        "Scrapes target Instagram competitor accounts using our optimized **Apify Engine** "
+        "(12h cooldowns, 24h circuit breaker, 95% bandwidth savings). "
+        "Multi-modal AI then reverse-engineers **why** competitor posts went viral (Hook Psychology, "
+        "Slide Pacing, Caption Mechanics) and generates a **Vmatrix Adaptation Blueprint** to create "
+        "an original 10x better carousel in our clean 100% white aesthetic."
+    )
+
+    if "competitor_handle" not in st.session_state:
+        st.session_state.competitor_handle = "codewithharry"
+    if "competitor_niche" not in st.session_state:
+        st.session_state.competitor_niche = "AI & CODING"
+
+    # Input controls
+    c_col1, c_col2, c_col3 = st.columns([2, 1.5, 1])
+    with c_col1:
+        comp_handle_input = st.text_input(
+            "Target Competitor Instagram Handle",
+            value=st.session_state.competitor_handle,
+            placeholder="e.g. codewithharry, ai.creators, daily_code",
+        )
+        st.session_state.competitor_handle = comp_handle_input.replace("@", "").strip()
+
+    with c_col2:
+        comp_niche_input = st.selectbox(
+            "Niche Category",
+            options=["AI & CODING", "TOOLS", "FINANCE"],
+            index=0 if st.session_state.competitor_niche == "AI & CODING" else (1 if st.session_state.competitor_niche == "TOOLS" else 2),
+        )
+        st.session_state.competitor_niche = comp_niche_input
+
+    with c_col3:
+        comp_limit = st.slider("Max Posts", min_value=3, max_value=20, value=6, step=1)
+
+    # Preset quick-buttons
+    st.markdown("**Or pick a vetted niche competitor:**")
+    comp_preset_cols = st.columns(4)
+    COMP_PRESETS = [
+        ("💻 @codewithharry", "codewithharry", "AI & CODING"),
+        ("🤖 @ai.creators", "ai.creators", "AI & CODING"),
+        ("⚡ @daily_code", "daily_code", "TOOLS"),
+        ("💰 @levelsfyi", "levelsfyi", "FINANCE"),
+    ]
+    for p_idx, (lbl, h_val, n_val) in enumerate(COMP_PRESETS):
+        with comp_preset_cols[p_idx]:
+            if st.button(lbl, use_container_width=True, key=f"comp_pre_{p_idx}"):
+                st.session_state.competitor_handle = h_val
+                st.session_state.competitor_niche = n_val
+                st.rerun()
+
+    # Action buttons
+    action_c1, action_c2 = st.columns([1.5, 3])
+    with action_c1:
+        scrape_btn = st.button("🚀 Scrape & Ingest Posts", type="primary", use_container_width=True)
+    with action_c2:
+        force_scrape = st.checkbox("Bypass 12h Cooldown (Force live scrape)", value=False)
+
+    if scrape_btn:
+        with st.spinner(f"Scraping latest posts for @{st.session_state.competitor_handle} via Apify / DB..."):
+            scraper = InstaScraper()
+            scraped_items = scraper.scrape(
+                handle=st.session_state.competitor_handle,
+                niche=st.session_state.competitor_niche,
+                limit=comp_limit,
+                force=force_scrape,
+            )
+            if scraped_items:
+                st.success(f"Ingested {len(scraped_items)} posts for @{st.session_state.competitor_handle}!")
+            else:
+                st.info(f"Handle @{st.session_state.competitor_handle} is in cooldown (scraped recently) or returned 0 posts. Showing cached posts.")
+            st.rerun()
+
+    st.markdown("---")
+
+    # Fetch stored competitor posts from database
+    stored_posts = db.get_competitor_posts(
+        handle=st.session_state.competitor_handle,
+        niche=st.session_state.competitor_niche,
+        limit=20,
+    )
+    if not stored_posts:
+        # Also try fetching all competitor posts if specific handle has none
+        stored_posts = db.get_competitor_posts(limit=20)
+
+    st.markdown(f"### 📋 Competitor Posts & Reverse-Engineering Feed ({len(stored_posts)} Available)")
+    if not stored_posts:
+        st.info("No competitor posts ingested yet. Click **'🚀 Scrape & Ingest Posts'** above to fetch posts.")
+    else:
+        for idx, post in enumerate(stored_posts):
+            p_shortcode = post.get("shortcode", f"post_{idx}")
+            p_handle = post.get("handle", "competitor")
+            p_likes = post.get("likes", 0) or 0
+            p_comments = post.get("comments", 0) or 0
+            p_views = post.get("views", 0) or 0
+            p_caption = post.get("caption", "")
+            p_media = post.get("media_url", "")
+            p_analysis = post.get("virality_analysis")
+
+            # Engagement Badge
+            if p_likes >= 20000:
+                tier_badge = "🔥 VIRAL HIT"
+                tier_color = "#f43f5e"
+            elif p_likes >= 5000:
+                tier_badge = "⭐ HIGH ENGAGEMENT"
+                tier_color = "#fbbf24"
+            else:
+                tier_badge = "📈 SOLID PERFORMER"
+                tier_color = "#38bdf8"
+
+            post_box = st.container()
+            with post_box:
+                col_media, col_info = st.columns([1, 2.5])
+                with col_media:
+                    if p_media:
+                        st.image(p_media, use_container_width=True, caption=f"@{p_handle} ({p_shortcode})")
+                    else:
+                        st.markdown(
+                            f'<div style="background: rgba(30,41,59,0.5); border-radius: 8px; height: 160px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">@{p_handle}</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                with col_info:
+                    st.markdown(
+                        f"""
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                            <span style="font-weight: 700; color: #f8fafc; font-size: 1.05rem;">@{p_handle}</span>
+                            <span style="color: {tier_color}; border: 1px solid {tier_color}; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8rem;">
+                                {tier_badge}
+                            </span>
+                        </div>
+                        <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
+                            ❤️ <strong>{p_likes:,}</strong> likes &nbsp;•&nbsp; 💬 <strong>{p_comments:,}</strong> comments &nbsp;•&nbsp; 👁️ <strong>{p_views:,}</strong> views
+                        </div>
+                        <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.35; margin-bottom: 10px; max-height: 70px; overflow: hidden;">
+                            {p_caption[:240]}...
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    btn_c1, btn_c2 = st.columns([1.2, 1])
+                    with btn_c1:
+                        if st.button(f"🧠 Analyze Virality", key=f"anlz_{p_shortcode}_{idx}", type="secondary", use_container_width=True):
+                            with st.spinner("Reverse-engineering hook, slide structure & virality drivers with AI..."):
+                                analysis_result = analyze_post_virality(post)
+                                st.session_state[f"analysis_{p_shortcode}"] = analysis_result
+                                st.rerun()
+
+                    with btn_c2:
+                        st.markdown(
+                            f'<a href="{post.get("post_url", "#")}" target="_blank" style="display: inline-block; padding: 6px 12px; color: #38bdf8; text-decoration: none; font-size: 0.85rem;">View on Instagram ↗</a>',
+                            unsafe_allow_html=True,
+                        )
+
+                # Render AI Analysis breakdown if available
+                cur_analysis = p_analysis or st.session_state.get(f"analysis_{p_shortcode}")
+                if cur_analysis:
+                    h_info = cur_analysis.get("hook_analysis", {})
+                    p_info = cur_analysis.get("slide_pacing", {})
+                    c_info = cur_analysis.get("caption_mechanics", {})
+                    v_score = cur_analysis.get("virality_score", 85)
+                    why_reasons = cur_analysis.get("why_it_went_viral", [])
+                    bp = cur_analysis.get("vmatrix_blueprint", {})
+
+                    st.markdown(
+                        f"""
+                        <div style="background: rgba(15,23,42,0.65); border: 1px solid rgba(129,140,248,0.3); border-radius: 12px; padding: 16px 20px; margin-top: 10px; margin-bottom: 20px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                <span style="font-weight: 800; color: #818cf8; font-size: 1.05rem;">🔬 AI Virality Breakdown</span>
+                                <span style="font-weight: 800; color: #4ade80; font-size: 1.0rem;">Virality Score: {v_score}/100</span>
+                            </div>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.85rem;">
+                                <div>
+                                    <strong style="color: #f3f4f8;">🎯 Hook Psychology:</strong>
+                                    <div style="color: #94a3b8; margin-top: 2px;">{h_info.get('hook_breakdown', '')}</div>
+                                    <div style="color: #a78bfa; font-size: 0.80rem; margin-top: 2px;"><em>Trigger: {h_info.get('psychological_trigger', '')}</em></div>
+                                </div>
+                                <div>
+                                    <strong style="color: #f3f4f8;">📊 Slide Pacing & Structure:</strong>
+                                    <div style="color: #94a3b8; margin-top: 2px;">{p_info.get('pacing_analysis', '')}</div>
+                                    <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 2px;"><em>Density: {p_info.get('educational_density', '')}</em></div>
+                                </div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.85rem;">
+                                <strong style="color: #f3f4f8;">📝 Caption Formula:</strong>
+                                <div style="color: #94a3b8; margin-top: 2px;">{c_info.get('cta_effectiveness', '')} • {c_info.get('save_share_triggers', '')}</div>
+                            </div>
+                            <div style="margin-top: 10px; font-size: 0.85rem;">
+                                <strong style="color: #f3f4f8;">💡 Why It Went Viral:</strong>
+                                <ul style="color: #cbd5e1; margin-top: 4px; padding-left: 18px;">
+                                    {''.join(f'<li>{r}</li>' for r in why_reasons)}
+                                </ul>
+                            </div>
+                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding-top: 12px;">
+                                <strong style="color: #34d399; font-size: 0.95rem;">🚀 Vmatrix Adaptation Blueprint:</strong>
+                                <div style="color: #f8fafc; font-weight: 700; margin-top: 4px;">"{bp.get('adapted_title', '')}"</div>
+                                <div style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">Hook: {bp.get('hook_line', '')}</div>
+                                <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 4px;">Edge: {bp.get('competitive_advantage', '')}</div>
+                            </div>
+                        </div>
+                        """,
+                        unsafe_allow_html=True,
+                    )
+
+                    # Adapt for Vmatrix Button
+                    if st.button(f"⚡ Adapt into Vmatrix Carousel", key=f"adapt_{p_shortcode}_{idx}", type="primary", use_container_width=True):
+                        adapted_title = bp.get("adapted_title") or f"Mastering {p_caption[:40]}"
+                        target_fmt = bp.get("target_format", "listicle")
+                        st.session_state.topic = adapted_title
+                        st.session_state.carousel_mode = target_fmt
+                        st.success(f"🎉 Adapted! Topic '{adapted_title}' loaded into Content Generator. Switch to Tab 2 to plan & render!")
+                        st.balloons()
+
+                st.markdown("---")
+
 
 
