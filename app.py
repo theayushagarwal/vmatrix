@@ -25,6 +25,7 @@ from core import (
     render_infographic,
     upload_images_to_cloudinary,
     publish_to_instagram_carousel,
+    generate_post_comment,
     fetch_all_feeds,
     fetch_google_trends,
     fetch_techcrunch_ai,
@@ -513,10 +514,27 @@ with tab_publish:
         st.info("Generate a carousel before publishing.")
     else:
         st.markdown("**Caption preview**")
-        st.text_area(
+        caption_val = st.text_area(
             "caption",
             value=st.session_state.content.get("caption", ""),
-            height=150,
+            height=130,
+            label_visibility="collapsed",
+        )
+
+        st.markdown("**Auto-Comment Preview (First Comment / Discussion Starter)**")
+        default_comment = st.session_state.content.get("auto_comment")
+        if not default_comment:
+            default_comment = generate_post_comment(
+                topic=st.session_state.content.get("series_title", "Tech & AI Guide"),
+                content_plan=st.session_state.content,
+                format_type="listicle",
+            )
+            st.session_state.content["auto_comment"] = default_comment
+
+        comment_val = st.text_area(
+            "auto_comment",
+            value=default_comment,
+            height=70,
             label_visibility="collapsed",
         )
 
@@ -528,11 +546,14 @@ with tab_publish:
 
                 pub_progress.progress(60, text="Waiting for Instagram to process containers…")
                 result = publish_to_instagram_carousel(
-                    image_urls, st.session_state.content.get("caption", "")
+                    image_urls,
+                    caption_val,
+                    auto_comment=comment_val,
                 )
 
                 pub_progress.progress(100, text="Published.")
-                st.success(f"🎉 Live on Instagram — post ID `{result['post_id']}`")
+                comment_badge = f" | First comment ID: `{result['comment_id']}`" if result.get("comment_id") else ""
+                st.success(f"🎉 Live on Instagram — post ID `{result['post_id']}`{comment_badge}")
                 st.balloons()
             except Exception as e:
                 pub_progress.empty()

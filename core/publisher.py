@@ -119,14 +119,19 @@ def _poll_container_status(container_id: str, access_token: str) -> str:
     raise TimeoutError(f"Container {container_id} did not finish within the polling window.")
 
 
-def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
+def publish_to_instagram_carousel(
+    image_urls: list[str],
+    caption: str,
+    auto_comment: str | None = None,
+) -> dict:
     """
     1. Create item containers (is_carousel_item=true) for each image URL in parallel.
     2. Poll item status until FINISHED in parallel.
     3. Create parent carousel container with children IDs & caption.
     4. Poll parent status until FINISHED.
     5. Publish via media_publish endpoint.
-    Returns: dict with post_id and success status.
+    6. Automatically post first comment if auto_comment is provided.
+    Returns: dict with post_id, container_id, comment_id (if auto_comment), and success status.
     """
     ig_user_id = os.environ.get("IG_USER_ID")
     access_token = os.environ.get("IG_ACCESS_TOKEN")
@@ -201,17 +206,33 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
 
     # 5. Publish
     post_id = _publish()
+    result = {"success": True, "post_id": post_id, "container_id": parent_container_id}
 
-    return {"success": True, "post_id": post_id, "container_id": parent_container_id}
+    # 6. Auto-comment if specified
+    if auto_comment and post_id:
+        try:
+            c_res = post_instagram_comment(post_id, auto_comment)
+            result["comment_id"] = c_res.get("comment_id")
+            result["auto_comment"] = auto_comment
+        except Exception as e:
+            logger.warning("⚠️ Auto-comment failed on carousel %s (non-fatal): %s", post_id, e)
+
+    return result
 
 
-def publish_to_instagram_photo(image_url: str, caption: str) -> dict:
+
+def publish_to_instagram_photo(
+    image_url: str,
+    caption: str,
+    auto_comment: str | None = None,
+) -> dict:
     """
     Publishes a single photo post to Instagram via Meta Graph API:
     1. Create media container with image_url and caption.
     2. Poll container status until FINISHED.
     3. Publish via media_publish endpoint.
-    Returns: dict with post_id and success status.
+    4. Automatically post first comment if auto_comment is provided.
+    Returns: dict with post_id, container_id, comment_id (if auto_comment), and success status.
     """
     ig_user_id = os.environ.get("IG_USER_ID")
     access_token = os.environ.get("IG_ACCESS_TOKEN")
@@ -259,5 +280,50 @@ def publish_to_instagram_photo(image_url: str, caption: str) -> dict:
 
     # 3. Publish
     post_id = _publish()
+    result = {"success": True, "post_id": post_id, "container_id": container_id}
 
-    return {"success": True, "post_id": post_id, "container_id": container_id}
+    # 4. Auto-comment if specified
+    if auto_comment and post_id:
+        try:
+            c_res = post_instagram_comment(post_id, auto_comment)
+            result["comment_id"] = c_res.get("comment_id")
+            result["auto_comment"] = auto_comment
+        except Exception as e:
+            logger.warning("⚠️ Auto-comment failed on photo %s (non-fatal): %s", post_id, e)
+
+    return result
+
+
+def post_instagram_comment(media_id: str, message: str) -> dict:
+    """
+    Publishes an auto-comment / first comment to an Instagram media object (photo, carousel, reel)
+    via Meta Graph API:
+    POST https://graph.instagram.com/v19.0/{media_id}/comments
+    with data: {"message": message, "access_token": access_token}
+    Returns: dict with success status, comment_id, and media_id.
+    """
+    access_token = os.environ.get("IG_ACCESS_TOKEN")
+    if not access_token:
+        raise ValueError("IG_ACCESS_TOKEN is not set.")
+
+    api_base = get_graph_api_base(access_token)
+
+    @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
+    def _post() -> str:
+        resp = requests.post(
+            f"{api_base}/{media_id}/comments",
+            data={
+                "message": message,
+                "access_token": access_token,
+            },
+            timeout=30,
+        )
+        if resp.status_code >= 400:
+            logger.error("Meta Graph API error posting comment (%d): %s", resp.status_code, resp.text)
+        resp.raise_for_status()
+        return resp.json().get("id")
+
+    comment_id = _post()
+    logger.info("  💬 Successfully posted auto-comment on media %s (Comment ID: %s)", media_id, comment_id)
+    return {"success": True, "comment_id": comment_id, "media_id": media_id, "message": message}
+

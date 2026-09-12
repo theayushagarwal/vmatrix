@@ -46,8 +46,10 @@ from core import (
     upload_images_to_cloudinary,
     publish_to_instagram_carousel,
     publish_to_instagram_photo,
+    post_instagram_comment,
     audit_slide_images,
     generate_post_caption,
+    generate_post_comment,
     record_post,
     get_time_since_last_post,
 )
@@ -258,23 +260,34 @@ def run_autonomous_post(
     )
     logger.info("  ✓ Generated caption (%d characters)", len(caption))
 
+    logger.info("  💬 Generating engagement-driving auto-comment (first comment)...")
+    auto_comment = generate_post_comment(
+        topic=series_name,
+        content_plan=content_plan,
+        format_type=pipeline_mode,
+    )
+    logger.info("  ✓ Generated auto-comment: %s", auto_comment)
+
     if pipeline_mode == "photo":
         logger.info("📸 Publishing Single Photo to Instagram (@vmatrix.co)...")
-        ig_result = publish_to_instagram_photo(cloudinary_urls[0], caption)
+        ig_result = publish_to_instagram_photo(cloudinary_urls[0], caption, auto_comment=auto_comment)
     else:
         logger.info("🎨 Publishing %d-Slide Carousel to Instagram (@vmatrix.co)...", len(cloudinary_urls))
-        ig_result = publish_to_instagram_carousel(cloudinary_urls, caption)
+        ig_result = publish_to_instagram_carousel(cloudinary_urls, caption, auto_comment=auto_comment)
 
     post_id = ig_result.get("post_id", "unknown")
+    comment_id = ig_result.get("comment_id")
     elapsed = round(time.time() - start_time, 2)
 
     logger.info("=" * 65)
-    logger.info("🎉 POST PUBLISHED LIVE ON INSTAGRAM! Post ID: %s in %.2fs", post_id, elapsed)
+    logger.info("🎉 POST PUBLISHED LIVE ON INSTAGRAM! Post ID: %s | Comment ID: %s in %.2fs", post_id, comment_id or "N/A", elapsed)
     logger.info("=" * 65)
 
     return {
         "status": "published",
         "post_id": post_id,
+        "comment_id": comment_id,
+        "auto_comment": auto_comment,
         "topic": chosen_topic,
         "slot": active_slot,
         "format": pipeline_mode,
@@ -283,6 +296,7 @@ def run_autonomous_post(
         "image_urls": cloudinary_urls,
         "elapsed_seconds": elapsed,
     }
+
 
 
 def main():

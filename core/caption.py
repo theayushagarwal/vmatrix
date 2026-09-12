@@ -307,3 +307,56 @@ def generate_post_caption(
         voice_index=voice_idx,
         hashtag_index=hashtag_idx,
     )
+
+
+def generate_post_comment(
+    topic: str,
+    content_plan: Optional[Dict[str, Any]] = None,
+    format_type: str = "auto",
+) -> str:
+    """
+    Generates a high-converting, engagement-driving first comment for the published post.
+    Combines a technical discussion hook with a bookmark/save CTA.
+    Uses Groq/Cerebras if available, with deterministic failover templates.
+    """
+    plan = content_plan or {}
+    hook = plan.get("hook_line") or plan.get("cover_subtitle") or ""
+
+    # Deterministic fallback templates based on format
+    if format_type == "photo" or "items" in plan:
+        fallback = (
+            f"Which of these tools is your daily driver in 2026? Or did we miss an essential pick? "
+            f"Drop your thoughts below! 👇\n\n📌 Bookmark this cheatsheet for your next project."
+        )
+    elif format_type == "flow":
+        fallback = (
+            f"How does your team handle this architecture in production? What's your biggest bottleneck? "
+            f"Let's discuss below 👇\n\n📌 Save this architecture breakdown for your next system design review."
+        )
+    else:
+        fallback = (
+            f"Which of these key takeaways had the biggest impact on your developer workflow? "
+            f"Drop a comment below! 👇\n\n📌 Save this guide so you can reference it anytime."
+        )
+
+    # Attempt LLM generation for maximum freshness & specificity
+    prompt = (
+        f"You are the creator of @vmatrix.co on Instagram. Write a short, high-engagement first comment "
+        f"(max 35 words) to auto-post and pin under our new post on '{topic}'.\n"
+        f"Context: {hook}\n\n"
+        f"Instructions:\n"
+        f"1. Ask our developer audience a specific, provocative question about their stack, workflow, or architectural choice to spark comments.\n"
+        f"2. End with a clean one-line CTA to bookmark/save the post (e.g., '📌 Bookmark this for your next build.').\n"
+        f"3. Max 2 emojis total. Plain text only. No hashtags. Do not include quotes."
+    )
+
+    try:
+        res = _call_llm_text(BRAND_SYSTEM_PROMPT, prompt, temperature=0.7)
+        if res and len(res.strip()) > 10:
+            cleaned = res.strip().strip('"\'')
+            return cleaned
+    except Exception as e:
+        logger.debug("LLM comment generation failed, using fallback: %s", e)
+
+    return fallback
+

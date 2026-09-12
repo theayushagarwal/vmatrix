@@ -138,22 +138,27 @@ info_audit = audit_cheatsheet_image(info_path)
 assert info_audit["passed"], f"Infographic visual audit failed: {info_audit['issues']}"
 print(f"  ✓ Infographic Visual Audit: PASSED ({info_audit['score']}/10 via {info_audit['method']})")
 
-# 7. Check Autonomous Scheduler & Single Photo Publisher
-print("\n>>> [7/8] Verifying Slot Resolver & Publishing Exports...")
+# 7. Check Autonomous Scheduler, Auto-Comment Generator & Publishing Exports
+print("\n>>> [7/8] Verifying Slot Resolver, Comment Engine & Publishing Exports...")
 from autonomous_publisher import resolve_slot_and_format
-from core.publisher import publish_to_instagram_photo, publish_to_instagram_carousel
+from core.publisher import publish_to_instagram_photo, publish_to_instagram_carousel, post_instagram_comment
+from core.caption import generate_post_comment
 from core.memory import check_duplicate_guardrails, get_time_since_last_post
 
 s_morn, f_morn = resolve_slot_and_format(slot="morning")
 assert s_morn == "morning" and f_morn == "photo", f"Morning slot failed: {s_morn}, {f_morn}"
 print(f"  ✓ Morning Slot Resolution: {s_morn} -> {f_morn} (Single Photo Infographic)")
 
+test_comm = generate_post_comment("AI Dev Tools 2026", format_type="photo")
+assert test_comm and len(test_comm) > 15, f"Comment generator returned invalid comment: {test_comm}"
+print(f"  ✓ Auto-Comment Generator: \"{test_comm[:60]}...\" ({len(test_comm)} chars)")
+
 is_dup, guard_msg = check_duplicate_guardrails("5 Essential Docker Commands for Developers")
 assert is_dup, "Guardrails should detect recently recorded Docker post as duplicate"
 print(f"  ✓ Anti-Duplication Guardrail Check: Caught duplicate ('{guard_msg}')")
 
-# 7. Check UI Compilation & Syntax
-print("\n>>> [7/7] Verifying Streamlit App Compilation...")
+# 8. Check UI Compilation & Syntax
+print("\n>>> [8/8] Verifying Streamlit App Compilation...")
 import py_compile
 py_compile.compile("app.py")
 print("  ✓ app.py compiled with zero syntax/import errors")

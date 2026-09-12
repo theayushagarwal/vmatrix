@@ -10,7 +10,12 @@ from .renderer import (
     get_logo_url,
     get_favicon_url,
 )
-from .publisher import upload_images_to_cloudinary, publish_to_instagram_carousel, publish_to_instagram_photo
+from .publisher import (
+    upload_images_to_cloudinary,
+    publish_to_instagram_carousel,
+    publish_to_instagram_photo,
+    post_instagram_comment,
+)
 from .feeds import (
     fetch_all_feeds,
     fetch_google_trends,
@@ -27,6 +32,7 @@ from .caption import (
     generate_caption,
     generate_listicle_caption,
     generate_post_caption,
+    generate_post_comment,
 )
 from .funnel import (
     run_filtering_funnel,
@@ -62,6 +68,7 @@ __all__ = [
     "generate_caption",
     "generate_listicle_caption",
     "generate_post_caption",
+    "generate_post_comment",
     "render_carousel_slides",
     "render_carousel_flow_slides",
     "render_infographic",
@@ -70,6 +77,7 @@ __all__ = [
     "upload_images_to_cloudinary",
     "publish_to_instagram_carousel",
     "publish_to_instagram_photo",
+    "post_instagram_comment",
     "fetch_all_feeds",
     "fetch_google_trends",
     "fetch_techcrunch_ai",
