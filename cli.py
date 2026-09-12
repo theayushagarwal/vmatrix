@@ -124,7 +124,7 @@ def menu_generate_carousel():
 
 def menu_competitor_spy():
     print(f"\n{YELLOW}[3] Competitor Instagram Scraping & 3-Gate Outlier Detection...{RESET}")
-    handle = input(f"{BOLD}Enter Competitor Instagram Handle [default: codewithharry]: {RESET}").strip() or "codewithharry"
+    handle = input(f"{BOLD}Enter Competitor Instagram Handle [default: bytebytego_]: {RESET}").strip() or "bytebytego_"
     handle = handle.replace("@", "").strip()
     niche = "AI & CODING"
 

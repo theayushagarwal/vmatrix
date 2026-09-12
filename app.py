@@ -1225,7 +1225,7 @@ with tab_competitors:
     )
 
     if "competitor_handle" not in st.session_state:
-        st.session_state.competitor_handle = "codewithharry"
+        st.session_state.competitor_handle = "bytebytego_"
     if "competitor_niche" not in st.session_state:
         st.session_state.competitor_niche = "AI & CODING"
 
@@ -1235,7 +1235,7 @@ with tab_competitors:
         comp_handle_input = st.text_input(
             "Target Competitor Instagram Handle",
             value=st.session_state.competitor_handle,
-            placeholder="e.g. codewithharry, ai.creators, daily_code",
+            placeholder="e.g. bytebytego_, thecodebytes, bhavik.dev",
         )
         st.session_state.competitor_handle = comp_handle_input.replace("@", "").strip()
 
@@ -1254,9 +1254,9 @@ with tab_competitors:
     st.markdown("**Or pick a vetted niche competitor:**")
     comp_preset_cols = st.columns(4)
     COMP_PRESETS = [
-        ("💻 @codewithharry", "codewithharry", "AI & CODING"),
-        ("🤖 @ai.creators", "ai.creators", "AI & CODING"),
-        ("⚡ @daily_code", "daily_code", "TOOLS"),
+        ("📐 @bytebytego_", "bytebytego_", "AI & CODING"),
+        ("🤖 @thecodebytes", "thecodebytes", "AI & CODING"),
+        ("🐍 @bhavik.dev", "bhavik.dev", "AI & CODING"),
         ("💰 @levelsfyi", "levelsfyi", "FINANCE"),
     ]
     for p_idx, (lbl, h_val, n_val) in enumerate(COMP_PRESETS):

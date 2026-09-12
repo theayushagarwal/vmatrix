@@ -533,7 +533,7 @@
           <div class="flex items-center gap-3">
             <div class="relative">
               <i class="fa-brands fa-instagram absolute left-3.5 top-3 text-slate-400 text-sm"></i>
-              <input type="text" id="spy-handle-input" placeholder="e.g. codewithharry" value="codewithharry" class="bg-slate-900 border border-slate-700 text-sm rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-pink-500 font-mono w-48 sm:w-60">
+              <input type="text" id="spy-handle-input" placeholder="e.g. bytebytego_" value="bytebytego_" class="bg-slate-900 border border-slate-700 text-sm rounded-xl pl-9 pr-3 py-2 text-white focus:outline-none focus:border-pink-500 font-mono w-48 sm:w-60">
             </div>
             <button onclick="triggerCompetitorScrape()" id="btn-scrape-competitor" class="px-5 py-2.5 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-semibold text-xs rounded-xl shadow-lg shadow-pink-600/30 flex items-center gap-2 transition-all">
               <i class="fa-solid fa-radar"></i>
@@ -544,19 +544,21 @@
 
         <!-- Preset Handle Chips -->
         <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-800/80">
-          <span class="text-[11px] font-mono text-slate-400">Quick Targets:</span>
-          <button onclick="setSpyHandle('codewithharry')" class="px-2.5 py-1 rounded-lg bg-pink-950/50 hover:bg-pink-900/70 border border-pink-500/50 text-[11px] text-pink-300 hover:text-white font-semibold transition-colors flex items-center gap-1">
-            <i class="fa-solid fa-fire text-pink-400"></i> @codewithharry (102k Likes · Analyzed)
+          <span class="text-[11px] font-mono text-slate-400">Target Tech Competitors:</span>
+          <button onclick="setSpyHandle('bytebytego_')" class="px-2.5 py-1 rounded-lg bg-pink-950/50 hover:bg-pink-900/70 border border-pink-500/50 text-[11px] text-pink-300 hover:text-white font-semibold transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-fire text-pink-400"></i> @bytebytego_ (System Design Carousels)
           </button>
-          <button onclick="setSpyHandle('thesamur_ai')" class="px-2.5 py-1 rounded-lg bg-pink-950/40 hover:bg-pink-900/60 border border-pink-500/40 text-[11px] text-pink-300 hover:text-white transition-colors flex items-center gap-1">
-            <i class="fa-solid fa-bolt text-indigo-400"></i> @thesamur_ai (4 Posts)
+          <button onclick="setSpyHandle('thecodebytes')" class="px-2.5 py-1 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/40 text-[11px] text-indigo-300 hover:text-white transition-colors flex items-center gap-1">
+            <i class="fa-solid fa-bolt text-indigo-400"></i> @thecodebytes (AI Agents & Frameworks)
           </button>
-          <button onclick="setSpyHandle('all')" class="px-2.5 py-1 rounded-lg bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/40 text-[11px] text-indigo-300 hover:text-white transition-colors flex items-center gap-1">
+          <button onclick="setSpyHandle('bhavik.dev')" class="px-2.5 py-1 rounded-lg bg-purple-950/40 hover:bg-purple-900/60 border border-purple-500/40 text-[11px] text-purple-300 hover:text-white transition-colors flex items-center gap-1">
+            <i class="fa-brands fa-python text-yellow-400"></i> @bhavik.dev (Python Architecture)
+          </button>
+          <button onclick="setSpyHandle('all')" class="px-2.5 py-1 rounded-lg bg-cyan-950/40 hover:bg-cyan-900/60 border border-cyan-500/40 text-[11px] text-cyan-300 hover:text-white transition-colors flex items-center gap-1">
             <i class="fa-solid fa-database text-cyan-400"></i> View All Saved Posts
           </button>
-          <button onclick="setSpyHandle('levelsio')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@levelsio</button>
-          <button onclick="setSpyHandle('aisavvy')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@aisavvy</button>
-          <button onclick="setSpyHandle('rowancheung')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@rowancheung</button>
+          <button onclick="setSpyHandle('thesamur_ai')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@thesamur_ai</button>
+          <button onclick="setSpyHandle('systemdesignhub')" class="px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 border border-slate-800 text-[11px] text-slate-300 hover:text-white transition-colors">@systemdesignhub</button>
         </div>
 
         <!-- Scrape Options Row -->
@@ -742,7 +744,7 @@
     document.addEventListener('DOMContentLoaded', () => {
       refreshSystemStatus();
       loadApprovalQueue();
-      loadSpyPosts('codewithharry');
+      loadSpyPosts('bytebytego_');
       // Auto-poll approval queue every 8 seconds
       setInterval(loadApprovalQueue, 8000);
     });

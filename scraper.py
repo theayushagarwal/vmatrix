@@ -64,51 +64,57 @@ class InstaScraper:
     def _get_curated_fallback_posts(self, handle: str, niche: str, limit: int = 5) -> list[dict]:
         """High-engagement sample competitor posts for testing and offline execution."""
         sample_bank = {
-            "codewithharry": [
+            "bytebytego_": [
                 {
-                    "shortcode": "C_harry_dock1",
-                    "caption": "🔥 Stop writing bloated Dockerfiles! Here are 5 production tricks to shrink container size by 80% with multi-stage builds and minimal distroless images. Which one are you using in prod? Save this for your next deployment! #python #docker #devops #coding",
-                    "likes": 18450,
-                    "views": 52000,
-                    "comments": 420,
-                    "media_url": "https://images.unsplash.com/photo-1605745341112-85968b19335b?w=800&auto=format&fit=crop&q=80",
+                    "shortcode": "C_byte_api_gateway",
+                    "caption": "API Gateway vs Reverse Proxy vs Load Balancer: What is the real architectural difference? 🚀 Save this for your next System Design interview! #systemdesign #softwareengineering #microservices #backend",
+                    "likes": 42800,
+                    "views": 120000,
+                    "comments": 940,
+                    "media_url": "https://images.unsplash.com/photo-1558494949-ef010cbdcc31?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
+                    "is_carousel": 1,
                 },
                 {
-                    "shortcode": "C_harry_api2",
-                    "caption": "FastAPI is fast, but with these 4 async connection pool tweaks and uvloop, it handles 10x more concurrent requests. Tag a backend dev who needs this! #fastapi #python #backend",
-                    "likes": 24100,
-                    "views": 68000,
-                    "comments": 580,
-                    "media_url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
+                    "shortcode": "C_byte_cache_stampede",
+                    "caption": "How Top Tech Companies Prevent Cache Stampedes: 4 Production Strategies (Probabilistic Early Expiration & Mutex Locks). Save this blueprint! #systemdesign #redis #backend",
+                    "likes": 38200,
+                    "views": 95000,
+                    "comments": 710,
+                    "media_url": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
+                    "is_carousel": 1,
                 },
             ],
-            "ai.creators": [
+            "thecodebytes": [
                 {
-                    "shortcode": "C_ai_prompt1",
-                    "caption": "99% of people prompt LLMs like a search engine. Use the 'Context Sandwich' framework instead to get zero-hallucination structured JSON outputs every single time. 🥪 Bookmark this! #ai #llm #chatgpt #deepseek",
-                    "likes": 32800,
-                    "views": 94000,
-                    "comments": 890,
+                    "shortcode": "C_code_langgraph_mcp",
+                    "caption": "Why LangGraph + Model Context Protocol (MCP) is replacing monolithic RAG chains in 2026. 🤖⚡ Swipe through for the complete state graph flowchart 👉 #ai #llm #python #machinelearning",
+                    "likes": 36500,
+                    "views": 98000,
+                    "comments": 780,
                     "media_url": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
+                    "is_carousel": 1,
                 },
+            ],
+            "bhavik.dev": [
                 {
-                    "shortcode": "C_ai_agents2",
-                    "caption": "Autonomous AI Agents in 2026: Why LangGraph + MCP is replacing monolithic RAG chains for production workflows. Full architectural blueprint breakdown inside. #aiagents #python #machinelearning",
-                    "likes": 28900,
-                    "views": 81000,
-                    "comments": 612,
-                    "media_url": "https://images.unsplash.com/photo-1620712943543-bcc4688e7485?w=800&auto=format&fit=crop&q=80",
+                    "shortcode": "C_bhavik_fastapi_tricks",
+                    "caption": "5 Python Performance Hacks Every Senior Backend Dev Uses (That Aren't Async/Await). 🐍⚡ Save for your backend sprints! #python #backend #fastapi #programming",
+                    "likes": 29400,
+                    "views": 82000,
+                    "comments": 510,
+                    "media_url": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&auto=format&fit=crop&q=80",
                     "is_reel": 0,
+                    "is_carousel": 1,
                 },
             ],
         }
 
         items = sample_bank.get(handle.lower().strip())
         if not items:
-            items = sample_bank["codewithharry"]
+            items = sample_bank["bytebytego_"]
 
         from datetime import timedelta
         results = []
