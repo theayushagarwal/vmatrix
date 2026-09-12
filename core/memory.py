@@ -15,6 +15,7 @@ from typing import List, Dict, Any, Optional
 
 from google import genai
 from .utils import logger
+from .database import sync_post_to_supabase
 
 MEMORY_FILE_PATH = Path(__file__).resolve().parent.parent / "data" / "post_history.json"
 
@@ -146,6 +147,10 @@ def record_post(title: str, category: str = "AI & CODING", hook: str = "", metad
     # Keep up to 200 items in history
     history = history[:200]
     save_post_history(history)
+
+    # Sync to Supabase in cloud if connected
+    sync_post_to_supabase(title=title, category=category, hook=hook, embedding=embedding, metadata=metadata)
+
     return entry
 
 

@@ -26,6 +26,11 @@ from .memory import (
     get_text_embedding,
     cosine_similarity,
 )
+from .database import (
+    get_supabase_client,
+    sync_post_to_supabase,
+    fetch_posts_from_supabase,
+)
 from .utils import RenderValidationError
 
 __all__ = [
@@ -54,5 +59,8 @@ __all__ = [
     "check_max_similarity",
     "get_text_embedding",
     "cosine_similarity",
+    "get_supabase_client",
+    "sync_post_to_supabase",
+    "fetch_posts_from_supabase",
     "RenderValidationError",
 ]

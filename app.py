@@ -153,6 +153,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown("**System status**")
     _status_row("Groq (gpt-oss-120b)", bool(os.environ.get("GROQ_API_KEY")))
+    _status_row("Supabase Cloud", bool(os.environ.get("SUPABASE_URL") and (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))))
     _status_row("Gemini API", bool(os.environ.get("GEMINI_API_KEY")))
     _status_row("Cloudinary", bool(os.environ.get("CLOUDINARY_CLOUD_NAME") and os.environ.get("CLOUDINARY_API_KEY")))
     _status_row("Instagram", bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")))
