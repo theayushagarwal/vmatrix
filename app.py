@@ -62,7 +62,7 @@ load_dotenv()
 # Page config + custom styling
 # ---------------------------------------------------------------------------
 st.set_page_config(
-    page_title="ai-social-engine",
+    page_title="Vmatrix Social OS · Autonomous Engine",
     page_icon="⚡",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -71,179 +71,327 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-    .stApp { background: #090d16; color: #f3f4f8; }
-    section[data-testid="stSidebar"] { background: #0d1220; border-right: 1px solid rgba(129,140,248,0.15); }
-    .block-container { padding-top: 2.2rem; max-width: 1200px; }
-    h1, h2, h3 { font-weight: 800 !important; letter-spacing: -0.02em; }
-    .status-pill {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 6px 14px; border-radius: 999px; font-size: 0.82rem; font-weight: 600;
-        margin-bottom: 6px;
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+    /* Global Typography & Base */
+    html, body, [class*="css"], .stApp {
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif !important;
+        background-color: #080b14 !important;
+        background-image: 
+            radial-gradient(ellipse 90% 60% at 50% -20%, rgba(99, 102, 241, 0.22), transparent 70%),
+            radial-gradient(circle at 95% 75%, rgba(236, 72, 153, 0.08), transparent 50%),
+            radial-gradient(circle at 5% 35%, rgba(56, 189, 248, 0.07), transparent 40%) !important;
+        background-attachment: fixed !important;
+        color: #f1f5f9 !important;
+        letter-spacing: -0.01em;
     }
-    .status-ok { background: rgba(74,222,128,0.12); color: #4ade80; border: 1px solid rgba(74,222,128,0.3); }
-    .status-missing { background: rgba(248,113,113,0.12); color: #f87171; border: 1px solid rgba(248,113,113,0.3); }
-    
-    .feed-card {
-        background: rgba(30,41,59,0.45);
-        border: 1px solid rgba(129,140,248,0.22);
-        border-radius: 16px;
-        padding: 18px 20px;
-        margin-bottom: 12px;
-        transition: transform 0.15s ease, border-color 0.15s ease;
+
+    code, pre, .mono-font {
+        font-family: 'JetBrains Mono', monospace !important;
     }
-    .feed-card:hover {
-        border-color: rgba(129,140,248,0.45);
+
+    .block-container {
+        padding-top: 1.8rem !important;
+        padding-bottom: 3.5rem !important;
+        max-width: 1280px !important;
     }
-    .feed-title {
-        font-size: 1.05rem;
+
+    h1, h2, h3, h4, h5, h6 {
+        font-weight: 800 !important;
+        letter-spacing: -0.03em !important;
+        color: #ffffff !important;
+    }
+
+    /* Sidebar Mission Control */
+    section[data-testid="stSidebar"] {
+        background-color: #0c101c !important;
+        background-image: linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(8, 11, 20, 0.98) 100%) !important;
+        border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+        box-shadow: 4px 0 30px rgba(0, 0, 0, 0.5) !important;
+    }
+
+    /* Hero Banner HUD */
+    .hero-container {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.45) 0%, rgba(15, 23, 42, 0.75) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 24px 28px;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-container::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, #6366f1, #a855f7, #ec4899, #38bdf8);
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        border-radius: 999px;
+        font-size: 0.75rem;
         font-weight: 700;
-        color: #f3f4f8;
-        line-height: 1.35;
-        margin-bottom: 6px;
-    }
-    .feed-summary {
-        font-size: 0.88rem;
-        color: #94a3b8;
-        line-height: 1.4;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        color: #a5b4fc;
         margin-bottom: 10px;
     }
-    .feed-meta {
+
+    .hero-title {
+        font-size: 2.2rem;
+        font-weight: 800;
+        letter-spacing: -0.04em;
+        line-height: 1.15;
+        margin: 0 0 8px 0;
+        background: linear-gradient(135deg, #ffffff 30%, #cbd5e1 70%, #94a3b8 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+        font-size: 0.95rem;
+        color: #94a3b8;
+        line-height: 1.45;
+        margin: 0;
+    }
+
+    /* Live Pulsing Dot */
+    @keyframes pulse-glow {
+        0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 6px #22c55e); }
+        50% { opacity: 0.45; transform: scale(0.9); filter: drop-shadow(0 0 1px #22c55e); }
+    }
+    .pulse-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #22c55e;
+        animation: pulse-glow 2s infinite ease-in-out;
+        vertical-align: middle;
+        margin-right: 6px;
+    }
+
+    /* Telemetry HUD Strip */
+    .telemetry-strip {
         display: flex;
-        align-items: center;
+        flex-wrap: wrap;
         gap: 12px;
-        font-size: 0.80rem;
-        color: #818cf8;
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .telemetry-item {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.78rem;
         font-weight: 600;
+        color: #cbd5e1;
+        background: rgba(15, 23, 42, 0.6);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        padding: 4px 10px;
+        border-radius: 8px;
+    }
+
+    /* Modern Floating Segmented Tabs Dock */
+    div[data-baseweb="tab-list"] {
+        background: rgba(15, 23, 42, 0.85) !important;
+        backdrop-filter: blur(18px) !important;
+        -webkit-backdrop-filter: blur(18px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        border-radius: 16px !important;
+        padding: 6px 8px !important;
+        gap: 6px !important;
+        margin-bottom: 24px !important;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4) !important;
+    }
+    button[data-baseweb="tab"] {
+        border-radius: 10px !important;
+        padding: 9px 18px !important;
+        color: #94a3b8 !important;
+        font-weight: 600 !important;
+        font-size: 0.88rem !important;
+        border: 1px solid transparent !important;
+        background: transparent !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    button[data-baseweb="tab"]:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.06) !important;
+    }
+    button[data-baseweb="tab"][aria-selected="true"] {
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.28) 0%, rgba(168, 85, 247, 0.28) 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(129, 140, 248, 0.45) !important;
+        box-shadow: 0 4px 18px rgba(99, 102, 241, 0.3) !important;
+        font-weight: 700 !important;
+    }
+    div[data-baseweb="tab-highlight"] {
+        display: none !important;
+    }
+
+    /* Primary Buttons */
+    button[kind="primary"], .stButton > button[type="primary"] {
+        background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #d946ef 100%) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.25) !important;
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        letter-spacing: -0.01em !important;
+        padding: 0.60rem 1.4rem !important;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+    button[kind="primary"]:hover, .stButton > button[type="primary"]:hover {
+        transform: translateY(-2px) !important;
+        box-shadow: 0 8px 28px rgba(124, 58, 237, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.4) !important;
+        border-color: rgba(255, 255, 255, 0.45) !important;
+    }
+
+    /* Secondary Buttons */
+    button[kind="secondary"], .stButton > button:not([type="primary"]) {
+        background: rgba(30, 41, 59, 0.5) !important;
+        backdrop-filter: blur(12px) !important;
+        color: #e2e8f0 !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease !important;
+    }
+    button[kind="secondary"]:hover, .stButton > button:not([type="primary"]):hover {
+        background: rgba(51, 65, 85, 0.65) !important;
+        border-color: rgba(129, 140, 248, 0.4) !important;
+        color: #ffffff !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* Inputs & Select Boxes */
+    .stTextInput > div > div > input,
+    .stSelectbox > div > div > div,
+    .stTextArea > div > div > textarea {
+        background: rgba(15, 23, 42, 0.7) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 12px !important;
+        color: #f8fafc !important;
+        font-size: 0.92rem !important;
+        padding: 10px 14px !important;
+        transition: all 0.2s ease !important;
+    }
+    .stTextInput > div > div > input:focus,
+    .stSelectbox > div > div > div:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #818cf8 !important;
+        box-shadow: 0 0 0 3px rgba(129, 140, 248, 0.25) !important;
+    }
+
+    /* Glass Cards & Expanders */
+    div[data-testid="stExpander"] {
+        background: rgba(15, 23, 42, 0.6) !important;
+        backdrop-filter: blur(16px) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3) !important;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .feed-card {
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(14px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 18px 20px;
+        margin-bottom: 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .feed-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(129, 140, 248, 0.45);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.1);
     }
 
     .funnel-card {
-        background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.85) 100%);
-        border: 1px solid rgba(129,140,248,0.35);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.65) 0%, rgba(15, 23, 42, 0.85) 100%);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(129, 140, 248, 0.35);
         border-radius: 18px;
         padding: 22px 24px;
         margin-bottom: 16px;
+        transition: transform 0.2s ease, border-color 0.2s ease;
     }
-    .funnel-step-badge {
-        display: inline-block;
-        padding: 4px 12px;
-        border-radius: 999px;
-        font-size: 0.76rem;
-        font-weight: 700;
-        letter-spacing: 0.04em;
-        margin-bottom: 8px;
+    .funnel-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(129, 140, 248, 0.6);
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     }
-    .badge-ai { background: rgba(129,140,248,0.18); color: #818cf8; border: 1px solid rgba(129,140,248,0.4); }
-    .badge-fin { background: rgba(52,211,153,0.18); color: #34d399; border: 1px solid rgba(52,211,153,0.4); }
-    .badge-tools { background: rgba(56,189,248,0.18); color: #38bdf8; border: 1px solid rgba(56,189,248,0.4); }
 
     .stat-pill {
-        background: rgba(15,23,42,0.6);
-        border: 1px solid rgba(129,140,248,0.2);
-        border-radius: 12px;
-        padding: 10px 14px;
+        background: rgba(15, 23, 42, 0.65);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 12px 14px;
         text-align: center;
+        transition: all 0.2s ease;
     }
-    .stat-val { font-size: 1.3rem; font-weight: 800; color: #818cf8; }
-    .stat-lbl { font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
+    .stat-pill:hover {
+        border-color: rgba(129, 140, 248, 0.35);
+        transform: translateY(-1px);
+    }
+    .stat-val { font-size: 1.35rem; font-weight: 800; color: #818cf8; }
+    .stat-lbl { font-size: 0.72rem; color: #94a3b8; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 2px; }
 
-    div[data-testid="stImage"] img { border-radius: 18px; border: 1px solid rgba(129,140,248,0.2); }
+    /* Outlier Glow Cards */
+    .outlier-glow-card {
+        background: linear-gradient(135deg, rgba(30, 27, 75, 0.4) 0%, rgba(15, 23, 42, 0.85) 100%);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(244, 63, 94, 0.45);
+        border-radius: 18px;
+        padding: 20px 24px;
+        margin-bottom: 16px;
+        box-shadow: 0 0 25px rgba(244, 63, 94, 0.12), 0 8px 24px rgba(0, 0, 0, 0.4);
+        transition: all 0.2s ease;
+    }
+    .outlier-glow-card:hover {
+        border-color: rgba(244, 63, 94, 0.7);
+        box-shadow: 0 0 35px rgba(244, 63, 94, 0.22), 0 12px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    div[data-testid="stImage"] img {
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
     .queue-card {
-        background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.92) 100%);
-        border: 1px solid rgba(129,140,248,0.35);
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.92) 100%);
+        border: 1px solid rgba(129, 140, 248, 0.35);
         border-radius: 20px;
         padding: 24px;
         margin-bottom: 24px;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     }
     .timer-badge {
         display: inline-flex; align-items: center; gap: 8px;
         padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.90rem;
     }
-    .timer-urgent { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.45); }
-    .timer-warning { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.45); }
-    .timer-normal { background: rgba(52,211,153,0.18); color: #34d399; border: 1px solid rgba(52,211,153,0.45); }
+    .timer-urgent { background: rgba(239, 68, 68, 0.18); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.45); }
+    .timer-warning { background: rgba(245, 158, 11, 0.18); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); }
+    .timer-normal { background: rgba(52, 211, 153, 0.18); color: #34d399; border: 1px solid rgba(52, 211, 153, 0.45); }
     </style>
     """,
     unsafe_allow_html=True,
-)
-
-PRESETS = [
-    "🔥 5 Claude Prompt Hacks",
-    "⚡ Git Commands for Vibe Coders",
-    "💰 S&P 500 Indexing Simplified",
-]
-
-# ---------------------------------------------------------------------------
-# Sidebar: credential status & memory stats
-# ---------------------------------------------------------------------------
-def _status_row(label: str, ok: bool):
-    cls = "status-ok" if ok else "status-missing"
-    icon = "●" if ok else "○"
-    st.sidebar.markdown(
-        f'<div class="status-pill {cls}">{icon} {label}</div>', unsafe_allow_html=True
-    )
-
-recent_posts = get_recent_posts(days=30)
-
-with st.sidebar:
-    st.markdown("### ⚡ ai-social-engine")
-    st.caption("Autonomous social media engine in < 5s")
-    st.markdown("---")
-    st.markdown("**System status**")
-    _status_row("Groq (gpt-oss-120b)", bool(os.environ.get("GROQ_API_KEY")))
-    _status_row("Logo.dev (Logos/Icons)", bool(os.environ.get("LOGODEV_PUBLISHABLE_KEY") or os.environ.get("LOGODEV_SECRET_KEY")))
-    _status_row("Brandfetch API", bool(os.environ.get("BRANDFETCH_API_KEY")))
-    _status_row("Supabase Cloud", bool(os.environ.get("SUPABASE_URL") and (os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY"))))
-    _status_row("Cloudinary", bool(os.environ.get("CLOUDINARY_CLOUD_NAME") and os.environ.get("CLOUDINARY_API_KEY")))
-    _status_row("Instagram Live", bool(os.environ.get("IG_USER_ID") and os.environ.get("IG_ACCESS_TOKEN")))
-    gemini_enabled = os.environ.get("ENABLE_GEMINI", "false").lower() in ("true", "1", "yes")
-    if os.environ.get("GEMINI_API_KEY"):
-        if gemini_enabled:
-            _status_row("Gemini API (Active)", True)
-        else:
-            _status_row("Gemini API (In Reserve / Dormant)", True)
-    st.markdown("---")
-    st.markdown("**5-Stage Funnel**")
-    st.caption("🔴 Stage 1: Blacklist ($0, 0ms)")
-    st.caption("🟢 Stage 2: Niche Scoring ($0, 1ms)")
-    st.caption("🧠 Stage 3: Groq openai/gpt-oss-120b")
-    st.caption("🔄 Stage 4: Vector Anti-Dup (Cosine)")
-    st.caption("🏆 Stage 5: Format Fit & Actionability")
-    st.markdown("---")
-    st.markdown("**Post Memory (Last 30d)**")
-    st.caption(f"💾 {len(recent_posts)} topics tracked for vector deduplication")
-    st.markdown("---")
-    st.caption("Missing a key? Add it to your `.env` file and restart the app.")
-
-# ---------------------------------------------------------------------------
-# Session state
-# ---------------------------------------------------------------------------
-if "content" not in st.session_state:
-    st.session_state.content = None
-if "slide_paths" not in st.session_state:
-    st.session_state.slide_paths = None
-if "topic" not in st.session_state:
-    st.session_state.topic = ""
-if "feed_geo" not in st.session_state:
-    st.session_state.feed_geo = "IN"
-if "funnel_results" not in st.session_state:
-    st.session_state.funnel_results = None
-if "carousel_mode" not in st.session_state:
-    st.session_state.carousel_mode = "listicle"
-
-# ---------------------------------------------------------------------------
-# Feed Caching
-# ---------------------------------------------------------------------------
-@st.cache_data(ttl=300, show_spinner=False)
-def load_cached_feeds(geo: str):
-    return fetch_all_feeds(geo=geo, max_per_feed=15)
-
-# ---------------------------------------------------------------------------
-# Header
-# ---------------------------------------------------------------------------
-st.markdown("# ⚡ ai-social-engine")
-st.markdown(
-    "Turn breaking raw trends into high-converting Instagram carousels via our **5-Stage Filtering Funnel**, "
-    "**Groq (openai/gpt-oss-120b)** structured planner, **Logo.dev** brand assets, and **Playwright 4K** renderer."
 )
 
 # ---------------------------------------------------------------------------
@@ -384,46 +532,67 @@ with st.expander("📡 **Raw Topic Radar (4 Live Feeds)** — Browse individual 
 st.markdown("---")
 
 # ---------------------------------------------------------------------------
-# Topic Input + Presets
+# Topic Input + Presets Launchpad
 # ---------------------------------------------------------------------------
-topic_col, _ = st.columns([3, 1])
-with topic_col:
-    topic_input = st.text_input(
-        "Topic",
-        value=st.session_state.topic,
-        placeholder="e.g. 5 Claude Prompt Hacks for Developers or pick from the Funnel/Radar above",
-        label_visibility="collapsed",
-    )
+st.markdown(
+    """
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: 700; font-size: 1.05rem; color: #f8fafc;">🎯 Carousel Concept Launchpad</span>
+        <span style="font-size: 0.80rem; color: #818cf8; font-weight: 600;">Groq 120B Structured Planner</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-st.markdown("**Or start from a preset:**")
-preset_cols = st.columns(3)
-for i, preset in enumerate(PRESETS):
-    with preset_cols[i]:
-        if st.button(preset, use_container_width=True):
-            topic_input = preset.split(" ", 1)[1]
-            st.session_state.topic = topic_input
+topic_input = st.text_input(
+    "Topic",
+    value=st.session_state.topic,
+    placeholder="Enter an engineering topic (e.g. 5 Production Docker Tricks, FastAPI Concurrency, LangGraph Architecture)...",
+    label_visibility="collapsed",
+)
 
 st.session_state.topic = topic_input or st.session_state.topic
 
-mode_col1, mode_col2 = st.columns([3, 1])
-with mode_col1:
+st.markdown(
+    """
+    <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px; margin-bottom: 6px;">
+        <span style="font-size: 0.80rem; color: #94a3b8; font-weight: 600;">⚡ Quick Presets:</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+preset_cols = st.columns(3)
+for i, preset in enumerate(PRESETS):
+    with preset_cols[i]:
+        if st.button(preset, use_container_width=True, key=f"top_pre_{i}"):
+            topic_input = preset.split(" ", 1)[1]
+            st.session_state.topic = topic_input
+            st.rerun()
+
+st.session_state.topic = topic_input or st.session_state.topic
+
+ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([2.5, 1.2, 1.3])
+with ctrl_c1:
     selected_mode = st.radio(
-        "Carousel Format",
+        "Carousel Canvas Architecture",
         options=["listicle", "flow"],
-        format_func=lambda x: "📋 Listicle / Tool Cards (5 Slides)" if x == "listicle" else "🗺️ System Architecture Flow (5 Slides)",
+        format_func=lambda x: "📋 Listicle / Tool Cards (5 Slides)" if x == "listicle" else "🗺️ System Flowchart (5 Slides)",
         horizontal=True,
         index=0 if st.session_state.carousel_mode == "listicle" else 1,
     )
     st.session_state.carousel_mode = selected_mode
-with mode_col2:
+
+with ctrl_c2:
     export_fmt = st.selectbox(
-        "Slide Export Format",
+        "Output Render Quality",
         options=["jpeg", "png"],
-        format_func=lambda x: "⚡ JPEG (95% Fast Retina)" if x == "jpeg" else "🖼️ PNG (Lossless)",
+        format_func=lambda x: "⚡ JPEG 4K Retina" if x == "jpeg" else "🖼️ PNG Lossless",
         index=0,
     )
 
-generate_clicked = st.button("✨ Generate Carousel", type="primary", use_container_width=True)
+with ctrl_c3:
+    st.write("") # spacing
+    generate_clicked = st.button("✨ Plan & Render", type="primary", use_container_width=True)
 
 st.markdown("---")
 
@@ -1178,131 +1347,132 @@ with tab_competitors:
                 tier_color = "#38bdf8"
                 border_color = "rgba(56,189,248,0.2)"
 
-            post_box = st.container()
-            with post_box:
-                col_media, col_info = st.columns([1, 2.5])
-                with col_media:
-                    if p_media:
-                        st.image(p_media, use_container_width=True, caption=f"@{p_handle} ({p_shortcode})")
-                    else:
-                        st.markdown(
-                            f'<div style="background: rgba(30,41,59,0.5); border-radius: 8px; height: 160px; display: flex; align-items: center; justify-content: center; color: #94a3b8;">@{p_handle}</div>',
-                            unsafe_allow_html=True,
-                        )
-
-                with col_info:
+            card_cls = "outlier-glow-card" if is_outlier else "feed-card"
+            st.markdown(f'<div class="{card_cls}">', unsafe_allow_html=True)
+            col_media, col_info = st.columns([1, 2.5])
+            with col_media:
+                if p_media:
+                    st.image(p_media, use_container_width=True, caption=f"@{p_handle} ({p_shortcode})")
+                else:
                     st.markdown(
-                        f"""
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                            <span style="font-weight: 700; color: #f8fafc; font-size: 1.05rem;">@{p_handle}</span>
-                            <span style="color: {tier_color}; border: 1px solid {tier_color}; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; background: rgba(15,23,42,0.4);">
-                                {tier_badge}
-                            </span>
-                        </div>
-                        <div style="font-size: 0.85rem; color: #cbd5e1; margin-bottom: 8px;">
-                            ❤️ <strong>{p_likes:,}</strong> likes &nbsp;•&nbsp; 💬 <strong>{p_comments:,}</strong> comments &nbsp;•&nbsp; 👁️ <strong>{p_views:,}</strong> views
-                        </div>
-                        <div style="font-size: 0.82rem; color: #94a3b8; line-height: 1.35; margin-bottom: 10px; max-height: 70px; overflow: hidden;">
-                            {p_caption[:240]}...
-                        </div>
-                        """,
+                        f'<div style="background: rgba(30,41,59,0.5); border-radius: 12px; height: 160px; display: flex; align-items: center; justify-content: center; color: #94a3b8; font-weight: 600;">@{p_handle}</div>',
                         unsafe_allow_html=True,
                     )
 
-                    # 3-Gate Mathematical Diagnostics
-                    if gate_1 and gate_2 and gate_3:
-                        with st.expander("📐 3-Gate Math & Virality Breakdown", expanded=is_outlier):
-                            g1_icon = "✅" if gate_1.get("passed") else "❌"
-                            g2_icon = "✅" if gate_2.get("passed") else "❌"
-                            g3_icon = "✅" if gate_3.get("passed") else "❌"
-                            st.markdown(
-                                f"""
-                                <div style="font-size: 0.82rem; line-height: 1.6; color: #cbd5e1;">
-                                    <div><strong>{g1_icon} Gate 1 (Relative Multiplier):</strong> {gate_1.get('description', '')}</div>
-                                    <div><strong>{g2_icon} Gate 2 (Absolute Floor):</strong> {gate_2.get('description', '')}</div>
-                                    <div><strong>{g3_icon} Gate 3 (Composite ER >= 1%):</strong> {gate_3.get('description', '')}</div>
-                                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); color: #38bdf8;">
-                                        <strong>📉 Time Decay:</strong> Raw {raw_score:.2f}x &times; Recency {recency_mult:.2f}x (at {age_days:.1f}d) = <strong>{v_score:.2f}x Virality Score</strong>
-                                    </div>
-                                </div>
-                                """,
-                                unsafe_allow_html=True,
-                            )
+            with col_info:
+                st.markdown(
+                    f"""
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-weight: 800; color: #ffffff; font-size: 1.1rem; letter-spacing: -0.02em;">@{p_handle}</span>
+                        <span style="color: {tier_color}; border: 1px solid {border_color}; padding: 4px 12px; border-radius: 999px; font-weight: 800; font-size: 0.82rem; background: rgba(15,23,42,0.6); box-shadow: 0 0 15px {border_color};">
+                            {tier_badge}
+                        </span>
+                    </div>
+                    <div style="font-size: 0.88rem; color: #cbd5e1; margin-bottom: 8px;">
+                        ❤️ <strong>{p_likes:,}</strong> likes &nbsp;•&nbsp; 💬 <strong>{p_comments:,}</strong> comments &nbsp;•&nbsp; 👁️ <strong>{p_views:,}</strong> views
+                    </div>
+                    <div style="font-size: 0.84rem; color: #94a3b8; line-height: 1.45; margin-bottom: 12px; max-height: 75px; overflow: hidden;">
+                        {p_caption[:240]}...
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
 
-                    btn_c1, btn_c2 = st.columns([1.2, 1])
-                    with btn_c1:
-                        if st.button(f"🧠 Analyze Virality", key=f"anlz_{p_shortcode}_{idx}", type="secondary", use_container_width=True):
-                            with st.spinner("Reverse-engineering hook, slide structure & virality drivers with AI..."):
-                                analysis_result = analyze_post_virality(post)
-                                st.session_state[f"analysis_{p_shortcode}"] = analysis_result
-                                st.rerun()
-
-                    with btn_c2:
+                # 3-Gate Mathematical Diagnostics
+                if gate_1 and gate_2 and gate_3:
+                    with st.expander("📐 3-Gate Math & Virality Breakdown", expanded=is_outlier):
+                        g1_icon = "✅" if gate_1.get("passed") else "❌"
+                        g2_icon = "✅" if gate_2.get("passed") else "❌"
+                        g3_icon = "✅" if gate_3.get("passed") else "❌"
                         st.markdown(
-                            f'<a href="{post.get("post_url", "#")}" target="_blank" style="display: inline-block; padding: 6px 12px; color: #38bdf8; text-decoration: none; font-size: 0.85rem;">View on Instagram ↗</a>',
+                            f"""
+                            <div style="font-size: 0.82rem; line-height: 1.6; color: #cbd5e1; background: rgba(15,23,42,0.4); padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.06);">
+                                <div><strong>{g1_icon} Gate 1 (Relative Multiplier):</strong> {gate_1.get('description', '')}</div>
+                                <div><strong>{g2_icon} Gate 2 (Absolute Floor):</strong> {gate_2.get('description', '')}</div>
+                                <div><strong>{g3_icon} Gate 3 (Composite ER >= 1%):</strong> {gate_3.get('description', '')}</div>
+                                <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); color: #38bdf8;">
+                                    <strong>📉 Time Decay:</strong> Raw {raw_score:.2f}x &times; Recency {recency_mult:.2f}x (at {age_days:.1f}d) = <strong style="color: #4ade80;">{v_score:.2f}x Virality Score</strong>
+                                </div>
+                            </div>
+                            """,
                             unsafe_allow_html=True,
                         )
 
-                # Render AI Analysis breakdown if available
-                cur_analysis = p_analysis or st.session_state.get(f"analysis_{p_shortcode}")
-                if cur_analysis:
-                    h_info = cur_analysis.get("hook_analysis", {})
-                    p_info = cur_analysis.get("slide_pacing", {})
-                    c_info = cur_analysis.get("caption_mechanics", {})
-                    v_score = cur_analysis.get("virality_score", 85)
-                    why_reasons = cur_analysis.get("why_it_went_viral", [])
-                    bp = cur_analysis.get("vmatrix_blueprint", {})
+                btn_c1, btn_c2 = st.columns([1.3, 1])
+                with btn_c1:
+                    if st.button(f"🧠 Analyze Virality", key=f"anlz_{p_shortcode}_{idx}", type="secondary", use_container_width=True):
+                        with st.spinner("Reverse-engineering hook, slide structure & virality drivers with AI..."):
+                            analysis_result = analyze_post_virality(post)
+                            st.session_state[f"analysis_{p_shortcode}"] = analysis_result
+                            st.rerun()
 
+                with btn_c2:
                     st.markdown(
-                        f"""
-                        <div style="background: rgba(15,23,42,0.65); border: 1px solid rgba(129,140,248,0.3); border-radius: 12px; padding: 16px 20px; margin-top: 10px; margin-bottom: 20px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                <span style="font-weight: 800; color: #818cf8; font-size: 1.05rem;">🔬 AI Virality Breakdown</span>
-                                <span style="font-weight: 800; color: #4ade80; font-size: 1.0rem;">Virality Score: {v_score}/100</span>
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 0.85rem;">
-                                <div>
-                                    <strong style="color: #f3f4f8;">🎯 Hook Psychology:</strong>
-                                    <div style="color: #94a3b8; margin-top: 2px;">{h_info.get('hook_breakdown', '')}</div>
-                                    <div style="color: #a78bfa; font-size: 0.80rem; margin-top: 2px;"><em>Trigger: {h_info.get('psychological_trigger', '')}</em></div>
-                                </div>
-                                <div>
-                                    <strong style="color: #f3f4f8;">📊 Slide Pacing & Structure:</strong>
-                                    <div style="color: #94a3b8; margin-top: 2px;">{p_info.get('pacing_analysis', '')}</div>
-                                    <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 2px;"><em>Density: {p_info.get('educational_density', '')}</em></div>
-                                </div>
-                            </div>
-                            <div style="margin-top: 10px; font-size: 0.85rem;">
-                                <strong style="color: #f3f4f8;">📝 Caption Formula:</strong>
-                                <div style="color: #94a3b8; margin-top: 2px;">{c_info.get('cta_effectiveness', '')} • {c_info.get('save_share_triggers', '')}</div>
-                            </div>
-                            <div style="margin-top: 10px; font-size: 0.85rem;">
-                                <strong style="color: #f3f4f8;">💡 Why It Went Viral:</strong>
-                                <ul style="color: #cbd5e1; margin-top: 4px; padding-left: 18px;">
-                                    {''.join(f'<li>{r}</li>' for r in why_reasons)}
-                                </ul>
-                            </div>
-                            <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 12px; padding-top: 12px;">
-                                <strong style="color: #34d399; font-size: 0.95rem;">🚀 Vmatrix Adaptation Blueprint:</strong>
-                                <div style="color: #f8fafc; font-weight: 700; margin-top: 4px;">"{bp.get('adapted_title', '')}"</div>
-                                <div style="color: #94a3b8; font-style: italic; font-size: 0.85rem;">Hook: {bp.get('hook_line', '')}</div>
-                                <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 4px;">Edge: {bp.get('competitive_advantage', '')}</div>
-                            </div>
-                        </div>
-                        """,
+                        f'<a href="{post.get("post_url", "#")}" target="_blank" style="display: inline-block; padding: 7px 14px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; color: #38bdf8; text-decoration: none; font-size: 0.84rem; font-weight: 600; text-align: center; width: 100%;">View on Instagram ↗</a>',
                         unsafe_allow_html=True,
                     )
 
-                    # Adapt for Vmatrix Button
-                    if st.button(f"⚡ Adapt into Vmatrix Carousel", key=f"adapt_{p_shortcode}_{idx}", type="primary", use_container_width=True):
-                        adapted_title = bp.get("adapted_title") or f"Mastering {p_caption[:40]}"
-                        target_fmt = bp.get("target_format", "listicle")
-                        st.session_state.topic = adapted_title
-                        st.session_state.carousel_mode = target_fmt
-                        st.success(f"🎉 Adapted! Topic '{adapted_title}' loaded into Content Generator. Switch to Tab 2 to plan & render!")
-                        st.balloons()
+            # Render AI Analysis breakdown if available
+            cur_analysis = p_analysis or st.session_state.get(f"analysis_{p_shortcode}")
+            if cur_analysis:
+                h_info = cur_analysis.get("hook_analysis", {})
+                p_info = cur_analysis.get("slide_pacing", {})
+                c_info = cur_analysis.get("caption_mechanics", {})
+                v_score_disp = cur_analysis.get("virality_score", 85)
+                why_reasons = cur_analysis.get("why_it_went_viral", [])
+                bp = cur_analysis.get("vmatrix_blueprint", {})
 
-                st.markdown("---")
+                st.markdown(
+                    f"""
+                    <div style="background: linear-gradient(135deg, rgba(15,23,42,0.85) 0%, rgba(30,27,75,0.5) 100%); border: 1px solid rgba(129,140,248,0.4); border-radius: 16px; padding: 20px 24px; margin-top: 14px; margin-bottom: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.4);">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;">
+                            <span style="font-weight: 800; color: #818cf8; font-size: 1.1rem; letter-spacing: -0.02em;">🔬 AI Intelligence Dossier</span>
+                            <span style="font-weight: 800; color: #4ade80; font-size: 1.0rem; background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3); padding: 3px 10px; border-radius: 999px;">Score: {v_score_disp}/100</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 0.86rem;">
+                            <div style="background: rgba(15,23,42,0.5); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: #f3f4f8;">🎯 Hook Psychology:</strong>
+                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{h_info.get('hook_breakdown', '')}</div>
+                                <div style="color: #a78bfa; font-size: 0.80rem; margin-top: 6px;"><em>Trigger: {h_info.get('psychological_trigger', '')}</em></div>
+                            </div>
+                            <div style="background: rgba(15,23,42,0.5); padding: 12px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                                <strong style="color: #f3f4f8;">📊 Slide Pacing & Structure:</strong>
+                                <div style="color: #cbd5e1; margin-top: 4px; line-height: 1.4;">{p_info.get('pacing_analysis', '')}</div>
+                                <div style="color: #38bdf8; font-size: 0.80rem; margin-top: 6px;"><em>Density: {p_info.get('educational_density', '')}</em></div>
+                            </div>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.86rem; background: rgba(15,23,42,0.4); padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.06);">
+                            <strong style="color: #f3f4f8;">📝 Caption Formula:</strong>
+                            <div style="color: #cbd5e1; margin-top: 4px;">{c_info.get('cta_effectiveness', '')} • {c_info.get('save_share_triggers', '')}</div>
+                        </div>
+                        <div style="margin-top: 12px; font-size: 0.86rem;">
+                            <strong style="color: #f3f4f8;">💡 Why It Went Viral:</strong>
+                            <ul style="color: #cbd5e1; margin-top: 6px; padding-left: 20px; line-height: 1.5;">
+                                {''.join(f'<li>{r}</li>' for r in why_reasons)}
+                            </ul>
+                        </div>
+                        <div style="border-top: 1px solid rgba(255,255,255,0.12); margin-top: 14px; padding-top: 14px;">
+                            <strong style="color: #34d399; font-size: 1.0rem;">🚀 Vmatrix Adaptation Blueprint:</strong>
+                            <div style="color: #f8fafc; font-weight: 800; font-size: 1.05rem; margin-top: 4px;">"{bp.get('adapted_title', '')}"</div>
+                            <div style="color: #94a3b8; font-style: italic; font-size: 0.86rem; margin-top: 2px;">Hook: {bp.get('hook_line', '')}</div>
+                            <div style="color: #38bdf8; font-size: 0.82rem; margin-top: 4px;">Competitive Edge: {bp.get('competitive_advantage', '')}</div>
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+                # Adapt for Vmatrix Button
+                if st.button(f"⚡ Adapt into Vmatrix Carousel", key=f"adapt_{p_shortcode}_{idx}", type="primary", use_container_width=True):
+                    adapted_title = bp.get("adapted_title") or f"Mastering {p_caption[:40]}"
+                    target_fmt = bp.get("target_format", "listicle")
+                    st.session_state.topic = adapted_title
+                    st.session_state.carousel_mode = target_fmt
+                    st.success(f"🎉 Adapted! Topic '{adapted_title}' loaded into Content Generator. Switch to Tab 2 to plan & render!")
+                    st.balloons()
+
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.markdown("<div style='margin-bottom: 8px;'></div>", unsafe_allow_html=True)
 
 
 
