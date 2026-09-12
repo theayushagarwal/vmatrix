@@ -81,8 +81,8 @@ jobs:
           NVIDIA_VISION_MODEL: ${{ secrets.NVIDIA_VISION_MODEL || 'meta/llama-3.2-11b-vision-instruct' }}
 
           # GitHub Models Vision API (Tier 3 GPT-4o Vision Inspector)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN_MODELS || secrets.GITHUB_TOKEN }}
-          GITHUB_VISION_MODEL: ${{ secrets.GITHUB_VISION_MODEL || 'gpt-4o' }}
+          GITHUB_TOKEN: ${{ secrets.GH_MODELS_TOKEN }}
+          GITHUB_VISION_MODEL: ${{ secrets.GH_VISION_MODEL || 'gpt-4o' }}
 
           # Apify Intelligence Radar (AI Agents & Developer Tools)
           APIFY_API_KEY: ${{ secrets.APIFY_API_KEY }}
