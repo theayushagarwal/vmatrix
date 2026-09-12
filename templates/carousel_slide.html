@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>slide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #090d16;
+    --bg-panel: rgba(30, 41, 59, 0.55);
+    --panel-border: rgba(129, 140, 248, 0.25);
+    --accent: #818cf8;
+    --accent-soft: rgba(129, 140, 248, 0.16);
+    --text-primary: #f3f4f8;
+    --text-dim: #8b93ab;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1080px; height: 1350px;
+    background: var(--bg-deep);
+    font-family: 'Outfit', 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    overflow: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+  .frame {
+    position: relative;
+    width: 1080px; height: 1350px;
+    padding: 80px 72px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(129,140,248,0.055) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(129,140,248,0.055) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: radial-gradient(ellipse 900px 1100px at 30% 20%, black 40%, transparent 78%);
+    mask-image: radial-gradient(ellipse 900px 1100px at 30% 20%, black 40%, transparent 78%);
+  }
+  .glow-a {
+    position: absolute; width: 640px; height: 640px; border-radius: 999px;
+    background: radial-gradient(circle, rgba(129,140,248,0.30) 0%, transparent 68%);
+    top: -220px; right: -180px;
+  }
+  .glow-b {
+    position: absolute; width: 520px; height: 520px; border-radius: 999px;
+    background: radial-gradient(circle, rgba(56,189,248,0.14) 0%, transparent 70%);
+    bottom: -160px; left: -160px;
+  }
+
+  .glass {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 20px 60px rgba(0,0,0,0.35);
+    border-radius: 24px;
+  }
+
+  .badge-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 8px 18px; border-radius: 999px;
+    background: var(--accent-soft);
+    border: 1px solid rgba(129,140,248,0.35);
+    color: var(--accent);
+    font-size: 22px; font-weight: 600;
+    width: fit-content;
+  }
+  .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+
+  .progress-track { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #818cf8, #38bdf8); }
+
+  .row { display: flex; align-items: center; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+  .col { display: flex; flex-direction: column; }
+  .grow { flex: 1; }
+  .z10 { position: relative; z-index: 10; }
+  .gap-3 { gap: 12px; }
+  .gap-4 { gap: 16px; }
+  .mt-auto { margin-top: auto; }
+
+  .header-label { font-size: 22px; letter-spacing: 0.01em; color: var(--text-dim); }
+
+  /* Cover */
+  .cover-title { font-size: 86px; font-weight: 800; line-height: 1.04; letter-spacing: -0.02em; max-width: 880px; }
+  .cover-hook { font-size: 34px; line-height: 1.45; color: var(--text-dim); max-width: 760px; margin-top: 36px; }
+  .cover-subtitle-box { padding: 28px 36px; width: fit-content; margin-top: 64px; }
+  .cover-subtitle-box span { font-size: 28px; font-weight: 500; }
+
+  /* Content */
+  .step-num { font-size: 140px; font-weight: 800; line-height: 1; letter-spacing: -0.02em; color: var(--accent); opacity: 0.9; }
+  .logo-card { width: 128px; height: 128px; display: flex; align-items: center; justify-content: center; }
+  .logo-card img { border-radius: 16px; }
+  .content-title { font-size: 62px; font-weight: 700; line-height: 1.08; letter-spacing: -0.02em; max-width: 860px; margin: 52px 0 30px; }
+  .content-desc { font-size: 32px; line-height: 1.55; color: var(--text-dim); max-width: 840px; margin-bottom: 48px; }
+  .tool-chip { padding: 20px 30px; border-radius: 20px; }
+  .tool-chip span { font-size: 24px; font-weight: 600; color: var(--accent); }
+
+  /* Outro */
+  .outro-title { font-size: 70px; font-weight: 800; line-height: 1.08; letter-spacing: -0.02em; max-width: 820px; margin-bottom: 48px; }
+  .outro-box { padding: 40px 48px; width: 100%; max-width: 860px; }
+  .outro-box .label { font-size: 24px; color: var(--text-dim); display: block; margin-bottom: 14px; }
+  .outro-box .keyword { font-size: 54px; font-weight: 800; color: var(--accent); }
+  .outro-action { font-size: 28px; line-height: 1.5; color: var(--text-dim); max-width: 760px; margin-top: 36px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="bg-grid"></div>
+  <div class="glow-a"></div>
+  <div class="glow-b"></div>
+
+  <div class="row-between z10 gap-3" style="margin-bottom: 56px;">
+    <div class="row gap-3">
+      <div class="dot"></div>
+      <span class="mono header-label">{{ category }}</span>
+    </div>
+    <span class="mono header-label">{{ slide_index }} / {{ slide_total }}</span>
+  </div>
+
+  <div class="col grow z10">
+
+  {% if slide.type == 'cover' %}
+    <div class="col grow" style="justify-content: center;">
+      <div class="badge-pill mono" style="margin-bottom: 40px;">{{ series_title }}</div>
+      <h1 class="cover-title">{{ slide.title }}</h1>
+      <p class="cover-hook">{{ slide.hook_line }}</p>
+      {% if slide.subtitle %}
+      <div class="glass cover-subtitle-box">
+        <span>{{ slide.subtitle }}</span>
+      </div>
+      {% endif %}
+    </div>
+    <div class="row gap-4 mt-auto">
+      <div class="progress-track grow"><div class="progress-fill" style="width: {{ (100 / slide_total) | round }}%;"></div></div>
+      <span class="mono header-label">swipe &rarr;</span>
+    </div>
+
+  {% elif slide.type == 'content' %}
+    <div class="row-between" style="align-items: flex-start; margin-bottom: 52px;">
+      <span class="step-num">{{ slide.step_num }}</span>
+      <div class="glass logo-card">
+        <img src="{{ slide.tool_domain | favicon }}" width="66" height="66"
+             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+        <span class="mono" style="display:none; font-size: 40px; font-weight: 700; color: var(--accent);">{{ (slide.tool_name or '?')[0] | upper }}</span>
+      </div>
+    </div>
+
+    <h2 class="content-title">{{ slide.title }}</h2>
+    <p class="content-desc">{{ slide.description }}</p>
+
+    <div class="row-between mt-auto">
+      <div class="glass tool-chip">
+        <span class="mono">{{ slide.tool_name }}</span>
+      </div>
+      {% if slide.key_benefit %}
+      <div class="badge-pill mono">{{ slide.key_benefit }}</div>
+      {% endif %}
+    </div>
+    <div class="progress-track" style="margin-top: 44px;"><div class="progress-fill" style="width: {{ (slide_index / slide_total * 100) | round }}%;"></div></div>
+
+  {% elif slide.type == 'outro' %}
+    <div class="col grow" style="justify-content: center; align-items: flex-start;">
+      <h2 class="outro-title">{{ slide.title }}</h2>
+      <div class="glass outro-box">
+        <span class="mono label">DROP THIS BELOW &darr;</span>
+        <span class="keyword">&ldquo;{{ slide.cta_keyword }}&rdquo;</span>
+      </div>
+      {% if slide.action_text %}
+      <p class="outro-action">{{ slide.action_text }}</p>
+      {% endif %}
+    </div>
+    <div class="row gap-3 mt-auto">
+      <div class="dot"></div>
+      <span class="mono header-label">follow for the next one</span>
+    </div>
+  {% endif %}
+
+  </div>
+</div>
+</body>
+</html>

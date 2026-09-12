@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>infographic</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-deep: #090d16;
+    --bg-panel: rgba(30, 41, 59, 0.55);
+    --panel-border: rgba(129, 140, 248, 0.25);
+    --accent: #818cf8;
+    --accent-soft: rgba(129, 140, 248, 0.16);
+    --text-primary: #f3f4f8;
+    --text-dim: #8b93ab;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    width: 1080px; height: 1350px;
+    background: var(--bg-deep);
+    font-family: 'Outfit', 'Segoe UI', Helvetica, Arial, sans-serif;
+    color: var(--text-primary);
+    overflow: hidden;
+  }
+  .mono { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+  .frame {
+    position: relative;
+    width: 1080px; height: 1350px;
+    padding: 64px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .bg-grid {
+    position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(129,140,248,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(129,140,248,0.05) 1px, transparent 1px);
+    background-size: 54px 54px;
+    -webkit-mask-image: radial-gradient(ellipse 1000px 900px at 50% 0%, black 35%, transparent 80%);
+    mask-image: radial-gradient(ellipse 1000px 900px at 50% 0%, black 35%, transparent 80%);
+  }
+  .glow-a {
+    position: absolute; width: 700px; height: 700px; border-radius: 999px;
+    background: radial-gradient(circle, rgba(129,140,248,0.26) 0%, transparent 68%);
+    top: -260px; left: 50%; transform: translateX(-50%);
+  }
+  .glass {
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 16px 40px rgba(0,0,0,0.32);
+    border-radius: 26px;
+  }
+  .badge-pill {
+    display: inline-flex; align-items: center;
+    padding: 6px 16px; border-radius: 999px;
+    background: var(--accent-soft);
+    border: 1px solid rgba(129,140,248,0.35);
+    color: var(--accent);
+    font-size: 18px; font-weight: 600;
+  }
+
+  .z10 { position: relative; z-index: 10; }
+  .row { display: flex; align-items: center; }
+  .row-between { display: flex; align-items: center; justify-content: space-between; }
+  .col { display: flex; flex-direction: column; }
+  .gap-3 { gap: 12px; }
+  .dot { width: 7px; height: 7px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+
+  .header { margin-bottom: 18px; }
+  .header-label { font-size: 20px; letter-spacing: 0.01em; color: var(--text-dim); }
+  .title { font-size: 62px; font-weight: 800; line-height: 1.08; letter-spacing: -0.02em; max-width: 900px; margin: 16px 0; }
+  .hook { font-size: 27px; line-height: 1.5; color: var(--text-dim); max-width: 820px; margin-bottom: 40px; }
+
+  .grid {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 22px;
+    flex: 1;
+  }
+  .card { padding: 30px; display: flex; flex-direction: column; }
+  .card-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+  .icon-box {
+    width: 76px; height: 76px; display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.03);
+  }
+  .icon-box img { border-radius: 10px; }
+  .card-name { font-size: 32px; font-weight: 700; line-height: 1.2; margin-bottom: 12px; }
+  .card-desc { font-size: 22px; line-height: 1.45; color: var(--text-dim); }
+
+  .footer { margin-top: 36px; }
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="bg-grid"></div>
+  <div class="glow-a"></div>
+
+  <div class="z10 col header">
+    <div class="row gap-3">
+      <div class="dot"></div>
+      <span class="mono header-label">{{ category }}</span>
+    </div>
+    <h1 class="title">{{ title }}</h1>
+    <p class="hook">{{ hook_line }}</p>
+  </div>
+
+  <div class="z10 grid">
+    {% for item in items %}
+    <div class="glass card">
+      <div class="card-top">
+        <div class="glass icon-box">
+          <img src="{{ item.domain | favicon }}" width="42" height="42"
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" />
+          <span class="mono" style="display:none; font-size: 26px; font-weight: 700; color: var(--accent);">{{ (item.name or '?')[0] | upper }}</span>
+        </div>
+        {% if item.badge %}
+        <span class="badge-pill mono">{{ item.badge }}</span>
+        {% endif %}
+      </div>
+      <h3 class="card-name">{{ item.name }}</h3>
+      <p class="card-desc">{{ item.desc }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="z10 row gap-3 footer">
+    <div class="dot"></div>
+    <span class="mono header-label">save this for later</span>
+  </div>
+</div>
+</body>
+</html>
