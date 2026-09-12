@@ -85,10 +85,31 @@ def get_favicon_url(domain: str) -> str:
     return get_logo_url(domain)
 
 
+def format_title_gradient(title: str) -> str:
+    """
+    Wraps the key punchy phrase in the title with <span class="gradient-text">.
+    If colon is present: wraps whatever comes after the colon.
+    Otherwise: wraps the latter half / last 2-3 words.
+    """
+    if not title:
+        return ""
+    if "<span" in title:
+        return title
+    if ":" in title:
+        parts = title.split(":", 1)
+        return f'{parts[0]}: <span class="gradient-text">{parts[1].strip()}</span>'
+    words = title.split()
+    if len(words) <= 2:
+        return f'<span class="gradient-text">{title}</span>'
+    split_idx = max(1, len(words) // 2)
+    return f'{" ".join(words[:split_idx])} <span class="gradient-text">{" ".join(words[split_idx:])}</span>'
+
+
 def _get_jinja_env() -> Environment:
     env = Environment(loader=FileSystemLoader(str(TEMPLATE_DIR)))
     env.filters["favicon"] = get_favicon_url
     env.filters["logo"] = get_logo_url
+    env.filters["title_gradient"] = format_title_gradient
     return env
 
 
@@ -148,10 +169,14 @@ def render_carousel_slides(data: dict, output_dir: Path, image_format: str = "jp
     total = len(slides)
     ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
 
+    # Extract 3 content steps for cover slide preview anchor
+    content_steps = [s for s in slides if s.get("type") == "content"]
+
     html_items: list[tuple[str, Path, str]] = []
     for idx, slide in enumerate(slides, start=1):
         html = template.render(
             slide=slide,
+            steps=content_steps,
             series_title=data.get("series_title", ""),
             category=data.get("category", "TOOLS"),
             slide_index=idx,
