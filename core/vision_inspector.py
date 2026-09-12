@@ -22,6 +22,7 @@ import json
 import base64
 from pathlib import Path
 from typing import List, Dict, Any, Optional, Union
+from concurrent.futures import ThreadPoolExecutor
 from PIL import Image, ImageStat
 import requests
 
@@ -300,8 +301,10 @@ def audit_slide_images(
             "summary": "❌ Vision Audit Failed: 0 slides provided",
         }
 
-    # 1. Local Pillow Audit on every slide
-    slide_reports = [_audit_single_image_pil(p) for p in paths]
+    # 1. Local Pillow Audit on every slide (in parallel)
+    with ThreadPoolExecutor(max_workers=min(8, len(paths))) as executor:
+        slide_reports = list(executor.map(_audit_single_image_pil, paths))
+
     all_passed = all(r["passed"] for r in slide_reports)
     avg_score = sum(r["score"] for r in slide_reports) / len(slide_reports)
 

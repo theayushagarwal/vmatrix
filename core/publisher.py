@@ -11,6 +11,7 @@ Two responsibilities:
 import os
 import time
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 
 import requests
 import cloudinary
@@ -64,12 +65,19 @@ def _upload_one(path: Path) -> str:
 
 def upload_images_to_cloudinary(image_paths: list[Path]) -> list[str]:
     """
-    Uploads local slide PNGs to Cloudinary and returns a list of secure HTTPS
-    URLs. Each upload is retried independently with backoff, so one flaky
-    request doesn't force a full re-upload of every slide.
+    Uploads local slide PNGs to Cloudinary in parallel using ThreadPoolExecutor
+    and returns an ordered list of secure HTTPS URLs matching the input slide order.
+    Each upload is retried independently with backoff, so one flaky request
+    doesn't force a full re-upload of every slide.
     """
     init_cloudinary()
-    return [_upload_one(path) for path in image_paths]
+    if len(image_paths) == 1:
+        return [_upload_one(image_paths[0])]
+
+    logger.info("  ⚡ Uploading %d slides to Cloudinary in parallel...", len(image_paths))
+    with ThreadPoolExecutor(max_workers=min(8, len(image_paths))) as executor:
+        # executor.map guarantees input sequence order preservation
+        return list(executor.map(_upload_one, image_paths))
 
 
 def _poll_container_status(container_id: str, access_token: str) -> str:
@@ -113,8 +121,8 @@ def _poll_container_status(container_id: str, access_token: str) -> str:
 
 def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
     """
-    1. Create item containers (is_carousel_item=true) for each image URL.
-    2. Poll item status until FINISHED.
+    1. Create item containers (is_carousel_item=true) for each image URL in parallel.
+    2. Poll item status until FINISHED in parallel.
     3. Create parent carousel container with children IDs & caption.
     4. Poll parent status until FINISHED.
     5. Publish via media_publish endpoint.
@@ -141,12 +149,15 @@ def publish_to_instagram_carousel(image_urls: list[str], caption: str) -> dict:
         resp.raise_for_status()
         return resp.json()["id"]
 
-    # 1. Create item containers
-    item_container_ids: list[str] = [_create_item_container(url) for url in image_urls]
+    # 1. Create item containers in parallel (preserving sequence order)
+    logger.info("  ⚡ Creating %d Instagram item containers in parallel...", len(image_urls))
+    with ThreadPoolExecutor(max_workers=min(8, len(image_urls))) as executor:
+        item_container_ids: list[str] = list(executor.map(_create_item_container, image_urls))
 
-    # 2. Poll each item container
-    for container_id in item_container_ids:
-        _poll_container_status(container_id, access_token)
+    # 2. Poll each item container in parallel until FINISHED
+    logger.info("  ⚡ Polling %d Instagram item containers in parallel...", len(item_container_ids))
+    with ThreadPoolExecutor(max_workers=min(8, len(item_container_ids))) as executor:
+        list(executor.map(lambda cid: _poll_container_status(cid, access_token), item_container_ids))
 
     @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
     def _create_parent_container() -> str:
