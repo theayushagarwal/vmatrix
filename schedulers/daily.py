@@ -14,11 +14,14 @@ from typing import Dict, Any, List, Optional
 import yaml
 from loguru import logger
 
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+CONFIG_PATH = ROOT_DIR / "config" / "niches.yaml"
+
 from core.db import db
 from core.scraper import InstaScraper
-
-ROOT_DIR = Path(__file__).resolve().parent.parent
-CONFIG_PATH = ROOT_DIR / "config" / "niches.yaml"
 
 
 def load_niche_config(niche_name: str = "veltrix") -> Dict[str, Any]:
@@ -97,16 +100,20 @@ def filter_and_save_competitor_posts(
 def run_daily_scraping_job(
     handles: Optional[List[str]] = None,
     niche_name: str = "veltrix",
-    limit: int = 6
+    limit: Optional[int] = None
 ) -> Dict[str, List[Dict[str, Any]]]:
     """
     Executes daily competitor scraping batch with strict keyword gate filtering.
+    Reads target_competitors and posts_limit_per_account from config/niches.yaml.
     """
-    target_handles = handles or ["bytebytego_", "thecodebytes", "bhavik.dev"]
-    logger.info(f"Starting daily competitor scraping for {len(target_handles)} handles (niche: {niche_name})...")
+    niche_cfg = load_niche_config(niche_name)
+    target_handles = handles or niche_cfg.get("target_competitors", ["bytebytego_", "thecodebytes", "bhavik.dev"])
+    effective_limit = limit or niche_cfg.get("posts_limit_per_account", 6)
+
+    logger.info(f"Starting daily competitor scraping for {len(target_handles)} handles (niche: {niche_name}, {effective_limit} posts each)...")
 
     scraper = InstaScraper()
-    batch_results = scraper.scrape_batch(target_handles, niche="AI & CODING", limit=limit)
+    batch_results = scraper.scrape_batch(target_handles, niche="AI & CODING", limit=effective_limit)
 
     results = {}
     for handle in target_handles:

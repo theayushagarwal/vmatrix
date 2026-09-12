@@ -1,6 +1,13 @@
 niches:
   veltrix:
     description: "AI, Quant Finance, Coding"
+    posts_limit_per_account: 6
+    target_competitors:
+      - "bytebytego_"
+      - "thecodebytes"
+      - "bhavik.dev"
+      - "systemdesignhub"
+      - "thesamur_ai"
     keywords_filter:
       - "ai"
       - "finance"
