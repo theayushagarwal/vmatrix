@@ -449,8 +449,8 @@ def render_comparison_slide(comparison_data: dict, output_dir: Path, image_forma
         title=comparison_data.get("title", f"{paid_tool} vs. {free_tool}"),
         slide_index=comparison_data.get("slide_index", 1),
         total_slides=comparison_data.get("total_slides", 1),
-        brand_tag=comparison_data.get("brand_tag", "VELTRIXAI // TOOL SHOWDOWN"),
-        brand_handle=comparison_data.get("brand_handle", "@veltrixai_official"),
+        brand_tag=comparison_data.get("brand_tag", "VMATRIX // TOOL SHOWDOWN"),
+        brand_handle=comparison_data.get("brand_handle", "@vmatrix.co"),
         theme=theme,
         paid_tool=paid_tool,
         paid_price=comparison_data.get("paid_price", "$$$ PAID"),
@@ -484,8 +484,8 @@ def render_code_slide(code_data: dict, output_dir: Path, image_format: str = "jp
         title=code_data.get("title", "Command & Script Snippet"),
         slide_index=code_data.get("slide_index", 1),
         total_slides=code_data.get("total_slides", 1),
-        brand_tag=code_data.get("brand_tag", "VELTRIXAI // CODE SNIPPET"),
-        brand_handle=code_data.get("brand_handle", "@veltrixai_official"),
+        brand_tag=code_data.get("brand_tag", "VMATRIX // CODE SNIPPET"),
+        brand_handle=code_data.get("brand_handle", "@vmatrix.co"),
         theme=theme,
         filename=code_data.get("filename", "snippet.py"),
         code_content=code_data.get("code_content", "# Put code here"),
@@ -512,7 +512,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
     slides = listicle_data.get("slides", [])
     total_slides = len(slides)
     theme = listicle_data.get("theme", "LIGHT")
-    brand_handle = listicle_data.get("brand_handle", "@veltrixai_official")
+    brand_handle = listicle_data.get("brand_handle", "@vmatrix.co")
     ext = "jpg" if image_format.lower() in ("jpg", "jpeg") else "png"
 
     html_items: list[tuple[str, Path, str]] = []
@@ -528,7 +528,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
                 subtitle=slide.get("subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
                 cover_subtitle=slide.get("cover_subtitle", listicle_data.get("subtitle", "Complete Step-by-Step Breakdown")),
                 series_title=slide.get("series_title", listicle_data.get("series_title", "TECH GUIDE")),
-                brand_tag=slide.get("brand_tag", listicle_data.get("brand_tag", "VELTRIXAI // CURATED GUIDE")),
+                brand_tag=slide.get("brand_tag", listicle_data.get("brand_tag", "VMATRIX // CURATED GUIDE")),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,
@@ -550,7 +550,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
                 free_price=slide.get("free_price", "FREE / OSS"),
                 free_desc=slide.get("free_desc", ""),
                 free_logo=slide.get("free_logo") or resolve_logo_url(free_tool, domain=slide.get("free_domain", ""), output_dir=output_dir, suffix=f"f_{idx}"),
-                brand_tag=slide.get("brand_tag", "VELTRIXAI // TOOL SHOWDOWN"),
+                brand_tag=slide.get("brand_tag", "VMATRIX // TOOL SHOWDOWN"),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,
@@ -562,7 +562,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
                 title=slide.get("title", "Code Snippet"),
                 filename=slide.get("filename", "main.py"),
                 code_content=slide.get("code_content", "# Code snippet"),
-                brand_tag=slide.get("brand_tag", "VELTRIXAI // CODE SNIPPET"),
+                brand_tag=slide.get("brand_tag", "VMATRIX // CODE SNIPPET"),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,
@@ -574,7 +574,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
                 title=slide.get("title", "Want The Complete Source Repo?"),
                 cta_keyword=slide.get("cta_keyword", listicle_data.get("cta_keyword", "GUIDE")),
                 action_text=slide.get("action_text", ""),
-                brand_tag=slide.get("brand_tag", "VELTRIXAI // ACTION REQUIRED"),
+                brand_tag=slide.get("brand_tag", "VMATRIX // ACTION REQUIRED"),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,
@@ -595,7 +595,7 @@ def render_listicle_slides(listicle_data: dict, output_dir: Path, image_format: 
                 tool_name=tool_name,
                 tool_logo=tool_logo,
                 key_benefit=slide.get("key_benefit", ""),
-                brand_tag=slide.get("brand_tag", "VELTRIXAI // TOOL SHOWCASE"),
+                brand_tag=slide.get("brand_tag", "VMATRIX // TOOL SHOWCASE"),
                 brand_handle=brand_handle,
                 theme=s_theme,
                 slide_index=idx,

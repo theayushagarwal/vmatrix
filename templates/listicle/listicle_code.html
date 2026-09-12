@@ -85,7 +85,7 @@
     <div class="color-strip"></div>
     <header class="top-nav">
         <div class="slide-counter">Page {{ slide_index | default(1) }} / {{ total_slides | default(5) }}</div>
-        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // CODE SNIPPET', true) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VMATRIX // CODE SNIPPET', true) }}</div>
     </header>
     <h2 class="slide-title">{{ title }}</h2>
     <div class="editor-container">
@@ -101,7 +101,7 @@
         <div class="editor-code-body"><code>{{ code_content }}</code></div>
     </div>
     <footer class="footer">
-        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="brand-pill">{{ brand_handle | default('@vmatrix.co', true) }}</div>
         <div class="swipe-btn">{% if slide_index == total_slides %}SAVE POST{% else %}SWIPE LEFT →{% endif %}</div>
     </footer>
 </body>

@@ -79,7 +79,7 @@
     <div class="color-strip"></div>
     <header class="top-nav">
         <div class="slide-counter">Page {{ slide_index | default(1) }} / {{ total_slides | default(5) }}</div>
-        <div class="page-tag">{{ brand_tag | default('VELTRIXAI // TOOL SHOWDOWN', true) }}</div>
+        <div class="page-tag">{{ brand_tag | default('VMATRIX // TOOL SHOWDOWN', true) }}</div>
     </header>
     <h2 class="slide-title">{{ title }}</h2>
     <div class="comparison-cards">
@@ -111,7 +111,7 @@
         </div>
     </div>
     <footer class="footer">
-        <div class="brand-pill">{{ brand_handle | default('@veltrixai_official', true) }}</div>
+        <div class="brand-pill">{{ brand_handle | default('@vmatrix.co', true) }}</div>
         <div class="swipe-btn">{% if slide_index == total_slides %}SAVE POST{% else %}SWIPE LEFT →{% endif %}</div>
     </footer>
 </body>
