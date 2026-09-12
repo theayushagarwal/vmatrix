@@ -294,19 +294,28 @@ def generate_post_caption(
     hashtag_idx = day_of_year % 2
 
     if format_type in ("listicle", "flow") or "slides" in content_plan:
-        return generate_listicle_caption(content_plan, voice_index=voice_idx, hashtag_index=hashtag_idx)
+        cap = generate_listicle_caption(content_plan, voice_index=voice_idx, hashtag_index=hashtag_idx)
+    else:
+        # For single photo cheatsheet:
+        items = content_plan.get("items", [])
+        items_summary = ", ".join([f"{it.get('name')}: {it.get('desc')}" for it in items[:4]])
+        hook = content_plan.get("hook_line", "")
 
-    # For single photo cheatsheet:
-    items = content_plan.get("items", [])
-    items_summary = ", ".join([f"{it.get('name')}: {it.get('desc')}" for it in items[:4]])
-    hook = content_plan.get("hook_line", "")
+        cap = generate_caption(
+            topic=topic,
+            context_summary=f"{hook}\nKey tools covered: {items_summary}",
+            voice_index=voice_idx,
+            hashtag_index=hashtag_idx,
+        )
 
-    return generate_caption(
-        topic=topic,
-        context_summary=f"{hook}\nKey tools covered: {items_summary}",
-        voice_index=voice_idx,
-        hashtag_index=hashtag_idx,
-    )
+    # ── QA VERIFICATION ENGINE (Layer 1 & 2 Compliance Audit) ───────────────
+    from .text_auditor import verify_text_content, auto_fix_caption
+    audit_res = verify_text_content(topic, cap)
+    if audit_res.get("status") != "APPROVED":
+        logger.info("Caption failed initial QA audit: %s. Auto-healing caption...", audit_res.get("fail_reason"))
+        cap = auto_fix_caption(cap)
+
+    return cap
 
 
 def generate_post_comment(

@@ -103,21 +103,12 @@ def _audit_single_image_pil(image_path: Path, expected_theme: Optional[str] = No
                 issues.append(f"Unexpected dark background luminance ({mean_lum:.1f}), light theme violated")
                 score -= 1.5
 
-            # 5. Edge margin safety: inspect 3% outer border
-            border_px = int(min(width, height) * 0.03)
-            # Crop 4 outer edge strips
-            top_strip = grayscale.crop((0, 0, width, border_px))
-            bottom_strip = grayscale.crop((0, height - border_px, width, height))
-            left_strip = grayscale.crop((0, 0, border_px, height))
-            right_strip = grayscale.crop((width - border_px, 0, width, height))
-
-            # If an edge strip has bright text bleeding into the very outer pixels
-            edge_stats = [ImageStat.Stat(s).extrema[0] for s in (top_strip, bottom_strip, left_strip, right_strip)]
-            # extrema returns (min, max)
-            for side_name, ext in zip(["top", "bottom", "left", "right"], edge_stats):
-                if ext[1] > 240:
-                    # Very bright pixel right at the extreme outer 3% margin
-                    pass  # subtle warning or pass if decorative border glow exists
+            # 5. Edge margin safety & border bleed check
+            from .media_generator import has_border_bleed
+            is_lt = (expected_theme == "LIGHT") or (mean_lum > 160.0)
+            if has_border_bleed(img, strip_px=10, threshold=0.04, is_light_theme=is_lt):
+                issues.append("Outer perimeter border bleed detected (>4% edge artifact pixels)")
+                score -= 2.0
 
             score = max(0.0, min(10.0, score))
             passed = score >= 7.0 and len(issues) == 0

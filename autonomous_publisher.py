@@ -192,6 +192,7 @@ def run_autonomous_post(
     elif pipeline_mode == "flow":
         logger.info("[3/5] Planning 5-slide system architecture flowchart with Groq...")
         content_plan = generate_flow_carousel_content(chosen_topic)
+        content_plan.setdefault("theme", "LIGHT")
         series_name = content_plan.get("series_title") or content_plan.get("cover_title", chosen_topic)
         logger.info("  ✓ Planned Flowchart Carousel: \"%s\" with %d slides", series_name, len(content_plan.get("slides", [])))
 
@@ -214,9 +215,34 @@ def run_autonomous_post(
             logger.info("    - %s (%d KB)", p.name, p.stat().st_size // 1024)
 
     # --------------------------------------------------------------------------
-    # 2.5 Visual Quality Gate & Composition Audit
+    # 2.5 Visual Quality Gate & Composition Audit (4-Layer QA Engine)
     # --------------------------------------------------------------------------
-    logger.info("[4.5/5] Auditing visual composition & layout safety with Vision Inspector...")
+    logger.info("[4.5/5] Auditing visual composition & layout safety with 4-Layer QA Engine...")
+
+    # Layer 5: Auto-Recovery Loop for slide carousels
+    if pipeline_mode in ("listicle", "flow") and "slides" in content_plan:
+        from core.media_generator import verify_compiled_slides_vision, shorten_slide_text
+        for recovery_pass in range(1, 3):
+            is_approved, failed_indices = verify_compiled_slides_vision(slide_paths, is_listicle=True)
+            if is_approved:
+                logger.info("  ✓ AI Visual Layout Auditor: APPROVED all %d slide layouts.", len(slide_paths))
+                break
+            else:
+                logger.warning("  ⚠️ AI Visual Layout Auditor: REJECTED slides at indices %s. Attempting recovery pass %d...", failed_indices, recovery_pass)
+                if recovery_pass < 2:
+                    for f_idx in failed_indices:
+                        s_idx = f_idx - 1
+                        if 0 <= s_idx < len(content_plan["slides"]):
+                            s_data = content_plan["slides"][s_idx]
+                            orig_desc = s_data.get("description", "")
+                            s_data["description"] = shorten_slide_text(orig_desc)
+                            logger.info("    Shortened text on slide %d to eliminate card overflow.", f_idx)
+                    # Re-render with shortened descriptions
+                    if pipeline_mode == "flow":
+                        slide_paths = render_carousel_flow_slides(content_plan, tmp_dir, image_format="jpeg")
+                    else:
+                        slide_paths = render_carousel_slides(content_plan, tmp_dir, image_format="jpeg")
+
     audit_result = audit_slide_images(slide_paths, content_plan)
     if not audit_result.get("passed", True):
         err_msg = f"Visual Quality Gate Failed ({audit_result.get('score')}/10): {audit_result.get('issues')}"
@@ -261,7 +287,9 @@ def run_autonomous_post(
         content_plan=content_plan,
         format_type=pipeline_mode,
     )
-    logger.info("  ✓ Generated caption (%d characters)", len(caption))
+    from core.text_auditor import verify_text_content
+    cap_audit = verify_text_content(series_name, caption)
+    logger.info("  ✓ Generated caption (%d chars) | Compliance QA: %s (Caption OK: %s, Facts OK: %s)", len(caption), cap_audit.get('status'), cap_audit.get('caption_ok'), cap_audit.get('facts_ok'))
 
     logger.info("  💬 Generating engagement-driving auto-comment (first comment)...")
     auto_comment = generate_post_comment(

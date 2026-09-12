@@ -39,6 +39,26 @@ from .vision_inspector import (
     audit_slide_images,
     audit_cheatsheet_image,
 )
+from .text_auditor import (
+    verify_text_content,
+    validate_caption,
+    auto_fix_caption,
+)
+from .media_generator import (
+    has_border_bleed,
+    validate_image,
+    shorten_slide_text,
+    verify_compiled_slides_vision,
+    validate_image_via_groq,
+    validate_image_via_nvidia,
+    validate_image_via_github,
+)
+from .llm_utils import (
+    call_secondary_brain,
+    passes_shadowban_check,
+    DISCLAIMER,
+    BRAND_SYSTEM_PROMPT,
+)
 from .caption import (
     generate_caption,
     generate_listicle_caption,
@@ -148,4 +168,18 @@ __all__ = [
     "reject_queued_post",
     "process_auto_publish_timeouts",
     "RenderValidationError",
+    "verify_text_content",
+    "validate_caption",
+    "auto_fix_caption",
+    "has_border_bleed",
+    "validate_image",
+    "shorten_slide_text",
+    "verify_compiled_slides_vision",
+    "validate_image_via_groq",
+    "validate_image_via_nvidia",
+    "validate_image_via_github",
+    "call_secondary_brain",
+    "passes_shadowban_check",
+    "DISCLAIMER",
+    "BRAND_SYSTEM_PROMPT",
 ]
