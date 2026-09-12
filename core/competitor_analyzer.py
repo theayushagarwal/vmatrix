@@ -147,7 +147,16 @@ def _analyze_with_openrouter(user_prompt: str) -> Optional[Dict[str, Any]]:
         if resp.status_code == 200:
             data = resp.json()
             content = data["choices"][0]["message"]["content"]
-            parsed = json.loads(content)
+            start_idx = content.find("{")
+            end_idx = content.rfind("}")
+            if start_idx != -1 and end_idx != -1:
+                content = content[start_idx : end_idx + 1]
+            try:
+                parsed = json.loads(content)
+            except Exception:
+                import re
+                cleaned = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', ' ', content)
+                parsed = json.loads(cleaned)
             logger.info("  ✓ AI Virality Analysis generated via OpenRouter (%s)", model)
             return parsed
         else:

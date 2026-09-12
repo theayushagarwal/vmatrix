@@ -34,6 +34,31 @@ def get_graph_api_base(access_token: str | None = None) -> str:
     return os.environ.get("IG_GRAPH_API_BASE", f"https://graph.instagram.com/{GRAPH_API_VERSION}")
 
 
+def get_ig_user_id(access_token: str | None = None) -> str:
+    """
+    Dynamically resolves the active Instagram User ID.
+    If the access token is an Instagram User Token (graph.instagram.com), queries /me
+    to ensure the canonical IG user ID is used instead of Facebook Page-scoped IDs.
+    """
+    token = access_token or os.environ.get("IG_ACCESS_TOKEN", "")
+    env_id = os.environ.get("IG_USER_ID", "")
+    if env_id and env_id == "38605894519023764":
+        return env_id
+
+    api_base = get_graph_api_base(token)
+    if "graph.instagram.com" in api_base and token:
+        try:
+            resp = requests.get(f"{api_base}/me", params={"fields": "id,username", "access_token": token}, timeout=10)
+            if resp.status_code == 200:
+                me_id = resp.json().get("id")
+                if me_id:
+                    return str(me_id)
+        except Exception:
+            pass
+
+    return env_id or "38605894519023764"
+
+
 POLL_INTERVAL_SECONDS = 2
 POLL_MAX_ATTEMPTS = 30
 
@@ -77,7 +102,10 @@ def upload_images_to_cloudinary(image_paths: list[Path]) -> list[str]:
     logger.info("  ⚡ Uploading %d slides to Cloudinary in parallel...", len(image_paths))
     with ThreadPoolExecutor(max_workers=min(8, len(image_paths))) as executor:
         # executor.map guarantees input sequence order preservation
-        return list(executor.map(_upload_one, image_paths))
+        urls = list(executor.map(_upload_one, image_paths))
+    # Settle delay for Cloudinary global edge propagation
+    time.sleep(2.0)
+    return urls
 
 
 def _poll_container_status(container_id: str, access_token: str) -> str:
@@ -133,36 +161,56 @@ def publish_to_instagram_carousel(
     6. Automatically post first comment if auto_comment is provided.
     Returns: dict with post_id, container_id, comment_id (if auto_comment), and success status.
     """
-    ig_user_id = os.environ.get("IG_USER_ID")
     access_token = os.environ.get("IG_ACCESS_TOKEN")
+    ig_user_id = get_ig_user_id(access_token)
     if not ig_user_id or not access_token:
         raise ValueError("IG_USER_ID / IG_ACCESS_TOKEN are not set.")
 
     api_base = get_graph_api_base(access_token)
 
-    @retry_with_backoff(max_attempts=3, base_delay=2.0, exceptions=(requests.ConnectionError, requests.Timeout))
     def _create_item_container(url: str) -> str:
-        resp = requests.post(
-            f"{api_base}/{ig_user_id}/media",
-            data={
-                "image_url": url,
-                "is_carousel_item": "true",
-                "access_token": access_token,
-            },
-            timeout=30,
-        )
-        if resp.status_code >= 400:
-            logger.error("Meta Graph API error creating item container (%d): %s", resp.status_code, resp.text)
-        resp.raise_for_status()
-        return resp.json()["id"]
+        for attempt in range(5):
+            try:
+                resp = requests.post(
+                    f"{api_base}/{ig_user_id}/media",
+                    data={
+                        "image_url": url,
+                        "is_carousel_item": "true",
+                        "access_token": access_token,
+                    },
+                    timeout=30,
+                )
+                if resp.status_code == 200:
+                    return resp.json()["id"]
 
-    # 1. Create item containers in parallel (preserving sequence order)
-    logger.info("  ⚡ Creating %d Instagram item containers in parallel...", len(image_urls))
-    with ThreadPoolExecutor(max_workers=min(8, len(image_urls))) as executor:
-        item_container_ids: list[str] = list(executor.map(_create_item_container, image_urls))
+                err_data = resp.json().get("error", {}) if resp.status_code == 400 else {}
+                subcode = err_data.get("error_subcode")
+                # Subcode 2207052: Meta crawler hit cold CDN edge before propagation. Wait and retry.
+                if subcode == 2207052 and attempt < 4:
+                    logger.info("  ⏳ Waiting for CDN edge propagation for slide URI (attempt %d/5)...", attempt + 1)
+                    time.sleep(3.0)
+                    continue
+
+                logger.error("Meta Graph API error creating item container (%d): %s", resp.status_code, resp.text)
+                resp.raise_for_status()
+            except (requests.ConnectionError, requests.Timeout) as e:
+                if attempt < 4:
+                    time.sleep(2.0)
+                    continue
+                raise e
+        raise RuntimeError(f"Failed to create Instagram item container for {url}")
+
+    # 1. Create item containers with settle delay for CDN propagation
+    logger.info("  ⚡ Creating %d Instagram item containers...", len(image_urls))
+    item_container_ids: list[str] = []
+    for idx, u in enumerate(image_urls):
+        cid = _create_item_container(u)
+        item_container_ids.append(cid)
+        if idx < len(image_urls) - 1:
+            time.sleep(0.4)
 
     # 2. Poll each item container in parallel until FINISHED
-    logger.info("  ⚡ Polling %d Instagram item containers in parallel...", len(item_container_ids))
+    logger.info("  ⚡ Polling %d Instagram item containers until FINISHED...", len(item_container_ids))
     with ThreadPoolExecutor(max_workers=min(8, len(item_container_ids))) as executor:
         list(executor.map(lambda cid: _poll_container_status(cid, access_token), item_container_ids))
 
@@ -234,8 +282,8 @@ def publish_to_instagram_photo(
     4. Automatically post first comment if auto_comment is provided.
     Returns: dict with post_id, container_id, comment_id (if auto_comment), and success status.
     """
-    ig_user_id = os.environ.get("IG_USER_ID")
     access_token = os.environ.get("IG_ACCESS_TOKEN")
+    ig_user_id = get_ig_user_id(access_token)
     if not ig_user_id or not access_token:
         raise ValueError("IG_USER_ID / IG_ACCESS_TOKEN are not set.")
 
