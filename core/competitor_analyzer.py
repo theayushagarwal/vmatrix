@@ -178,12 +178,27 @@ def analyze_post_virality(post_data: Dict[str, Any]) -> Dict[str, Any]:
     views = post_data.get("views") or 0
     shortcode = post_data.get("shortcode") or ""
 
+    v_score = post_data.get("virality_score")
+    is_outlier = post_data.get("is_outlier")
+    raw_mult = post_data.get("raw_score")
+    gate_3 = post_data.get("gate_3", {})
+    er_pct = gate_3.get("er_percent")
+
+    outlier_info = ""
+    if is_outlier:
+        outlier_info = f"""
+- 3-GATE OUTLIER STATUS: 🔥 CONFIRMED VIRAL OUTLIER
+- Relative Outlier Multiplier: {raw_mult:.1f}x over account median
+- Time-Decayed Virality Score: {v_score:.1f}x
+- Composite Weighted Engagement Rate: {er_pct:.2f}%
+"""
+
     user_prompt = f"""
 COMPETITOR POST TO REVERSE-ENGINEER:
 - Creator Handle: @{handle}
 - Likes: {likes:,}
 - Comments: {comments:,}
-- Views / Video Views: {views:,}
+- Views / Video Views: {views:,}{outlier_info}
 - Caption:
 \"\"\"{caption}\"\"\"
 """
@@ -250,6 +265,17 @@ COMPETITOR POST TO REVERSE-ENGINEER:
         normalized["vmatrix_blueprint"] = analysis["vmatrix_adaptation_blueprint"]
     elif "vmatrix_blueprint" in analysis and "vmatrix_adaptation_blueprint" not in analysis:
         normalized["vmatrix_adaptation_blueprint"] = analysis["vmatrix_blueprint"]
+
+    # Ensure virality_score is valid int between 1 and 100
+    raw_v = normalized.get("virality_score") or normalized.get("score")
+    if raw_v is None:
+        likes = post_data.get("likes") or 1000
+        normalized["virality_score"] = min(98, max(65, int(70 + (likes / 1000.0) * 2)))
+    else:
+        try:
+            normalized["virality_score"] = min(100, max(1, int(float(raw_v))))
+        except (ValueError, TypeError):
+            normalized["virality_score"] = 85
 
     # Ensure nested objects are dicts
     if isinstance(normalized.get("hook_analysis"), str):

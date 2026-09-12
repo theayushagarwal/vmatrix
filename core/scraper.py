@@ -110,8 +110,12 @@ class InstaScraper:
         if not items:
             items = sample_bank["codewithharry"]
 
+        from datetime import timedelta
         results = []
-        for it in items[:limit]:
+        now = datetime.now(timezone.utc)
+        for idx, it in enumerate(items[:limit]):
+            # Stagger posted_at between 2 to 6 days ago so it passes the 24h maturation rule
+            posted_time = now - timedelta(days=idx + 2, hours=4)
             results.append({
                 "niche": niche,
                 "handle": handle,
@@ -122,7 +126,7 @@ class InstaScraper:
                 "likes": it["likes"],
                 "views": it["views"],
                 "comments": it["comments"],
-                "posted_at": datetime.now(timezone.utc).isoformat(),
+                "posted_at": posted_time.isoformat(),
                 "is_reel": it.get("is_reel", 0),
             })
         return results

@@ -115,6 +115,15 @@ from .approval import (
 )
 from .scraper import InstaScraper
 from .competitor_analyzer import analyze_post_virality
+from .outlier import (
+    detect_viral_outliers,
+    evaluate_3_gates,
+    calculate_time_decay_virality_score,
+    is_post_mature_and_recent,
+    separate_cohorts,
+    calculate_cohort_median,
+    process_post_outlier_status,
+)
 from .db import db
 from .utils import RenderValidationError
 
@@ -207,5 +216,12 @@ __all__ = [
     "BRAND_SYSTEM_PROMPT",
     "InstaScraper",
     "analyze_post_virality",
+    "detect_viral_outliers",
+    "evaluate_3_gates",
+    "calculate_time_decay_virality_score",
+    "is_post_mature_and_recent",
+    "separate_cohorts",
+    "calculate_cohort_median",
+    "process_post_outlier_status",
     "db",
 ]

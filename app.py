@@ -49,9 +49,10 @@ from core import (
     fetch_top_performing_posts_from_supabase,
     audit_published_posts_insights,
     get_top_performing_topics,
-    calculate_topic_resonance_boost,
     InstaScraper,
     analyze_post_virality,
+    detect_viral_outliers,
+    process_post_outlier_status,
     db,
 )
 
@@ -1098,11 +1099,54 @@ with tab_competitors:
         # Also try fetching all competitor posts if specific handle has none
         stored_posts = db.get_competitor_posts(limit=20)
 
-    st.markdown(f"### 📋 Competitor Posts & Reverse-Engineering Feed ({len(stored_posts)} Available)")
-    if not stored_posts:
-        st.info("No competitor posts ingested yet. Click **'🚀 Scrape & Ingest Posts'** above to fetch posts.")
+    # ---------------------------------------------------------------------------
+    # Outlier Detection Engine (3-Gate Math + 7-Day Time Decay)
+    # ---------------------------------------------------------------------------
+    filter_col1, filter_col2, filter_col3 = st.columns([1.5, 1.5, 1])
+    with filter_col1:
+        mult_choice = st.radio("Outlier Threshold", options=["1.5x (Standard)", "3.0x (Strict)"], horizontal=True)
+        mult_val = 3.0 if "3.0x" in mult_choice else 1.5
+
+    with filter_col2:
+        filter_outliers_only = st.checkbox("🔥 Show Only Viral Outliers (3-Gate Filter)", value=False)
+
+    outlier_pipeline = detect_viral_outliers(stored_posts, multiplier_threshold=mult_val, min_cohort_size=3)
+    outliers_list = outlier_pipeline["outliers"]
+    all_evaluated = outlier_pipeline["all_evaluated"]
+    reels_cohort = outlier_pipeline["cohorts"]["reels"]
+    photos_cohort = outlier_pipeline["cohorts"]["photos"]
+
+    # Display Cohort Mathematical Baselines
+    stat_c1, stat_c2, stat_c3 = st.columns(3)
+    with stat_c1:
+        st.metric(
+            label="🎬 Reels Cohort (Floor: 3k views)",
+            value=f"{reels_cohort['count']} posts",
+            delta="Active Baseline" if reels_cohort["valid"] else "Min 3 required (<3)",
+        )
+    with stat_c2:
+        st.metric(
+            label="📸 Photos Cohort (Floor: 500 likes)",
+            value=f"{photos_cohort['count']} posts",
+            delta="Active Baseline" if photos_cohort["valid"] else "Min 3 required (<3)",
+        )
+    with stat_c3:
+        st.metric(
+            label="🔥 Outliers Flagged",
+            value=f"{len(outliers_list)} posts",
+            delta=f"{len(outliers_list)}/{len(all_evaluated)} vetted",
+        )
+
+    posts_to_display = outliers_list if filter_outliers_only else all_evaluated
+
+    st.markdown(f"### 📋 Competitor Posts & Reverse-Engineering Feed ({len(posts_to_display)} Displayed)")
+    if not posts_to_display:
+        if filter_outliers_only:
+            st.info("No posts met all 3 outlier gates (1.5x median, 3k/500 floor, 1.0% ER) in this selection. Uncheck the filter above to view all posts.")
+        else:
+            st.info("No competitor posts ingested yet. Click **'🚀 Scrape & Ingest Posts'** above to fetch posts.")
     else:
-        for idx, post in enumerate(stored_posts):
+        for idx, post in enumerate(posts_to_display):
             p_shortcode = post.get("shortcode", f"post_{idx}")
             p_handle = post.get("handle", "competitor")
             p_likes = post.get("likes", 0) or 0
@@ -1111,17 +1155,28 @@ with tab_competitors:
             p_caption = post.get("caption", "")
             p_media = post.get("media_url", "")
             p_analysis = post.get("virality_analysis")
+            is_outlier = post.get("is_outlier", False)
+            v_score = post.get("virality_score", 0.0)
+            raw_score = post.get("raw_score", 0.0)
+            recency_mult = post.get("recency_multiplier", 1.0)
+            age_days = post.get("age_days", 2.0)
+            gate_1 = post.get("gate_1", {})
+            gate_2 = post.get("gate_2", {})
+            gate_3 = post.get("gate_3", {})
 
-            # Engagement Badge
-            if p_likes >= 20000:
-                tier_badge = "🔥 VIRAL HIT"
+            # Outlier Badge Styling
+            if is_outlier:
+                tier_badge = f"🔥 {v_score:.1f}x VIRAL OUTLIER"
                 tier_color = "#f43f5e"
-            elif p_likes >= 5000:
-                tier_badge = "⭐ HIGH ENGAGEMENT"
-                tier_color = "#fbbf24"
+                border_color = "rgba(244,63,94,0.4)"
+            elif post.get("skip_reason"):
+                tier_badge = f"⚪ {post.get('skip_reason', 'Standard')[:22]}"
+                tier_color = "#94a3b8"
+                border_color = "rgba(148,163,184,0.2)"
             else:
-                tier_badge = "📈 SOLID PERFORMER"
+                tier_badge = f"📈 {raw_score:.1f}x Standard"
                 tier_color = "#38bdf8"
+                border_color = "rgba(56,189,248,0.2)"
 
             post_box = st.container()
             with post_box:
@@ -1140,7 +1195,7 @@ with tab_competitors:
                         f"""
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                             <span style="font-weight: 700; color: #f8fafc; font-size: 1.05rem;">@{p_handle}</span>
-                            <span style="color: {tier_color}; border: 1px solid {tier_color}; padding: 2px 8px; border-radius: 6px; font-weight: 700; font-size: 0.8rem;">
+                            <span style="color: {tier_color}; border: 1px solid {tier_color}; padding: 3px 10px; border-radius: 6px; font-weight: 800; font-size: 0.85rem; background: rgba(15,23,42,0.4);">
                                 {tier_badge}
                             </span>
                         </div>
@@ -1153,6 +1208,26 @@ with tab_competitors:
                         """,
                         unsafe_allow_html=True,
                     )
+
+                    # 3-Gate Mathematical Diagnostics
+                    if gate_1 and gate_2 and gate_3:
+                        with st.expander("📐 3-Gate Math & Virality Breakdown", expanded=is_outlier):
+                            g1_icon = "✅" if gate_1.get("passed") else "❌"
+                            g2_icon = "✅" if gate_2.get("passed") else "❌"
+                            g3_icon = "✅" if gate_3.get("passed") else "❌"
+                            st.markdown(
+                                f"""
+                                <div style="font-size: 0.82rem; line-height: 1.6; color: #cbd5e1;">
+                                    <div><strong>{g1_icon} Gate 1 (Relative Multiplier):</strong> {gate_1.get('description', '')}</div>
+                                    <div><strong>{g2_icon} Gate 2 (Absolute Floor):</strong> {gate_2.get('description', '')}</div>
+                                    <div><strong>{g3_icon} Gate 3 (Composite ER >= 1%):</strong> {gate_3.get('description', '')}</div>
+                                    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,0.1); color: #38bdf8;">
+                                        <strong>📉 Time Decay:</strong> Raw {raw_score:.2f}x &times; Recency {recency_mult:.2f}x (at {age_days:.1f}d) = <strong>{v_score:.2f}x Virality Score</strong>
+                                    </div>
+                                </div>
+                                """,
+                                unsafe_allow_html=True,
+                            )
 
                     btn_c1, btn_c2 = st.columns([1.2, 1])
                     with btn_c1:
