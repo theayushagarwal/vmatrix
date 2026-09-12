@@ -155,7 +155,15 @@
     </div>
 
     <!-- Right Actions -->
-    <div class="flex items-center gap-3">
+    <div class="flex items-center gap-2.5">
+      <a href="/api/download/spec-pdf" target="_blank" download="Vmatrix_Complete_System_Specification.pdf" class="px-3 py-1.5 rounded-xl bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 hover:from-indigo-500 hover:to-pink-500 text-white font-semibold text-xs flex items-center gap-1.5 shadow-lg shadow-indigo-600/20 transition-all cursor-pointer" title="Download Complete System Specification PDF">
+        <i class="fa-solid fa-file-pdf"></i>
+        <span>Download Spec (PDF)</span>
+      </a>
+      <a href="/api/download/spec-md" target="_blank" download="Vmatrix_Complete_System_Specification.md" class="p-2 text-slate-400 hover:text-cyan-300 rounded-lg hover:bg-slate-800/80 transition-colors" title="Download Markdown Specification (.md)">
+        <i class="fa-brands fa-markdown text-sm"></i>
+      </a>
+      <div class="h-5 w-px bg-slate-800"></div>
       <button onclick="refreshSystemStatus()" title="Refresh Telemetry" class="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800/80 transition-colors">
         <i class="fa-solid fa-arrows-rotate" id="status-spinner"></i>
       </button>
@@ -1000,18 +1008,21 @@
 
         if (data.success && data.results) {
           const r = data.results;
-          document.getElementById('stat-s1').innerText = `Passed: ${r.passed_s1_count ?? '--'}`;
-          document.getElementById('stat-s2').innerText = `Passed: ${r.passed_s2_count ?? '--'}`;
-          document.getElementById('stat-s3').innerText = `Passed: ${r.passed_s3_count ?? '--'}`;
-          document.getElementById('stat-s4').innerText = `Passed: ${r.passed_s4_count ?? '--'}`;
-          document.getElementById('stat-s5').innerText = `Finalists: ${r.final_candidates ? r.final_candidates.length : 0}`;
+          const sc = r.stage_counts || {};
+          const candidates = r.final_candidates || r.winning_topics || r.winners || [];
+
+          document.getElementById('stat-s1').innerText = `Passed: ${r.passed_s1_count ?? sc.stage1_blacklist ?? '--'}`;
+          document.getElementById('stat-s2').innerText = `Passed: ${r.passed_s2_count ?? sc.stage2_niche ?? '--'}`;
+          document.getElementById('stat-s3').innerText = `Passed: ${r.passed_s3_count ?? sc.stage3_semantic ?? '--'}`;
+          document.getElementById('stat-s4').innerText = `Passed: ${r.passed_s4_count ?? sc.stage4_dedup ?? '--'}`;
+          document.getElementById('stat-s5').innerText = `Finalists: ${candidates.length}`;
 
           document.getElementById('funnel-timestamp').innerText = `Last run: ${new Date().toLocaleTimeString()}`;
 
-          renderFunnelWinners(r.final_candidates || []);
-          showToast('5-Stage Funnel completed! High-resonance topics ready.', 'success');
+          renderFunnelWinners(candidates);
+          showToast(`5-Stage Funnel completed! ${candidates.length} high-resonance topics ready.`, 'success');
         } else {
-          showToast(`Funnel error: ${data.error || 'Failed to run funnel'}`, 'error');
+          showToast(`Funnel notice: ${data.error || 'Funnel completed with zero candidates'}`, 'warning');
         }
       } catch (err) {
         showToast(`Request failed: ${err.message}`, 'error');
@@ -1033,10 +1044,10 @@
       }
 
       container.innerHTML = candidates.map((c, i) => {
-        const score = (c.actionability_score || c.score || 8.5).toFixed(1);
-        const title = c.title || c.topic || 'Untitled Trend';
-        const source = c.source || 'Google Trends';
-        const hook = c.hook || c.summary || 'Viral angle identified by autonomous radar.';
+        const score = (c.composite_score || c.actionability_score || c.score || 8.5).toFixed(1);
+        const title = c.title || c.refined_title || c.topic || 'Untitled Trend';
+        const source = c.source || c.category || 'Google Trends';
+        const hook = c.hook_angle || c.hook || c.summary || 'Viral angle identified by autonomous radar.';
 
         return `
           <div class="glass-card p-5 rounded-2xl flex flex-col justify-between space-y-4 border ${i === 0 ? 'border-indigo-500/50 shadow-lg shadow-indigo-500/10' : 'border-slate-800'}">

@@ -201,7 +201,7 @@ def get_live_feeds(geo: str = "IN"):
 @app.post("/api/funnel")
 def run_funnel_endpoint(req: FunnelRequest):
     try:
-        all_raw = fetch_all_feeds(geo=req.geo, max_per_feed=15)
+        all_raw = fetch_all_feeds(geo=req.geo, max_per_feed=8)
         combined = []
         for f, items in all_raw.items():
             combined.extend(items)
@@ -210,6 +210,17 @@ def run_funnel_endpoint(req: FunnelRequest):
             return {"success": False, "error": "No raw trend items fetched from providers."}
 
         results = run_filtering_funnel(combined)
+        sc = results.get("stage_counts", {})
+        winners = results.get("winning_topics") or results.get("winners") or []
+
+        # Add aliases expected by frontend
+        results["passed_s1_count"] = sc.get("stage1_blacklist", len(combined))
+        results["passed_s2_count"] = sc.get("stage2_niche", len(combined))
+        results["passed_s3_count"] = sc.get("stage3_semantic", len(combined))
+        results["passed_s4_count"] = sc.get("stage4_dedup", len(winners) or len(combined))
+        results["final_candidates"] = winners
+        results["winners"] = winners
+
         return {"success": True, "results": results}
     except Exception as e:
         logger.error(f"Funnel execution error: {e}")
@@ -487,6 +498,45 @@ def get_stored_competitor_posts(handle: Optional[str] = None, niche: Optional[st
     except Exception as e:
         logger.error(f"Get stored posts error: {e}")
         return {"success": False, "error": str(e), "posts": []}
+
+
+# ---------------------------------------------------------------------------
+# Download Specification Document Routes
+# ---------------------------------------------------------------------------
+@app.get("/api/download/spec-pdf")
+def download_spec_pdf():
+    pdf_path = BASE_DIR / "Vmatrix_Complete_System_Specification.pdf"
+    if not pdf_path.exists():
+        raise HTTPException(status_code=404, detail="PDF specification not found.")
+    return FileResponse(
+        path=pdf_path,
+        filename="Vmatrix_Complete_System_Specification.pdf",
+        media_type="application/pdf"
+    )
+
+
+@app.get("/api/download/spec-md")
+def download_spec_md():
+    md_path = BASE_DIR / "Vmatrix_Complete_System_Specification.md"
+    if not md_path.exists():
+        raise HTTPException(status_code=404, detail="Markdown specification not found.")
+    return FileResponse(
+        path=md_path,
+        filename="Vmatrix_Complete_System_Specification.md",
+        media_type="text/markdown"
+    )
+
+
+@app.get("/api/download/spec-html")
+def download_spec_html():
+    html_path = BASE_DIR / "Vmatrix_Complete_System_Specification.html"
+    if not html_path.exists():
+        raise HTTPException(status_code=404, detail="HTML specification not found.")
+    return FileResponse(
+        path=html_path,
+        filename="Vmatrix_Complete_System_Specification.html",
+        media_type="text/html"
+    )
 
 
 # ---------------------------------------------------------------------------

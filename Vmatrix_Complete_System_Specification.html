@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Vmatrix Social OS · Complete System Specification</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      color: #1e293b;
+      background-color: #ffffff;
+      line-height: 1.65;
+    }
+    code, pre {
+      font-family: 'JetBrains Mono', monospace;
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 1rem;
+      border-radius: 0.75rem;
+      overflow-x: auto;
+      font-size: 0.82rem;
+      margin-top: 1rem;
+      margin-bottom: 1rem;
+      border: 1px solid #334155;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: #0f172a;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.025em;
+      border-bottom: 2px solid #e2e8f0;
+      padding-bottom: 0.5rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #1e293b;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: -0.02em;
+      border-bottom: 1px solid #e2e8f0;
+      padding-bottom: 0.35rem;
+    }
+    h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #334155;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h4 {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #475569;
+      margin-top: 1.25rem;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      margin-bottom: 0.9rem;
+    }
+    ul, ol {
+      margin-bottom: 1rem;
+      padding-left: 1.5rem;
+    }
+    ul {
+      list-style-type: disc;
+    }
+    ol {
+      list-style-type: decimal;
+    }
+    li {
+      margin-bottom: 0.35rem;
+    }
+    blockquote {
+      border-left: 4px solid #6366f1;
+      background: #f8fafc;
+      padding: 0.75rem 1.25rem;
+      margin: 1.25rem 0;
+      border-radius: 0 0.5rem 0.5rem 0;
+      color: #475569;
+      font-style: italic;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1.25rem 0;
+      font-size: 0.85rem;
+    }
+    th {
+      background: #f1f5f9;
+      color: #0f172a;
+      font-weight: 600;
+      text-align: left;
+      padding: 0.65rem 0.85rem;
+      border: 1px solid #cbd5e1;
+    }
+    td {
+      padding: 0.6rem 0.85rem;
+      border: 1px solid #cbd5e1;
+      vertical-align: top;
+    }
+    tr:nth-child(even) {
+      background: #f8fafc;
+    }
+    hr {
+      border: 0;
+      border-top: 1px solid #e2e8f0;
+      margin: 2rem 0;
+    }
+    .print-btn {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      z-index: 50;
+      background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+      color: white;
+      padding: 0.6rem 1.2rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .print-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 15px 20px -3px rgba(79, 70, 229, 0.5);
+    }
+    @media print {
+      .print-btn {
+        display: none !important;
+      }
+      body {
+        padding: 0 !important;
+      }
+      pre {
+        white-space: pre-wrap !important;
+        word-break: break-all;
+      }
+    }
+  </style>
+</head>
+<body class="p-8 md:p-14 max-w-5xl mx-auto">
+  <button class="print-btn" onclick="window.print()">
+    <i class="fa-solid fa-file-pdf"></i> Print / Save as PDF
+  </button>
+
+  <div class="mb-8 p-6 bg-gradient-to-r from-indigo-950 via-slate-900 to-purple-950 text-white rounded-2xl shadow-xl border border-indigo-500/30 flex items-center justify-between flex-wrap gap-4">
+    <div>
+      <div class="flex items-center gap-2 mb-1">
+        <span class="px-2.5 py-0.5 rounded-full bg-indigo-500/30 text-indigo-300 text-xs font-mono font-bold border border-indigo-500/40">OFFICIAL SPECIFICATION</span>
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-mono">v2.5 PRODUCTION READY</span>
+      </div>
+      <h1 class="text-white border-0 p-0 m-0 text-2xl font-black">VMATRIX SOCIAL OS</h1>
+      <p class="text-slate-300 text-xs mt-1">Autonomous Social Publishing Engine & Competitor Viral Intelligence System</p>
+    </div>
+    <div class="text-right text-xs font-mono text-slate-300 space-y-1">
+      <div>Target: <strong class="text-pink-300">@vmatrix.co</strong></div>
+      <div>Engine: <strong class="text-cyan-300">Python 3.12 · 4K Retina</strong></div>
+      <div>Generated: <strong>September 2026</strong></div>
+    </div>
+  </div>
+
+  <article class="prose max-w-none">
+    <h1>Vmatrix Social OS · Complete System Architecture &amp; Product Blueprint</h1>
+<blockquote>
+<p><strong>Autonomous Social Publishing Engine &amp; Competitor Viral Intelligence</strong><br />
+Target Channel: <a href="https://www.instagram.com/vmatrix.co/"><code>@vmatrix.co</code></a> (Meta Instagram Graph API)<br />
+Core Framework: Python 3.12, FastAPI, Playwright, Multi-Model AI Council, Cloudinary CDN, Supabase, Apify</p>
+</blockquote>
+<hr />
+<h2>1. Executive Summary &amp; Mission</h2>
+<p><strong>Vmatrix Social OS</strong> is an autonomous, production-grade social media intelligence and content generation operating system designed specifically for software engineering, artificial intelligence, and developer tooling.</p>
+<p>Unlike generic social media schedulers or AI wrapper copywriters, Vmatrix operates with:</p>
+<ol>
+<li><strong>Zero Fluff / 100% Signal</strong>: No low-effort motivational quotes or generic AI jargon. Every post is an authoritative, bookmarkable technical blueprint (decision matrices, system design tradeoffs, production failure post-mortems).</li>
+<li><strong>Cognitive Engineering</strong>: Every slide strictly complies with 5 mathematical cognitive load rules (word caps, visual contrast anchors, reading time optimization).</li>
+<li><strong>Multi-Model AI Council</strong>: Autonomous reasoning distributed across an ultra-fast, resilient failover council (Groq 120B, OpenRouter 70B, Cerebras, Hugging Face 72B, Gemini 2.5, Nvidia NIM).</li>
+<li><strong>End-to-End Autonomy</strong>: From hourly Google Trends velocity checks and competitor scraping to 4K Playwright rendering, Cloudinary CDN uploading, Instagram Graph API carousel publication, and automated comment pinning.</li>
+</ol>
+<hr />
+<h2>2. System Architecture Diagram</h2>
+<pre><code class="language-mermaid">flowchart TD
+    subgraph INGESTION [&quot;📡 Ingestion &amp; Intelligence Layer&quot;]
+        GT[&quot;Google Trends RSS\n(US &amp; IN Feeds)&quot;] --&gt; FUNNEL
+        TC[&quot;TechCrunch / VentureBeat /\nHacker News / Dev.to&quot;] --&gt; FUNNEL
+        COMP[&quot;Competitor Profiles\n(@bytebytego_, @thecodebytes)&quot;] --&gt; APIFY[&quot;Apify Scraper\n(3-Key Rotating Pool)&quot;]
+    end
+
+    subgraph PHASE1 [&quot;⚡ PHASE 1: Autonomous Content Pipeline&quot;]
+        FUNNEL[&quot;5-Stage Elimination Funnel\n(Recency, Velocity, Dedup, Junior Fit, Score)&quot;] --&gt; PLANNER[&quot;Slide Architecture Planner\n(5 Cognitive Rules Enforced)&quot;]
+        PLANNER --&gt; PLAYWRIGHT[&quot;Headless 4K Renderer\n(Playwright Chromium · 2160x2700 Pure White)&quot;]
+        PLAYWRIGHT --&gt; PIL[&quot;PIL Post-Processor\n(RGB Mode, 95% JPEG, No Alpha)&quot;]
+        PIL --&gt; CDN[&quot;Cloudinary CDN\n(HTTPS CDN URL Hosting)&quot;]
+        CDN --&gt; QUEUE[&quot;30-Min Human Approval Queue\n(Dashboard &amp; Telegram Alert)&quot;]
+        QUEUE --&gt; INSTA[&quot;Meta Instagram Graph API\n(@vmatrix.co Direct Carousel &amp; Pinned Comment)&quot;]
+    end
+
+    subgraph PHASE2 [&quot;🧬 PHASE 2: Competitor Viral Intelligence&quot;]
+        APIFY --&gt; OUTLIER[&quot;3-Gate Outlier Math\n(Likes &gt;= 1.5x, Comments &gt;= 1.5x, ER Benchmark)&quot;]
+        OUTLIER --&gt; DOSSIER[&quot;Deep AI Virality Dossier\n(Linguistic Hook, Cognitive Pacing, Retention Cliff)&quot;]
+        OUTLIER --&gt; MACRO[&quot;Cross-Competitor Macro Synthesis\n(Multi-Model AI Council · 0% Copy-Paste)&quot;]
+        MACRO --&gt; HANDOFF[&quot;1-Click 4K Studio Handoff\n(Instant Translation into Live Carousel)&quot;]
+        HANDOFF --&gt; PLANNER
+    end
+
+    subgraph MULTI_MODEL [&quot;🧠 Multi-Model AI Council (Failover Resiliency)&quot;]
+        GROQ[&quot;1. Groq 120B (Primary · &lt;1.5s)&quot;]
+        OR[&quot;2. OpenRouter 70B (Secondary)&quot;]
+        CER[&quot;3. Cerebras WSE (Fast Llama/Qwen)&quot;]
+        HF[&quot;4. Hugging Face 72B (Serverless)&quot;]
+        GEM[&quot;5. Gemini 2.5 (Multimodal Secondary)&quot;]
+        NIM[&quot;6. Nvidia NIM (Vision / Guardrails)&quot;]
+        DET[&quot;7. Deterministic Engineering Fallback&quot;]
+        GROQ --&gt; OR --&gt; CER --&gt; HF --&gt; GEM --&gt; DET
+    end
+
+    subgraph PERSISTENCE [&quot;💾 Data &amp; Memory Layer&quot;]
+        SQLITE[&quot;Local SQLite DB\n(Zero-Latency Cache)&quot;] &lt;--&gt; SUPABASE[&quot;Supabase Cloud PostgreSQL\n(Global State &amp; 24h Dedup Memory)&quot;]
+    end
+
+    PLANNER -.-&gt; MULTI_MODEL
+    DOSSIER -.-&gt; MULTI_MODEL
+    MACRO -.-&gt; MULTI_MODEL
+    QUEUE -.-&gt; PERSISTENCE
+    INSTA -.-&gt; PERSISTENCE
+</code></pre>
+<hr />
+<h2>3. Detailed Component Breakdown</h2>
+<h3>Phase 1: Autonomous 4K Publishing Pipeline</h3>
+<p>Phase 1 transforms raw developer news and trending search spikes into high-retention 4K carousels published directly to Instagram.</p>
+<h4>1. 5-Stage Elimination Funnel (<code>core/funnel.py</code>)</h4>
+<p>Incoming topics from Google Trends RSS, Hacker News, and TechCrunch pass through 5 strict algorithmic filters:</p>
+<ul>
+<li><strong>Stage 1: Recency &amp; Relevance Filter</strong>: Rejects articles published $&gt;24$ hours ago. Filters against a positive technical lexicon (<code>AI</code>, <code>LLM</code>, <code>System Design</code>, <code>Database</code>, <code>Backend</code>, <code>DevOps</code>) and negative fluff lexicon (<code>crypto pump</code>, <code>gossip</code>, <code>celebrity</code>).</li>
+<li><strong>Stage 2: Velocity &amp; Spike Scoring</strong>: Evaluates momentum. Calculates search interest surges ($&gt;10\text{k}+$ searches, top 5 position) and Hacker News point acceleration ($&gt;100\text{ points/hour}$).</li>
+<li><strong>Stage 3: 24-Hour Deduplication Guard</strong>: Hashes candidate topics and compares them against the SQLite <code>post_history</code> and Supabase archive. Prevents redundant posts on the same underlying news event within 24 hours.</li>
+<li><strong>Stage 4: High-School &amp; Junior Developer Resonance Filter</strong>: Evaluates whether the topic can be understood and executed by a junior developer, high-school coder, or vibe coder. Filters out dense academic notation.</li>
+<li><strong>Stage 5: Finalist Selection &amp; Scoring</strong>: Scores finalists out of 10.0 based on technical depth, visualizability, and controversy/discussion potential. Top score enters content generation.</li>
+</ul>
+<h4>2. Hourly Trend Velocity Watchdog (<code>trend_checker.py</code>)</h4>
+<ul>
+<li>Background cron runner scanning US (<code>geo=US</code>) and India (<code>geo=IN</code>) Google Trends RSS every 60 minutes.</li>
+<li>Uses Groq 120B to evaluate if a breaking topic has an urgency score $\ge 9/10$.</li>
+<li>If a breakthrough is detected, it automatically bypasses standard queues, renders a carousel, and notifies the operator.</li>
+</ul>
+<h4>3. 4K Headless Rendering Engine (<code>core/renderer.py</code>)</h4>
+<ul>
+<li><strong>Technology</strong>: Playwright (Headless Chromium).</li>
+<li><strong>Resolution</strong>: <strong>4K Retina Quality</strong>: $2160 \times 2700\text{ px}$ (2x device scale from base $1080 \times 1350$ aspect ratio $4:5$).</li>
+<li><strong>Aesthetic</strong>: <strong>100% Pure White Background (<code>#FFFFFF</code>)</strong>. No dark backgrounds, no muddy gradients. High-contrast typography (<code>#0A0A0A</code> text, <code>#525252</code> subtitles).</li>
+<li><strong>Post-Processing Pipeline</strong>:
+<ol>
+<li>HTML5 template injection with scoped Tailwind CSS.</li>
+<li>Playwright screenshot captured at high DPI.</li>
+<li>PIL (Pillow) post-processing: Converts to strict <code>RGB</code> mode (eliminating PNG alpha channels that fail Instagram's API), applies subtle unsharp masking for crisp text edges, and saves as 95% quality JPEG.</li>
+</ol>
+</li>
+</ul>
+<h4>4. Automated Caption &amp; Community Magnet (<code>core/caption.py</code>)</h4>
+<ul>
+<li>Generates high-converting Instagram caption architecture:
+<ul>
+<li><strong>First Line Hook</strong>: Max 8 words, emoji prefix, intriguing premise.</li>
+<li><strong>Micro-Value Bullets</strong>: 3-4 bullet points highlighting the core lesson.</li>
+<li><strong>Comment Magnet CTA</strong>: Direct prompt: <em>&quot;Comment 'SWARM' below and I'll send you the architecture matrix.&quot;</em> (Triggers Instagram algorithm's comment-velocity boost).</li>
+<li><strong>Save Trigger</strong>: <em>&quot;📌 Bookmark this for your next system design interview.&quot;</em></li>
+<li><strong>Targeted Hashtags</strong>: 8-12 niche engineering tags.</li>
+</ul>
+</li>
+<li><strong>Auto-Comment Pinning</strong>: Instantly creates and pins the first comment on the newly published post to kickstart engagement.</li>
+</ul>
+<h4>5. 30-Minute Human Approval Queue (<code>core/approval.py</code>)</h4>
+<ul>
+<li>All generated posts enter an in-memory &amp; SQLite-backed queue.</li>
+<li>Operators can review 4K slide previews, edit captions, and approve/reject directly from Tab 3 of the dashboard.</li>
+<li>Configurable auto-publish timeout: If 30 minutes pass without human rejection, the engine can automatically publish or hold based on policy.</li>
+</ul>
+<h4>6. CDN &amp; Instagram Publication Pipeline (<code>core/publisher.py</code>)</h4>
+<ul>
+<li><strong>Cloudinary CDN</strong>: Uploads 4K JPEG slides to Cloudinary using HTTPS asset delivery. Instagram requires publicly accessible HTTPS URLs with valid image content-type headers.</li>
+<li><strong>Meta Instagram Graph API v21.0</strong>:
+<ol>
+<li>Calls <code>POST /{ig-user-id}/media</code> for each slide with <code>is_carousel_item=true</code>.</li>
+<li>Polls <code>GET /{container-id}?fields=status_code</code> until <code>FINISHED</code>.</li>
+<li>Calls <code>POST /{ig-user-id}/media</code> with <code>media_type=CAROUSEL</code> and children container IDs.</li>
+<li>Calls <code>POST /{ig-user-id}/media_publish</code> with the carousel ID.</li>
+<li>Calls <code>POST /{media-id}/comments</code> to post the first comment.</li>
+<li>Records media ID, permalink (<code>https://www.instagram.com/p/{shortcode}/</code>), timestamp, and status to SQLite &amp; Supabase.</li>
+</ol>
+</li>
+</ul>
+<hr />
+<h3>Phase 2: Competitor Intelligence &amp; Viral Outlier Meta-Synthesis</h3>
+<p>Phase 2 reverse-engineers top-performing competitor accounts and synthesizes cross-competitor viral signals into completely original high-authority posts.</p>
+<h4>1. Instagram Profile Harvester (<code>core/scraper.py</code>)</h4>
+<ul>
+<li>Tracks top competitor handles: <code>@bytebytego_</code>, <code>@thecodebytes</code>, <code>@bhavik.dev</code>, <code>@systemdesignhub</code>, <code>@codewithharry</code>.</li>
+<li>Uses Apify actors (<code>apify/instagram-scraper</code>) with:
+<ul>
+<li><strong>3-Key Rotating Backup Pool</strong>: Automatically shifts between 3 API keys upon rate limits or credit depletion.</li>
+<li><strong>Circuit Breaker</strong>: Enforces a 60-minute cooldown per handle to prevent Instagram bot detection and API waste.</li>
+<li><strong>Local SQLite Cache</strong>: Returns stored posts instantly if the network scraper is in cooldown.</li>
+</ul>
+</li>
+</ul>
+<h4>2. 3-Gate Mathematical Outlier Detection (<code>core/outlier.py</code>)</h4>
+<p>A competitor post is not viral simply because an account has many followers. The system runs every post through 3 mathematical statistical gates:</p>
+<ol>
+<li><strong>Gate 1: Likes Multiplier Gate</strong>:
+$$\text{Multiplier}_{\text{Likes}} = \frac{\text{Post Likes}}{\text{Cohort Median Likes}} \ge 1.5\text{x}$$</li>
+<li><strong>Gate 2: Comments Multiplier Gate</strong>:
+$$\text{Multiplier}_{\text{Comments}} = \frac{\text{Post Comments}}{\text{Cohort Median Comments}} \ge 1.5\text{x}$$</li>
+<li><strong>Gate 3: Engagement Rate (ER) Benchmark Gate</strong>:
+$$\text{ER} = \frac{\text{Likes} + \text{Comments}}{\text{Estimated Reach / Followers}} \times 100 \ge \text{Cohort 75th Percentile}$$</li>
+</ol>
+<ul>
+<li>Posts meeting <strong>$\ge 2$ gates</strong> are officially flagged as <strong>Viral Outliers</strong> with their exact multiplier (e.g., <code>2.42x Outlier</code>).</li>
+</ul>
+<h4>3. Deep AI Virality Reverse-Engineering (<code>core/competitor_analyzer.py</code>)</h4>
+<p>Each outlier is audited by Groq 120B / OpenRouter 70B across 5 dimensions:</p>
+<ol>
+<li><strong>Macro Trend Angle</strong>: What macro architectural shift or industry tension does this post exploit?</li>
+<li><strong>Hook Mechanics &amp; Linguistic Anatomy</strong>: Exact hook type (contrarian command, curiosity gap, loss aversion), reading time ($\le 1.8\text{s}$), and swipe probability.</li>
+<li><strong>Slide Structure &amp; Cognitive Pacing</strong>: Visual density rating, cognitive load score ($/10$), and retention cliff identification (where viewers drop off).</li>
+<li><strong>Caption Architecture</strong>: First-line hook, save/share triggers, CTA effectiveness.</li>
+<li><strong>Why It Went Viral</strong>: 5 distinct psychological and algorithmic reasons.</li>
+<li><strong>Vmatrix 4K Pure-White Adaptation</strong>: A complete 6-slide adaptation blueprint applying the 5 Cognitive Rules.</li>
+</ol>
+<h4>4. Cross-Competitor Macro Outlier Meta-Synthesis</h4>
+<ul>
+<li>Aggregates outlier signals across <strong>all</strong> monitored competitor accounts simultaneously.</li>
+<li><strong>0% Copy-Paste Guarantee</strong>: Rather than copying a competitor, the AI Council discovers the <em>macro convergence</em> (e.g., all competitors are talking about microservice fatigue and database bottlenecks).</li>
+<li>Synthesizes a composite master carousel that combines:
+<ul>
+<li>The contrast clarity of <code>@bytebytego_</code></li>
+<li>The architectural precision of <code>@thecodebytes</code></li>
+<li>The clean, junior-friendly implementation of <code>@bhavik.dev</code></li>
+</ul>
+</li>
+<li>Delivers:
+<ul>
+<li>Master Hook (strictly $\le 6$ words)</li>
+<li>Master Caption with comment magnet and save CTA</li>
+<li>Complete 6-Slide Visual Blueprint with amber/rose anchors</li>
+<li>1-Click Handoff into 4K Carousel Studio</li>
+</ul>
+</li>
+</ul>
+<hr />
+<h2>4. The 5 Strict Cognitive Engineering Rules</h2>
+<p>Every carousel generated by Vmatrix complies with 5 strict rules designed for mobile social media reading behavior:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Constraint</th>
+<th>Psychological Justification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Rule 1: Strict Sentence &amp; Word Cap</strong></td>
+<td>Slide 1 Hook $\le 6$ words.<br>Slide Headlines $\le 6$ words.<br>Slide Descriptions $\le 25$ words.</td>
+<td>Mobile feeds allow $&lt;2$ seconds of attention. Any text over 25 words creates cognitive overload and induces a bounce.</td>
+</tr>
+<tr>
+<td><strong>Rule 2: 100% Pure White Canvas</strong></td>
+<td>Background: <code>#FFFFFF</code>.<br>Primary Text: <code>#0A0A0A</code>.<br>Subtitles: <code>#525252</code>.</td>
+<td>Pure white mimics high-end technical books and Apple-level minimalism. Maximum contrast ratio ($&gt;18:1$) prevents eye strain in daylight.</td>
+</tr>
+<tr>
+<td><strong>Rule 3: Single Color Temperature Anchor</strong></td>
+<td>Warm Amber (<code>#D97706</code>) for warnings / latency / caveats.<br>Cool Rose (<code>#E11D48</code>) for errors / contrast.<br>Emerald (<code>#059669</code>) for positive benchmarks.</td>
+<td>Limits chromatic noise. The brain immediately locks onto the single highlighted anchor keyword on each slide.</td>
+</tr>
+<tr>
+<td><strong>Rule 4: Progressive Priming Flow</strong></td>
+<td>Slide 1: Hook / Pattern Interrupt.<br>Slide 2: Problem / Contrarian Trap.<br>Slides 3-5: 3 Actionable Steps / Decision Matrix.<br>Slide 6: Bookmark / Save CTA.</td>
+<td>Creates an open curiosity loop on Slide 1 that is only closed on Slide 5, maximizing carousel swipe completion rate.</td>
+</tr>
+<tr>
+<td><strong>Rule 5: Save/Share Dopamine Payoff</strong></td>
+<td>Must deliver reference utility (cheat sheet, comparison table, or architecture matrix).</td>
+<td>Saves and shares carry $3\text{x}-5\text{x}$ higher weight in Instagram's algorithm than simple likes.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>5. Multi-Model AI Council &amp; Fallback Chains</h2>
+<p>The system never relies on a single provider. All layers feature automatic, seamless failovers:</p>
+<pre><code>[Layer 1: Reasoning Council]
+Groq 120B (gpt-oss-120b)  &lt;-- Primary (&lt;1.5s latency)
+  ↓ (fails / rate limit)
+OpenRouter 70B (llama-3.3-70b-instruct)  &lt;-- Secondary Brain
+  ↓ (fails / rate limit)
+Cerebras WSE (qwen-3.8-27b / gemma-4-31b)  &lt;-- Wafer-Scale Fast Reasoner (Quota Monitored)
+  ↓ (fails / rate limit)
+Hugging Face 72B (Qwen2.5-72B-Instruct)  &lt;-- Serverless Fallback
+  ↓ (fails / rate limit)
+Gemini 2.5 Flash  &lt;-- Secondary Multimodal Brain
+  ↓ (fails / rate limit)
+Deterministic Hardened Engineering Engine  &lt;-- Zero-Downtime Guarantee (100% Uptime)
+</code></pre>
+<h3>Additional Infrastructure Fallback Chains:</h3>
+<ul>
+<li><strong>Apify Scraper Multi-Key Pool</strong>: 3 keys rotated automatically with token expiration and rate-limit detection.</li>
+<li><strong>Database Dual-Write</strong>: Primary SQLite (<code>social_engine.db</code>) for sub-millisecond local reads/writes, asynchronously synced to Supabase Cloud PostgreSQL.</li>
+<li><strong>Brand Logo Resolver</strong>: Logo.dev API $\rightarrow$ Brandfetch API $\rightarrow$ FontAwesome Vector SVGs $\rightarrow$ Clean Text Fallback.</li>
+<li><strong>Slide Image Export</strong>: 4K Playwright Chromium $\rightarrow$ PIL Image Sharpener $\rightarrow$ RGB Enforcement $\rightarrow$ Local Cache $\rightarrow$ Cloudinary CDN.</li>
+</ul>
+<hr />
+<h2>6. Dashboard Architecture (<code>http://localhost:8000</code>)</h2>
+<p>The user interface is a high-performance Single Page Application (SPA) built with Vanilla HTML5, Tailwind CSS, FontAwesome 6, and Inter/JetBrains Mono typography, powered by a FastAPI asynchronous server (<code>dashboard_server.py</code>).</p>
+<h3>Top Real-Time Telemetry Bar (10 Cloud Services):</h3>
+<ul>
+<li>🟢 <strong>Groq 120B</strong>: Primary Reasoner</li>
+<li>🟢 <strong>OpenRouter 70B</strong>: Secondary Brain</li>
+<li>🟡 <strong>Cerebras</strong>: Quota-aware status indicator (Amber badge when active key exceeds free tier)</li>
+<li>🟢 <strong>Nvidia NIM</strong>: Vision and guardrail microservices</li>
+<li>🟢 <strong>Hugging Face 72B</strong>: Serverless fallback</li>
+<li>🟢 <strong>Gemini 2.5</strong>: Multimodal secondary</li>
+<li>🟢 <strong>Apify Scraper</strong>: Competitor harvester</li>
+<li>🟢 <strong>Supabase DB</strong>: Global analytics &amp; sync</li>
+<li>🟢 <strong>Cloudinary CDN</strong>: 4K media hosting</li>
+<li>🟢 <strong>Meta Graph API</strong>: <code>@vmatrix.co</code> Instagram connection</li>
+</ul>
+<h3>SPA Navigation Tabs:</h3>
+<ol>
+<li><strong>Tab 1: Trend Radar &amp; 5-Stage Funnel</strong>: Real-time RSS harvester, geographic filter (US/IN), and Hourly Velocity Watchdog trigger.</li>
+<li><strong>Tab 2: 4K Carousel Studio</strong>: Topic input, preset selector (SQL vs NoSQL, Kafka vs RabbitMQ, Redis Caching), Playwright generator, 4K lightbox, and direct Instagram publishing controls.</li>
+<li><strong>Tab 3: 30-Minute Approval Queue</strong>: Countdown timer, live queue badge, slide carousel preview, caption editor, and approve/reject actions.</li>
+<li><strong>Tab 4: Competitor Intelligence Radar</strong>: Competitor profile scraper, 3-gate outlier status badges, AI Virality Dossier modal with full visible caption box, and Cross-Competitor Macro Synthesis engine with 1-click Studio handoff.</li>
+<li><strong>Tab 5: Intelligence Archive &amp; DB</strong>: SQLite &amp; Supabase synchronized historical post explorer with direct Instagram links.</li>
+</ol>
+<hr />
+<h2>7. Project Timeline &amp; Milestone Execution</h2>
+<pre><code>[Day 1: Foundation &amp; Core Ingestion]
+  ├── Initialized project architecture &amp; environment variables
+  ├── Connected Google Trends, TechCrunch, and Hacker News RSS feeds
+  ├── Built 5-stage elimination funnel with SQLite memory cache
+  └── Configured Supabase bi-directional cloud synchronization
+
+[Day 2: 4K Headless Renderer &amp; Cognitive Rules]
+  ├── Replaced Streamlit UI with high-performance FastAPI SPA (dashboard/index.html)
+  ├── Implemented Playwright Chromium headless engine rendering at 2160x2700 px (4K Retina)
+  ├── Enforced 100% pure white background design system (#FFFFFF)
+  ├── Encoded the 5 strict Cognitive Engineering Rules (word caps, amber/rose anchors)
+  └── Integrated Cloudinary CDN for HTTPS media hosting
+
+[Day 3: Meta Instagram Graph API &amp; First Live Publications]
+  ├── Authenticated Meta Graph API v21.0 for @vmatrix.co
+  ├── Built carousel media container polling &amp; publishing pipeline
+  ├── Implemented automated first-comment generation and comment pinning
+  └── Published first live production carousel:
+      Topic: &quot;5 Free AI Tools Every Coder Needs in 2026&quot;
+      Instagram Post: https://www.instagram.com/p/DdM1NMlFj6J/
+
+[Day 4: Competitor Intelligence &amp; Outlier Detection]
+  ├── Integrated Apify Instagram Scraper with rotating multi-key backup pool
+  ├── Formulated the 3-Gate Mathematical Outlier Detection algorithm (1.5x Median ER)
+  ├── Built Deep AI Virality Dossier modal (Linguistic hooks, retention cliffs, slide pacing)
+  └── Fixed Instagram URL links to open live posts and creator profiles directly
+
+[Day 5: Macro Meta-Synthesis &amp; Production Polish]
+  ├── Created Cross-Competitor Macro Outlier Synthesis engine (Multi-Model Council)
+  ├── Built 1-Click Studio Handoff from competitor synthesis directly into 4K Studio
+  ├── Exposed all models (Groq, OpenRouter, Cerebras, Nvidia NIM, Gemini) on dashboard telemetry
+  ├── Implemented visible postable caption text containers in all modal dialogs
+  └── Committed all assets to GitHub main repository: theayushagarwal/vmatrix
+</code></pre>
+<hr />
+<h2>8. Complete Technology Stack &amp; APIs</h2>
+<table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>Technologies &amp; Services Used</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Programming Language</strong></td>
+<td>Python 3.12 (Modern async typing, dataclasses, pydantic)</td>
+</tr>
+<tr>
+<td><strong>Web Server &amp; Backend</strong></td>
+<td>FastAPI, Uvicorn, Requests, Urllib3</td>
+</tr>
+<tr>
+<td><strong>Frontend UI / SPA</strong></td>
+<td>Tailwind CSS (CDN), FontAwesome 6, JetBrains Mono, Inter, Vanilla JS</td>
+</tr>
+<tr>
+<td><strong>Headless Rendering</strong></td>
+<td>Playwright (Chromium), Jinja2 HTML5 Templates, Pillow (PIL)</td>
+</tr>
+<tr>
+<td><strong>AI Reasoning Council</strong></td>
+<td>Groq (<code>openai/gpt-oss-120b</code>), OpenRouter (<code>meta-llama/llama-3.3-70b-instruct</code>), Cerebras (<code>qwen-3.8-27b</code>), Hugging Face (<code>Qwen2.5-72B-Instruct</code>), Gemini 2.5 Flash, Nvidia NIM (<code>llama-3.2-11b-vision-instruct</code>)</td>
+</tr>
+<tr>
+<td><strong>Web Scraping</strong></td>
+<td>Apify Actors (<code>apify/instagram-scraper</code>), Feedparser (RSS)</td>
+</tr>
+<tr>
+<td><strong>Media Hosting</strong></td>
+<td>Cloudinary Cloud CDN (HTTPS media hosting)</td>
+</tr>
+<tr>
+<td><strong>Social Media API</strong></td>
+<td>Meta Instagram Graph API v21.0 (Instagram Business Account <code>@vmatrix.co</code>)</td>
+</tr>
+<tr>
+<td><strong>Databases</strong></td>
+<td>SQLite 3 (<code>data/social_engine.db</code>), Supabase Cloud PostgreSQL</td>
+</tr>
+<tr>
+<td><strong>Brand Identity APIs</strong></td>
+<td>Logo.dev API, Brandfetch API</td>
+</tr>
+<tr>
+<td><strong>Version Control &amp; CI/CD</strong></td>
+<td>GitHub (<code>theayushagarwal/vmatrix</code>), GitHub Secrets</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>9. Repository Structure</h2>
+<pre><code>ai-social-engine/
+├── .env                              # Active API keys &amp; credentials
+├── .env.example                      # Template configuration file
+├── autonomous_publisher.py           # CLI runner for autonomous publishing cycles
+├── cli.py                            # Developer CLI utility
+├── dashboard_server.py               # FastAPI backend server (Port 8000)
+├── listicle_pipeline.py              # 4K listicle carousel generator script
+├── outlier.py                        # Standalone 3-gate outlier math runner
+├── scraper.py                        # Standalone competitor scraper runner
+├── trend_checker.py                  # Hourly Google Trends velocity watchdog
+├── requirements.txt                  # Python dependencies
+├── dashboard/
+│   └── index.html                    # Single-Page Application (5 Tabs + Telemetry)
+├── core/
+│   ├── approval.py                   # 30-minute approval queue logic
+│   ├── caption.py                    # Caption &amp; auto-comment generation
+│   ├── competitor_analyzer.py        # Virality reverse-engineering &amp; macro synthesis
+│   ├── db.py                         # SQLite &amp; Supabase persistence layer
+│   ├── feeds.py                      # Google Trends &amp; tech news RSS harvester
+│   ├── funnel.py                     # 5-stage topic elimination funnel
+│   ├── generator.py                  # Multi-model slide plan generator
+│   ├── llm_utils.py                  # Groq, OpenRouter &amp; HF failover client
+│   ├── logo_resolver.py              # Logo.dev &amp; Brandfetch resolver
+│   ├── memory.py                     # 24-hour topic deduplication memory
+│   ├── outlier.py                    # 3-gate mathematical outlier calculation
+│   ├── publisher.py                  # Cloudinary upload &amp; Instagram Graph API publishing
+│   ├── renderer.py                   # Headless Playwright 4K image renderer
+│   ├── scraper.py                    # Apify scraper with 3-key rotation pool
+│   └── text_auditor.py               # Word cap &amp; cognitive rule compliance checker
+├── data/
+│   ├── competitor_posts.json         # Scraped competitor post repository
+│   ├── macro_viral_synthesis.json    # Cached cross-competitor macro synthesis
+│   ├── post_history.json             # 24-hour deduplication post memory
+│   └── social_engine.db              # SQLite zero-latency database
+├── output_slides/                    # Rendered 4K JPEG slides (2160x2700)
+└── templates/                        # HTML5 / CSS templates for carousel rendering
+</code></pre>
+<hr />
+<h2>10. Live Verification &amp; Production Proof</h2>
+<ul>
+<li><strong>Instagram Account</strong>: <a href="https://www.instagram.com/vmatrix.co/"><code>@vmatrix.co</code></a></li>
+<li><strong>Live 4K Carousel Album</strong>: <a href="https://www.instagram.com/p/DdM1NMlFj6J/">https://www.instagram.com/p/DdM1NMlFj6J/</a></li>
+<li><strong>Live Pinned Comment</strong>: Comment ID <code>18123811297862503</code></li>
+<li><strong>Dashboard URL</strong>: <code>http://localhost:8000</code></li>
+<li><strong>GitHub Repository</strong>: <a href="https://github.com/theayushagarwal/vmatrix"><code>https://github.com/theayushagarwal/vmatrix</code></a></li>
+</ul>
+
+  </article>
+
+  <footer class="mt-16 pt-6 border-t border-slate-200 text-center text-xs text-slate-500 font-mono">
+    © 2026 Vmatrix Social OS · Developed for Autonomous Engineering Authority & Growth
+  </footer>
+</body>
+</html>

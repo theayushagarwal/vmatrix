@@ -1,193 +1,174 @@
-# ⚡ ai-social-engine
+# ⚡ Vmatrix Social OS
 
-**An autonomous social media engine that filters 100+ raw trend signals through a 5-Stage AI Funnel and turns winning topics into published Instagram carousels — in under 5 seconds of AI compute.**
+> **Autonomous Social Publishing Engine & Competitor Viral Intelligence**  
+> Target Channel: [@vmatrix.co](https://www.instagram.com/vmatrix.co/) (Meta Instagram Graph API v21.0)  
+> Core Framework: Python 3.12, FastAPI, Playwright (4K Retina), Multi-Model AI Council, Cloudinary CDN, Supabase, Apify
 
-No design tool. No copywriter. No manual export-and-upload. Raw noise in, vetted educational carousel live on Instagram.
-
----
-
-## 🏆 The Pitch
-
-Educational Instagram pages live and die by a brutal content treadmill: research what's trending, filter out noise, write punchy copy, design five on-brand slides, export them, upload them, write a caption, and publish — every single day. `ai-social-engine` collapses that entire pipeline into one autonomous flow:
-
-**100+ Raw Signals In → 5-Stage Filtering Funnel → Structured Plan (Gemini 2.5 Flash) → Rendered 4:5 Retina Slides (Playwright + HTML/CSS) → Live Instagram Post (Meta Graph API).**
+[![Live on Instagram](https://img.shields.io/badge/Instagram-@vmatrix.co-E4405F?logo=instagram&logoColor=white)](https://www.instagram.com/vmatrix.co/)
+[![FastAPI](https://img.shields.io/badge/Dashboard-FastAPI%20Localhost:8000-009688?logo=fastapi&logoColor=white)](http://localhost:8000)
+[![Playwright 4K](https://img.shields.io/badge/Renderer-Playwright%204K%20Retina-2EAD33?logo=playwright&logoColor=white)](http://localhost:8000)
+[![Multi-Model AI](https://img.shields.io/badge/AI%20Council-Groq%20120B%20%2B%20OpenRouter%2070B-7928CA)](http://localhost:8000)
 
 ---
 
-## 🌪️ 5-Stage Filtering Funnel
+## 🏆 What is Vmatrix Social OS?
 
-When gathering real-time data from search trends and news feeds, 90% of raw headlines are noise, sports, gossip, and clickbait. Our 5-stage funnel refines raw signals into high-converting post topics:
+**Vmatrix Social OS** is an autonomous, production-grade social media intelligence and publishing operating system built specifically for software engineering, artificial intelligence, and developer tooling.
 
-```
-                       RAW GATHERED DATA
-                (100+ raw news titles & trends)
-                              │
-                              ▼
-┌───────────────────────────────────────────────────────────┐
-│ 🔴 STAGE 1: Fast Keyword Blacklist (Throw out junk)       │
-│ • Cost: $0, 0ms | Drops sports, movies, drama, scandals   │
-└─────────────────────────────┬─────────────────────────────┘
-                              │ (~30 items left)
-                              ▼
-┌───────────────────────────────────────────────────────────┐
-│ 🟢 STAGE 2: Positive Niche Scoring (Rule-based)           │
-│ • Cost: $0, 1ms | Ranks AI, coding, fintech, investing    │
-└─────────────────────────────┬─────────────────────────────┘
-                              │ (~10 items left)
-                              ▼
-┌───────────────────────────────────────────────────────────┐
-│ 🧠 STAGE 3: Semantic LLM Classifier (Groq / Fast 0.3s)    │
-│ • Groq openai/gpt-oss-120b | PURE_AI, PURE_FINANCE, MIXED │
-└─────────────────────────────┬─────────────────────────────┘
-                              │ (~5 items left)
-                              ▼
-┌───────────────────────────────────────────────────────────┐
-│ 🔄 STAGE 4: Vector Anti-Duplication (Cosine Similarity)   │
-│ • Compares 768-dim embedding against 30-day post memory   │
-│ • Drops anything > 80% similar to recent posts            │
-└─────────────────────────────┬─────────────────────────────┘
-                              │ (~2-3 top candidates)
-                              ▼
-┌───────────────────────────────────────────────────────────┐
-│ 🏆 STAGE 5: Format Fit & Actionability Score              │
-│ • Verifies 3-5 concrete educational steps can be built    │
-└─────────────────────────────┬─────────────────────────────┘
-                              ▼
-                     WINNING POST TOPIC
-```
+Unlike generic social media schedulers or low-effort AI copywriters, Vmatrix operates with:
+1. **Zero Fluff / 100% Signal**: Every post is an authoritative, high-utility technical blueprint (architecture matrices, system design trade-offs, production failure post-mortems).
+2. **Cognitive Engineering**: Every slide complies with **5 strict mathematical cognitive load rules** (word caps, visual contrast anchors, reading time optimization).
+3. **Multi-Model AI Council**: Autonomous reasoning distributed across an ultra-fast failover council (Groq 120B, OpenRouter 70B, Cerebras, Hugging Face 72B, Gemini 2.5, Nvidia NIM).
+4. **End-to-End Autonomy**: From hourly Google Trends velocity checks and competitor scraping to 4K Playwright rendering, Cloudinary CDN hosting, Instagram Graph API carousel publication, and automated comment pinning.
 
 ---
 
-## 📡 4 Core Content & Topic Data Feeds
+## 🔄 Complete Architecture Overview
 
-The engine continuously monitors 4 live signals for high-signal topic discovery:
+```mermaid
+flowchart TD
+    subgraph INGESTION [📡 Intelligence & Ingestion Layer]
+        GT[Google Trends RSS · US & IN] --> FUNNEL
+        TC[TechCrunch / VentureBeat / Hacker News] --> FUNNEL
+        COMP[Competitor Accounts · @bytebytego_, @thecodebytes] --> APIFY[Apify Scraper · 3-Key Rotating Pool]
+    end
 
-1. 📈 **Google Trends**: Real-time and daily search spikes in India (`geo=IN`) and Global/US (`geo=US`).
-2. 🤖 **TechCrunch AI**: Breaking AI startup funding rounds, product launches, and venture news.
-3. 🏢 **VentureBeat AI**: Enterprise AI architectures, new LLM models, and AI research breakthroughs.
-4. 💻 **Hacker News**: Trending developer tools, coding libraries, and viral open-source GitHub repositories.
+    subgraph PHASE1 [⚡ PHASE 1: Autonomous Publishing Pipeline]
+        FUNNEL[5-Stage Elimination Funnel] --> PLANNER[Slide Architecture Planner · 5 Cognitive Rules]
+        PLANNER --> PLAYWRIGHT[Playwright 4K Renderer · 2160x2700 Pure White]
+        PLAYWRIGHT --> PIL[PIL Post-Processor · RGB 95% JPEG]
+        PIL --> CDN[Cloudinary CDN · HTTPS URLs]
+        CDN --> QUEUE[30-Minute Human Approval Queue]
+        QUEUE --> INSTA[Meta Instagram Graph API · @vmatrix.co Carousel & Pinned Comment]
+    end
 
----
+    subgraph PHASE2 [🧬 PHASE 2: Competitor Intelligence & Macro Synthesis]
+        APIFY --> OUTLIER[3-Gate Outlier Math · 1.5x Median ER]
+        OUTLIER --> DOSSIER[Deep AI Virality Dossier · Linguistic Anatomy]
+        OUTLIER --> MACRO[Cross-Competitor Macro Synthesis · 0% Copy-Paste]
+        MACRO --> HANDOFF[1-Click 4K Studio Handoff]
+        HANDOFF --> PLANNER
+    end
 
-## 🧠 Architecture
+    subgraph MULTI_MODEL [🧠 Multi-Model AI Council & Failover]
+        GROQ[1. Groq 120B · <1.5s] --> OR[2. OpenRouter 70B]
+        OR --> CER[3. Cerebras WSE · Quota Aware]
+        CER --> HF[4. Hugging Face 72B]
+        HF --> GEM[5. Gemini 2.5]
+        GEM --> DET[6. Deterministic Fallback]
+    end
 
-```
-┌─────────────────────────────────┐
-│   4 Core Data Feeds             │
-│  (Google Trends, TechCrunch AI, │
-│   VentureBeat AI, Hacker News)  │
-└────────────────┬────────────────┘
-                 │
-                 ▼
-┌─────────────────────────────────┐
-│   5-Stage Filtering Funnel      │
-│  (core/funnel.py + memory.py)   │
-└────────────────┬────────────────┘
-                 │
-                 ▼
-┌────────────────────────────────┐     ┌───────────────────┐     ┌──────────────────┐     ┌────────────────────┐
-│      Streamlit Control Room    │ ──▶ │  Gemini 2.5 Flash │ ──▶ │  Playwright HTML  │ ──▶ │ Cloudinary + Meta   │
-│            app.py              │     │  core/generator.py│     │  core/renderer.py │     │  core/publisher.py  │
-│    (Radar, JSON, Preview)      │     │  (structured JSON │     │  (Jinja2 template │     │  (host images, drive│
-│                                │     │   content plan)   │     │   → 1080x1350 PNG)│     │   carousel publish) │
-└────────────────────────────────┘     └───────────────────┘     └──────────────────┘     └────────────────────┘
+    PLANNER -.-> MULTI_MODEL
+    DOSSIER -.-> MULTI_MODEL
+    MACRO -.-> MULTI_MODEL
 ```
 
 ---
 
-## 🩹 Self-Healing by Design
+## ⚡ Phase 1: Autonomous Trend Harvesting & 4K Publishing
 
-- **Multi-Tier Feed Failover** — RSS feeds automatically fall back to resilient search bridges if rate limits (e.g. 429) occur.
-- **Multi-Tier Logo Resolvers** — Logo.dev high-res CDN + Brandfetch Brand API + Google Favicons fallback for crisp tool icons.
-- **Retry with Exponential Backoff** — all external network calls use exponential backoff + jitter.
-- **Render Validation** — Playwright renders are validated for pixel variance to prevent blank frames.
-- **Persistent Semantic Memory** — tracks 30-day post history in `data/post_history.json` and Supabase PostgreSQL to prevent repetitive content.
+1. **5-Stage Elimination Funnel (`core/funnel.py`)**:
+   - **Stage 1 (Recency & Blacklist)**: Rejects articles >24h old and filters non-technical noise.
+   - **Stage 2 (Velocity Scoring)**: Measures search surges (>10k+ searches) and Hacker News point acceleration (>100 pts/hr).
+   - **Stage 3 (24h Deduplication Guard)**: Hashes candidates against SQLite & Supabase to prevent duplicate posts.
+   - **Stage 4 (Junior / Vibe-Coder Resonance)**: Evaluates high-school/junior developer accessibility.
+   - **Stage 5 (Scoring & Winner Selection)**: Rates finalists out of 10.0 and picks the winning angle.
+2. **Hourly Velocity Watchdog (`trend_checker.py`)**:
+   - Background cron scanner auditing Google Trends US & IN every 60 minutes.
+   - Uses Groq 120B to score breakthrough spikes (Urgency >= 9/10 triggers autonomous bypass).
+3. **Headless 4K Rendering Engine (`core/renderer.py`)**:
+   - **Playwright Chromium**: Renders HTML5/CSS templates at **4K Retina ($2160 \times 2700\text{ px}$)**.
+   - **100% Pure White Background (`#FFFFFF`)**: Zero dark backgrounds, extreme readability.
+   - **PIL Processing**: Converts to strict `RGB` mode (no alpha channel rejection) at 95% JPEG quality.
+4. **Caption & Community Magnet (`core/caption.py`)**:
+   - Generates 1-line hook + 3 value bullets + Comment Magnet CTA (*"Comment 'BLUEPRINT' below..."*) + Save prompt + Hashtags.
+   - Automatically publishes and pins the first comment on Instagram.
+5. **30-Minute Approval Queue (`core/approval.py`)**:
+   - Live queue with countdown timer, slide preview, and approve/reject actions in dashboard.
+6. **Cloudinary CDN & Meta Instagram Graph API (`core/publisher.py`)**:
+   - Hosts slides on HTTPS Cloudinary CDN.
+   - Calls Meta Graph API v21.0 to create carousel containers, poll status, publish to `@vmatrix.co`, and pin comments.
 
 ---
 
-## 📂 Project Structure
+## 🧬 Phase 2: Competitor Intelligence & Viral Outlier Meta-Synthesis
 
-```text
-ai-social-engine/
-├── requirements.txt
-├── .env.example
-├── README.md
-├── core/
-│   ├── __init__.py
-│   ├── feeds.py           # 4 core feeds (Google Trends, TechCrunch, VentureBeat, Hacker News)
-│   ├── funnel.py          # 5-Stage filtering funnel (Blacklist, Niche, LLM, Dedup, Actionability)
-│   ├── memory.py          # 30-day post history & vector cosine deduplication
-│   ├── generator.py       # Groq (openai/gpt-oss-120b) structured content planner
-│   ├── renderer.py        # Playwright 4:5 slide renderer + Logo.dev & Brandfetch resolver
-│   ├── publisher.py       # Cloudinary uploader & Meta Graph API publisher
-│   ├── database.py        # Supabase PostgreSQL storage & memory sync
-│   └── utils.py           # Retry decorator & image validation
-├── templates/
-│   ├── carousel_slide.html       # Glassmorphic dark-mode educational slide
-│   └── single_infographic.html   # Cheatsheet/comparison grid infographic
-└── app.py                 # Streamlit control room UI with Funnel & Radar
-```
+1. **Instagram Competitor Harvester (`core/scraper.py`)**:
+   - Tracks `@bytebytego_`, `@thecodebytes`, `@bhavik.dev`, `@systemdesignhub`, `@codewithharry`.
+   - **3-Key Apify Backup Pool**: Rotates keys automatically upon rate limits with 60-minute circuit breakers.
+2. **3-Gate Mathematical Outlier Detection (`core/outlier.py`)**:
+   - **Gate 1 (Likes Multiplier)**: Post Likes >= 1.5x Median Cohort Likes.
+   - **Gate 2 (Comments Multiplier)**: Post Comments >= 1.5x Median Cohort Comments.
+   - **Gate 3 (Engagement Rate)**: ER >= Cohort 75th percentile.
+   - Posts clearing >= 2 gates receive the **Viral Outlier Badge** (e.g. `2.42x Outlier`).
+3. **Deep Virality Reverse-Engineering (`core/competitor_analyzer.py`)**:
+   - Dissects outliers across Macro Trend Angle, Linguistic Hook Anatomy, Slide Cognitive Pacing, Retention Cliff Location, and 5 Algorithmic Drivers.
+4. **Cross-Competitor Macro Outlier Meta-Synthesis**:
+   - Aggregates viral signals across **all** monitored competitors simultaneously.
+   - **0% Copy-Paste Guarantee**: Discovers cross-competitor technical shifts and synthesizes a 100% original master post.
+   - Delivers Master Hook (<= 6 words), Master Caption with comment magnet, and 6-Slide Visual Blueprint.
+   - **1-Click 4K Studio Handoff**: Loads synthesized angle directly into 4K Studio.
+
+---
+
+## 📏 The 5 Strict Cognitive Engineering Rules
+
+| Rule | Constraint | Psychological Reason |
+|---|---|---|
+| **Rule 1: Word Caps** | Slide 1 Hook <= 6w · Headlines <= 6w · Descriptions <= 25w | Feed attention is <1.8s. Over 25 words causes cognitive fatigue. |
+| **Rule 2: 100% Pure White** | Canvas: `#FFFFFF` · Text: `#0A0A0A` · Subtitle: `#525252` | Apple-like minimalism with >18:1 contrast ratio. |
+| **Rule 3: Color Anchors** | Amber (`#D97706`) warnings · Rose (`#E11D48`) contrast · Emerald (`#059669`) benchmarks | Directs the brain to exactly one highlighted keyword per slide. |
+| **Rule 4: Priming Flow** | Slide 1 (Hook) -> Slide 2 (Trap) -> Slides 3-5 (Steps) -> Slide 6 (CTA) | Opens a curiosity gap on Slide 1 closed on Slide 5. |
+| **Rule 5: Save/Share Payoff** | Must be a reference cheat sheet, matrix, or architecture tree | Saves carry 3x-5x higher algorithmic weight on Instagram. |
+
+---
+
+## 🖥️ Web Dashboard (FastAPI · Port 8000)
+
+The engine includes a non-Streamlit, ultra-responsive Single Page Application:
+* **Real-Time Telemetry Bar**: 10 live cloud services (Groq, OpenRouter, Cerebras, Nvidia NIM, HF 72B, Gemini 2.5, Apify, Supabase, Cloudinary, Instagram).
+* **5 Navigation Tabs**:
+  1. **Tab 1: Trend Radar & Funnel**: Live RSS feeds, hourly velocity watchdog trigger.
+  2. **Tab 2: 4K Carousel Studio**: Topic presets, Playwright generator, 4K slide lightbox, direct publishing.
+  3. **Tab 3: 30-Minute Approval Queue**: Countdown timer, carousel preview, reject/approve actions.
+  4. **Tab 4: Competitor Intelligence Radar**: Scraper, 3-gate outlier badges, virality dossier modal, macro synthesis with full visible captions.
+  5. **Tab 5: Intelligence Archive & DB**: SQLite & Supabase database explorer with direct Instagram links.
+
+---
+
+## 📁 Downloadable Project Documentation
+
+The complete, comprehensive system specification is available in multiple formats directly in the repo root:
+* **[Vmatrix_Complete_System_Specification.pdf](Vmatrix_Complete_System_Specification.pdf)** (High-res typeset PDF)
+* **[Vmatrix_Complete_System_Specification.md](Vmatrix_Complete_System_Specification.md)** (Raw Markdown for PPT / Notion)
+* **[Vmatrix_Complete_System_Specification.html](Vmatrix_Complete_System_Specification.html)** (Interactive report with 1-click Print/PDF)
 
 ---
 
 ## 🚀 Quickstart
 
 ```bash
-# 1. Install dependencies
+# 1. Clone & install dependencies
+git clone https://github.com/theayushagarwal/vmatrix.git
+cd vmatrix
 pip install -r requirements.txt
 playwright install chromium
 
 # 2. Configure environment
 cp .env.example .env
-# fill in GROQ_API_KEY, LOGODEV_*, BRANDFETCH_*, CLOUDINARY_*, IG_USER_ID, IG_ACCESS_TOKEN
+# Fill in GROQ_API_KEY, CLOUDINARY_*, IG_USER_ID, IG_ACCESS_TOKEN, etc.
 
-# 3. Run the demo
-streamlit run app.py
+# 3. Launch the high-performance dashboard
+python dashboard_server.py
+# Open http://localhost:8000 in your browser
 ```
 
 ---
 
-## 🛠️ Tech Stack
+## 📸 Live Production Proofs
 
-| Layer | Technology |
-|---|---|
-| Topic Gathering | Google Trends RSS, TechCrunch AI RSS, VentureBeat AI RSS, Hacker News API |
-| Filtering Funnel | Regex Blacklist, Lexicon Scorer, Groq (`openai/gpt-oss-120b`), Cosine Memory |
-| Content Intelligence | Groq (`openai/gpt-oss-120b`), structured JSON output (Gemini optional fallback) |
-| Brand Assets & Logos | Logo.dev CDN, Brandfetch v2 API, Google Favicons |
-| Rendering | Playwright (headless Chromium), Jinja2, CSS Glassmorphism (2160x2700 Retina) |
-| Database & Cloud | Supabase PostgreSQL & Vector Embeddings |
-| Media Hosting | Cloudinary CDN |
-| Publishing | Meta / Instagram Graph API (Single Photo & 5-Slide Carousels) |
-| Automation | GitHub Actions Cron + Post History Memory Synchronization |
-| Demo UI | Streamlit |
-
----
-
-## ⏰ Automated Publishing Schedule & Weekly Calendar
-
-The autonomous engine publishes **twice per day** timed around peak engagement windows:
-
-| Slot | Time (IST) | Time (UTC) | GitHub Actions Cron | Content Format |
-|---|---|---|---|---|
-| 🌅 **Morning Slot** | 7:00 AM IST | 01:30 UTC | `30 1 * * *` | 📸 **Single Photo Cheatsheet / Infographic** |
-| 🌆 **Evening Slot (Prime)** | 7:00 PM IST | 13:30 UTC | `30 13 * * *` | 🎨 **Deep Educational Carousel / Architecture Flow** |
-
-### 📅 7-Day Weekly Rotation Matrix
-
-| Day | 🌅 Morning Slot (7:00 AM IST) | 🌆 Evening Slot (7:00 PM IST) | Strategy |
-|---|---|---|---|
-| **Monday (0)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Clean start to the week: Quick tip + 5-slide tool listicle |
-| **Tuesday (1)** | 📸 Single Photo Cheatsheet | 🎨 Educational Carousel | Narrative educational breakdown |
-| **Wednesday (2)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Mid-week boost: Single photo cheatsheet + educational list |
-| **Thursday (3)** | 📸 Single Photo Cheatsheet | 🗺️ Architecture Flowchart | Deep technical day: System architecture flow diagram |
-| **Friday (4)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Weekend prep: Productivity / code cheatsheet + tool listicle |
-| **Saturday (5)** | 📸 Single Photo Cheatsheet | 🗺️ Architecture Flowchart | Complex system flow diagram & architecture blueprint |
-| **Sunday (6)** | 📸 Single Photo Cheatsheet | 📱 5-Slide Tool Listicle | Weekly recap cheatsheet + educational tool listicle |
-
-### 🛡️ Production Deduplication Guardrails
-1. **15-Post Rule**: Topic embedding cannot exceed 0.70 cosine similarity with any of the previous 15 posts.
-2. **24h Trend Cooldown**: Topic embedding cannot exceed 0.65 similarity with any post published within the last 24 hours.
-3. **30-Day General Memory**: Topic embedding cannot exceed 0.80 similarity with any post across the entire 30-day database.
-
-
+* **Instagram Account**: [@vmatrix.co](https://www.instagram.com/vmatrix.co/)
+* **Live 4K Carousel Post**: [https://www.instagram.com/p/DdM1NMlFj6J/](https://www.instagram.com/p/DdM1NMlFj6J/)
+* **Pinned First Comment**: Comment ID `18123811297862503`
+* **Local Dashboard**: `http://localhost:8000`
+* **GitHub Repository**: [theayushagarwal/vmatrix](https://github.com/theayushagarwal/vmatrix)
