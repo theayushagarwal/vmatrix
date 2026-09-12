@@ -25,6 +25,7 @@ from core import (
     render_infographic,
     upload_images_to_cloudinary,
     publish_to_instagram_carousel,
+    publish_to_instagram_photo,
     generate_post_comment,
     fetch_all_feeds,
     fetch_google_trends,
@@ -34,6 +35,16 @@ from core import (
     run_filtering_funnel,
     record_post,
     get_recent_posts,
+    queue_post_for_approval,
+    load_approval_queue,
+    get_pending_approvals,
+    get_approval_history,
+    get_time_remaining,
+    extend_approval_timeout,
+    update_queued_post,
+    approve_and_publish_post,
+    reject_queued_post,
+    process_auto_publish_timeouts,
 )
 
 load_dotenv()
@@ -127,6 +138,20 @@ st.markdown(
     .stat-lbl { font-size: 0.72rem; color: #94a3b8; font-weight: 600; text-transform: uppercase; }
 
     div[data-testid="stImage"] img { border-radius: 18px; border: 1px solid rgba(129,140,248,0.2); }
+    .queue-card {
+        background: linear-gradient(135deg, rgba(30,41,59,0.7) 0%, rgba(15,23,42,0.92) 100%);
+        border: 1px solid rgba(129,140,248,0.35);
+        border-radius: 20px;
+        padding: 24px;
+        margin-bottom: 24px;
+    }
+    .timer-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 6px 16px; border-radius: 999px; font-weight: 700; font-size: 0.90rem;
+    }
+    .timer-urgent { background: rgba(239,68,68,0.18); color: #f87171; border: 1px solid rgba(239,68,68,0.45); }
+    .timer-warning { background: rgba(245,158,11,0.18); color: #fbbf24; border: 1px solid rgba(245,158,11,0.45); }
+    .timer-normal { background: rgba(52,211,153,0.18); color: #34d399; border: 1px solid rgba(52,211,153,0.45); }
     </style>
     """,
     unsafe_allow_html=True,
@@ -393,8 +418,13 @@ generate_clicked = st.button("✨ Generate Carousel", type="primary", use_contai
 
 st.markdown("---")
 
-tab_content, tab_preview, tab_publish = st.tabs(
-    ["📋 Content Generation", "🖼️ Visual Carousel Preview", "🚀 Live Publishing"]
+tab_queue, tab_content, tab_preview, tab_publish = st.tabs(
+    [
+        "⏱️ 30-Min Approval Queue",
+        "📋 Content Generation",
+        "🖼️ Visual Carousel Preview",
+        "🚀 Live Publishing",
+    ]
 )
 
 # ---------------------------------------------------------------------------
@@ -482,6 +512,243 @@ elif st.session_state.last_failed_stage == "render":
         run_pipeline(st.session_state.topic, skip_generate=True, img_format=export_fmt)
 
 # ---------------------------------------------------------------------------
+# Tab 0: 30-Min Human Approval Queue
+# ---------------------------------------------------------------------------
+with tab_queue:
+    # Heartbeat check for auto-publish timeouts
+    auto_pub_setting = st.session_state.get("auto_publish_enabled", True)
+    try:
+        expired_published = process_auto_publish_timeouts(auto_publish_enabled=auto_pub_setting)
+        if expired_published:
+            st.info(f"⚡ Auto-pilot processed {len(expired_published)} post(s) whose 30-minute grace period expired.")
+    except Exception as e:
+        logger.warning("Auto-publish timeout processing note: %s", e)
+
+    pending_items = get_pending_approvals()
+
+    # Queue Metrics Bar
+    q_col1, q_col2, q_col3, q_col4 = st.columns([1.2, 1.2, 1.2, 1])
+    with q_col1:
+        st.markdown(
+            f'<div class="stat-pill"><div class="stat-val">{len(pending_items)}</div><div class="stat-lbl">Pending Review</div></div>',
+            unsafe_allow_html=True,
+        )
+    with q_col2:
+        if pending_items:
+            m, s, _ = get_time_remaining(pending_items[0])
+            st.markdown(
+                f'<div class="stat-pill" style="border-color: #fbbf24;"><div class="stat-val" style="color: #fbbf24;">{m}m {s}s</div><div class="stat-lbl">Next Auto-Publish</div></div>',
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown(
+                f'<div class="stat-pill"><div class="stat-val" style="color: #4ade80;">Ready</div><div class="stat-lbl">Queue Status</div></div>',
+                unsafe_allow_html=True,
+            )
+    with q_col3:
+        status_text = "AUTO-PILOT ON" if auto_pub_setting else "MANUAL ONLY"
+        color = "#34d399" if auto_pub_setting else "#818cf8"
+        st.markdown(
+            f'<div class="stat-pill"><div class="stat-val" style="color: {color}; font-size: 1.05rem; padding-top: 4px;">{status_text}</div><div class="stat-lbl">30m Grace Mode</div></div>',
+            unsafe_allow_html=True,
+        )
+    with q_col4:
+        if st.button("🔄 Refresh Queue", use_container_width=True):
+            st.rerun()
+
+    st.markdown("---")
+
+    # If pending items exist, render each one with full inspection and controls
+    if pending_items:
+        st.markdown(f"### ⏳ Active Posts in 30-Minute Grace Period ({len(pending_items)})")
+        for item in pending_items:
+            item_id = item["id"]
+            mins, secs, fraction = get_time_remaining(item)
+
+            if mins <= 5:
+                timer_class = "timer-urgent"
+                timer_icon = "🚨"
+                status_note = "Urgent: Auto-publishing shortly unless paused or rejected!"
+            elif mins <= 15:
+                timer_class = "timer-warning"
+                timer_icon = "⚠️"
+                status_note = "Grace period halfway through. Review copy and slides below."
+            else:
+                timer_class = "timer-normal"
+                timer_icon = "⏳"
+                status_note = "Human review window active (30 minutes total)."
+
+            st.markdown(
+                f"""
+                <div class="queue-card">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <div>
+                            <span class="funnel-step-badge badge-ai">{item.get('format', 'listicle').upper()}</span>
+                            <span class="funnel-step-badge badge-tools">{item.get('slot', 'morning').upper()} SLOT</span>
+                            <span class="funnel-step-badge badge-fin">VISION: {item.get('vision_score', 10.0)}/10 PASSED</span>
+                        </div>
+                        <div class="timer-badge {timer_class}">
+                            {timer_icon} {mins:02d}m {secs:02d}s Remaining
+                        </div>
+                    </div>
+                    <h3 style="margin-top: 0; margin-bottom: 4px;">{item.get('topic')}</h3>
+                    <p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 12px;">
+                        Queued at: {item.get('created_at_iso')} | {status_note}
+                    </p>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Visual progress countdown bar
+            st.progress(fraction, text=f"Auto-publish countdown: {mins} minutes, {secs} seconds remaining")
+
+            # Visual Slide Inspection
+            slides = item.get("image_urls") or item.get("slide_paths") or []
+            if slides:
+                st.markdown("**🖼️ Rendered 2160×2700 Retina Slides:**")
+                slide_cols = st.columns(min(5, len(slides)))
+                for s_idx, sp in enumerate(slides):
+                    with slide_cols[s_idx % len(slide_cols)]:
+                        st.image(sp, caption=f"Slide {s_idx + 1}", use_container_width=True)
+
+            # Editable Copy Fields
+            copy_col1, copy_col2 = st.columns([1.5, 1])
+            with copy_col1:
+                st.markdown("**📝 Caption (Audited):**")
+                edited_caption = st.text_area(
+                    f"caption_{item_id}",
+                    value=item.get("caption", ""),
+                    height=140,
+                    label_visibility="collapsed",
+                )
+            with copy_col2:
+                st.markdown("**💬 Auto-Comment (Pinned First Comment):**")
+                edited_comment = st.text_area(
+                    f"comment_{item_id}",
+                    value=item.get("auto_comment", ""),
+                    height=140,
+                    label_visibility="collapsed",
+                )
+
+            # Action Buttons
+            btn_c1, btn_c2, btn_c3, btn_c4 = st.columns([1.5, 1, 1, 1])
+            with btn_c1:
+                if st.button("🚀 Approve & Publish Now", key=f"appr_{item_id}", type="primary", use_container_width=True):
+                    update_queued_post(item_id, caption=edited_caption, auto_comment=edited_comment)
+                    with st.spinner("Publishing post & first comment live to Instagram (@vmatrix.co)..."):
+                        try:
+                            res = approve_and_publish_post(item_id, auto=False)
+                            st.success(f"🎉 Live on Instagram! Post ID: `{res.get('post_id')}` | Link: {res.get('permalink', 'N/A')}")
+                            st.balloons()
+                            time.sleep(1)
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Publishing failed: {e}")
+            with btn_c2:
+                if st.button("⏱️ +15 Mins", key=f"ext_{item_id}", use_container_width=True):
+                    extend_approval_timeout(item_id, extra_minutes=15)
+                    st.success("Extended countdown timer by +15 minutes!")
+                    time.sleep(0.5)
+                    st.rerun()
+            with btn_c3:
+                if st.button("💾 Save Edits", key=f"save_{item_id}", use_container_width=True):
+                    update_queued_post(item_id, caption=edited_caption, auto_comment=edited_comment)
+                    st.success("Saved copy changes.")
+                    time.sleep(0.5)
+                    st.rerun()
+            with btn_c4:
+                if st.button("❌ Reject", key=f"rej_{item_id}", use_container_width=True):
+                    reject_queued_post(item_id, reason="Rejected manually via dashboard")
+                    st.warning(f"Post '{item.get('topic')}' cancelled and removed from queue.")
+                    time.sleep(0.5)
+                    st.rerun()
+
+            st.markdown("---")
+    else:
+        st.info("✅ **No posts currently in the approval queue.** All scheduled or generated posts have been reviewed.")
+
+    # ⚡ Test Queue Simulation Section
+    with st.expander("⚡ **Send a Post to the 30-Minute Approval Queue (Stage & Review)**", expanded=False):
+        st.caption("Plan, render, and enqueue a post with a 30-minute countdown timer so you can test the human approval workflow.")
+        sim_topic = st.text_input("Topic to Queue", value=st.session_state.topic or "5 Claude 3.7 Prompt Engineering Hacks")
+        sim_fmt = st.selectbox("Format", options=["listicle", "photo", "flow"], index=0, format_func=lambda x: "📋 Listicle (5 Slides)" if x == "listicle" else ("📸 Cheatsheet (1 Photo)" if x == "photo" else "🗺️ System Flow (5 Slides)"))
+        if st.button("🚀 Plan, Render & Queue Post (30m Timer)", type="secondary"):
+            with st.spinner(f"Generating and rendering '{sim_topic}' into 30-min approval queue..."):
+                try:
+                    import tempfile
+                    from core import (
+                        generate_carousel_content,
+                        generate_cheatsheet_content,
+                        generate_flow_carousel_content,
+                        render_carousel_slides,
+                        render_carousel_flow_slides,
+                        render_infographic,
+                        generate_post_caption,
+                        generate_post_comment,
+                    )
+                    tmp_d = Path(tempfile.mkdtemp(prefix="queue-sim-"))
+                    if sim_fmt == "photo":
+                        c_plan = generate_cheatsheet_content(sim_topic)
+                        ip = render_infographic(c_plan, tmp_d, image_format="jpeg")
+                        s_paths = [ip]
+                    elif sim_fmt == "flow":
+                        c_plan = generate_flow_carousel_content(sim_topic)
+                        s_paths = render_carousel_flow_slides(c_plan, tmp_d, image_format="jpeg")
+                    else:
+                        c_plan = generate_carousel_content(sim_topic)
+                        s_paths = render_carousel_slides(c_plan, tmp_d, image_format="jpeg")
+
+                    cap = generate_post_caption(sim_topic, c_plan, format_type=sim_fmt)
+                    comm = generate_post_comment(sim_topic, c_plan, format_type=sim_fmt)
+
+                    q_res = queue_post_for_approval(
+                        topic=sim_topic,
+                        format_type=sim_fmt,
+                        slot="evening" if sim_fmt != "photo" else "morning",
+                        slide_paths=s_paths,
+                        caption=cap,
+                        auto_comment=comm,
+                        content_plan=c_plan,
+                        timeout_minutes=30,
+                        upload_cdn_now=True,
+                    )
+                    st.success(f"🎉 Enqueued '{sim_topic}' with 30-min approval timer (Queue ID: `{q_res['id']}`)!")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to queue post: {e}")
+
+    # 📜 Audit History Log
+    with st.expander("📜 **Approval Queue History & Published Log**", expanded=False):
+        history = get_approval_history(limit=15)
+        if not history:
+            st.caption("No past approval records yet.")
+        else:
+            for h in history:
+                h_status = h.get("status", "unknown")
+                if h_status in ("approved", "auto_published"):
+                    badge_color = "#34d399"
+                    status_lbl = "PUBLISHED (AUTO)" if h_status == "auto_published" else "APPROVED & PUBLISHED"
+                else:
+                    badge_color = "#f87171"
+                    status_lbl = "REJECTED"
+
+                st.markdown(
+                    f"""
+                    <div style="border-left: 3px solid {badge_color}; padding: 8px 14px; background: rgba(30,41,59,0.3); border-radius: 8px; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <strong style="color: #f3f4f8;">{h.get('topic')}</strong>
+                            <span style="color: {badge_color}; font-weight: 700; font-size: 0.8rem;">{status_lbl}</span>
+                        </div>
+                        <div style="font-size: 0.78rem; color: #94a3b8; margin-top: 4px;">
+                            Format: {h.get('format')} | Post ID: {h.get('post_id') or 'None'} | Permalink: {h.get('permalink') or 'N/A'}
+                        </div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+# ---------------------------------------------------------------------------
 # Tab 1: structured JSON
 # ---------------------------------------------------------------------------
 with tab_content:
@@ -538,30 +805,52 @@ with tab_publish:
             label_visibility="collapsed",
         )
 
-        if st.button("🚀 Publish to Instagram Live", type="primary", use_container_width=True):
-            pub_progress = st.progress(0, text="Uploading slides to Cloudinary…")
-            try:
-                image_urls = upload_images_to_cloudinary(st.session_state.slide_paths)
-                pub_progress.progress(35, text="Creating carousel item containers…")
+        col_live, col_queue = st.columns([1, 1])
+        with col_live:
+            if st.button("🚀 Publish to Instagram Live Now", type="primary", use_container_width=True):
+                pub_progress = st.progress(0, text="Uploading slides to Cloudinary…")
+                try:
+                    image_urls = upload_images_to_cloudinary(st.session_state.slide_paths)
+                    pub_progress.progress(35, text="Creating carousel item containers…")
 
-                pub_progress.progress(60, text="Waiting for Instagram to process containers…")
-                result = publish_to_instagram_carousel(
-                    image_urls,
-                    caption_val,
-                    auto_comment=comment_val,
-                )
+                    pub_progress.progress(60, text="Waiting for Instagram to process containers…")
+                    result = publish_to_instagram_carousel(
+                        image_urls,
+                        caption_val,
+                        auto_comment=comment_val,
+                    )
 
-                pub_progress.progress(100, text="Published.")
-                comment_badge = f" | First comment ID: `{result['comment_id']}`" if result.get("comment_id") else ""
-                st.success(f"🎉 Live on Instagram — post ID `{result['post_id']}`{comment_badge}")
-                st.balloons()
-            except Exception as e:
-                pub_progress.empty()
-                st.error(
-                    f"**Publishing failed:** {e}\n\n"
-                    "Uploads and container creation are retried automatically with "
-                    "backoff, so a failure here is either a hard auth/permissions "
-                    "issue (check `IG_USER_ID` / `IG_ACCESS_TOKEN`) or Meta rejected "
-                    "the request outright. Your slides are unaffected — hit the "
-                    "button again once it's fixed."
-                )
+                    pub_progress.progress(100, text="Published.")
+                    comment_badge = f" | First comment ID: `{result['comment_id']}`" if result.get("comment_id") else ""
+                    st.success(f"🎉 Live on Instagram — post ID `{result['post_id']}`{comment_badge}")
+                    st.balloons()
+                except Exception as e:
+                    pub_progress.empty()
+                    st.error(
+                        f"**Publishing failed:** {e}\n\n"
+                        "Uploads and container creation are retried automatically with "
+                        "backoff, so a failure here is either a hard auth/permissions "
+                        "issue (check `IG_USER_ID` / `IG_ACCESS_TOKEN`) or Meta rejected "
+                        "the request outright. Your slides are unaffected — hit the "
+                        "button again once it's fixed."
+                    )
+
+        with col_queue:
+            if st.button("⏱️ Queue for 30-Min Human Approval", type="secondary", use_container_width=True):
+                with st.spinner("Enqueuing post into 30-minute approval queue..."):
+                    try:
+                        q_item = queue_post_for_approval(
+                            topic=st.session_state.topic or st.session_state.content.get("series_title", "Guide"),
+                            format_type=st.session_state.carousel_mode,
+                            slot="evening",
+                            slide_paths=st.session_state.slide_paths,
+                            caption=caption_val,
+                            auto_comment=comment_val,
+                            content_plan=st.session_state.content,
+                            timeout_minutes=30,
+                            upload_cdn_now=True,
+                        )
+                        st.success(f"🎉 Enqueued! Check the **⏱️ 30-Min Approval Queue** tab to review countdown and slides (ID: `{q_item['id']}`).")
+                    except Exception as e:
+                        st.error(f"Failed to queue post: {e}")
+

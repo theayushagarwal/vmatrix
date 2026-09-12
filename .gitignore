@@ -34,6 +34,7 @@
 # Slide rendering & temporary image outputs
 slide_*.png
 infographic.png
+data/queue_media/
 output/
 outputs/
 exports/

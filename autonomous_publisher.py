@@ -52,6 +52,7 @@ from core import (
     generate_post_comment,
     record_post,
     get_time_since_last_post,
+    queue_post_for_approval,
 )
 from core.utils import logger
 
@@ -107,6 +108,8 @@ def run_autonomous_post(
     slot: str = "auto",
     format_override: str = "auto",
     geo: str = "IN",
+    queue_for_approval: bool = False,
+    timeout_minutes: int = 30,
 ) -> dict:
     """
     Executes the full end-to-end autonomous publishing loop.
@@ -268,6 +271,41 @@ def run_autonomous_post(
     )
     logger.info("  ✓ Generated auto-comment: %s", auto_comment)
 
+    # If Human Approval mode is enabled, place into 30-min approval queue
+    if queue_for_approval:
+        queued_item = queue_post_for_approval(
+            topic=series_name,
+            format_type=pipeline_mode,
+            slot=active_slot,
+            slide_paths=slide_paths,
+            caption=caption,
+            auto_comment=auto_comment,
+            content_plan=content_plan,
+            vision_score=audit_result.get("score", 10.0),
+            vision_method=audit_result.get("method", "pil_retina_analyzer"),
+            timeout_minutes=timeout_minutes,
+            upload_cdn_now=True,
+        )
+        elapsed = round(time.time() - start_time, 2)
+        logger.info("=" * 65)
+        logger.info("⏱️ POST QUEUED FOR HUMAN APPROVAL! ID: %s (%dm timer) in %.2fs", queued_item['id'], timeout_minutes, elapsed)
+        logger.info("Review & approve in Streamlit dashboard or let it auto-publish.")
+        logger.info("=" * 65)
+
+        return {
+            "status": "queued_for_approval",
+            "queue_id": queued_item["id"],
+            "expires_at": queued_item["expires_at"],
+            "timeout_minutes": timeout_minutes,
+            "topic": chosen_topic,
+            "slot": active_slot,
+            "format": pipeline_mode,
+            "weekday": day_name,
+            "series_title": series_name,
+            "image_urls": queued_item.get("image_urls", []),
+            "elapsed_seconds": elapsed,
+        }
+
     if pipeline_mode == "photo":
         logger.info("📸 Publishing Single Photo to Instagram (@vmatrix.co)...")
         ig_result = publish_to_instagram_photo(cloudinary_urls[0], caption, auto_comment=auto_comment)
@@ -318,6 +356,17 @@ def main():
     parser.add_argument("--dry-run", action="store_true", help="Run full pipeline without publishing to Instagram")
     parser.add_argument("--topic", type=str, default=None, help="Force a specific topic instead of radar discovery")
     parser.add_argument("--geo", type=str, default="IN", help="Trends region (IN or US)")
+    parser.add_argument(
+        "--queue-for-approval",
+        action="store_true",
+        help="Queue post into 30-minute human approval queue instead of publishing directly",
+    )
+    parser.add_argument(
+        "--timeout-minutes",
+        type=int,
+        default=30,
+        help="Approval grace period duration in minutes before auto-publishing (default: 30)",
+    )
 
     args = parser.parse_args()
     res = run_autonomous_post(
@@ -326,6 +375,8 @@ def main():
         slot=args.slot,
         format_override=args.format,
         geo=args.geo,
+        queue_for_approval=args.queue_for_approval,
+        timeout_minutes=args.timeout_minutes,
     )
     print("\nEXECUTION SUMMARY:")
     for k, v in res.items():

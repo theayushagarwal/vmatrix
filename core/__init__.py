@@ -59,6 +59,18 @@ from .database import (
     sync_post_to_supabase,
     fetch_posts_from_supabase,
 )
+from .approval import (
+    queue_post_for_approval,
+    load_approval_queue,
+    get_pending_approvals,
+    get_approval_history,
+    get_time_remaining,
+    extend_approval_timeout,
+    update_queued_post,
+    approve_and_publish_post,
+    reject_queued_post,
+    process_auto_publish_timeouts,
+)
 from .utils import RenderValidationError
 
 __all__ = [
@@ -105,5 +117,15 @@ __all__ = [
     "get_supabase_client",
     "sync_post_to_supabase",
     "fetch_posts_from_supabase",
+    "queue_post_for_approval",
+    "load_approval_queue",
+    "get_pending_approvals",
+    "get_approval_history",
+    "get_time_remaining",
+    "extend_approval_timeout",
+    "update_queued_post",
+    "approve_and_publish_post",
+    "reject_queued_post",
+    "process_auto_publish_timeouts",
     "RenderValidationError",
 ]

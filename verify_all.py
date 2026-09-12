@@ -157,8 +157,47 @@ is_dup, guard_msg = check_duplicate_guardrails("5 Essential Docker Commands for 
 assert is_dup, "Guardrails should detect recently recorded Docker post as duplicate"
 print(f"  ✓ Anti-Duplication Guardrail Check: Caught duplicate ('{guard_msg}')")
 
-# 8. Check UI Compilation & Syntax
-print("\n>>> [8/8] Verifying Streamlit App Compilation...")
+# 8. Check 30-Minute Human Approval Queue Engine
+print("\n>>> [8/9] Verifying 30-Minute Human Approval Queue & Governance Engine...")
+from core.approval import (
+    queue_post_for_approval,
+    get_pending_approvals,
+    get_time_remaining,
+    extend_approval_timeout,
+    update_queued_post,
+    reject_queued_post,
+    get_approval_history,
+)
+
+q_item = queue_post_for_approval(
+    topic="Test Post for 30-Min Queue",
+    format_type="listicle",
+    slot="evening",
+    slide_paths=[info_path],
+    caption="Test caption for approval queue",
+    auto_comment="Test first comment for approval queue",
+    timeout_minutes=30,
+    upload_cdn_now=False,
+)
+assert q_item["status"] == "pending", f"Queued post status invalid: {q_item['status']}"
+mins, secs, frac = get_time_remaining(q_item)
+assert mins >= 29, f"Countdown calculation unexpected: {mins}m {secs}s"
+print(f"  ✓ Enqueued Post: ID '{q_item['id']}' | Countdown: {mins}m {secs}s remaining (fraction: {frac:.2f})")
+
+updated_item = extend_approval_timeout(q_item["id"], extra_minutes=15)
+assert updated_item["timeout_minutes"] == 45, f"Extended timeout failed: {updated_item['timeout_minutes']}"
+print(f"  ✓ Timer Extension (+15m): New total duration {updated_item['timeout_minutes']} mins")
+
+edited_item = update_queued_post(q_item["id"], caption="Edited caption for operator review")
+assert edited_item["caption"] == "Edited caption for operator review", "Copy update failed"
+print(f"  ✓ Operator Copy Edit: Updated caption successfully")
+
+rej_item = reject_queued_post(q_item["id"], reason="Automated test rejection cleanup")
+assert rej_item["status"] == "rejected", f"Rejection status invalid: {rej_item['status']}"
+print(f"  ✓ Operator Rejection & Cancellation: Marked {rej_item['status']}")
+
+# 9. Check UI Compilation & Syntax
+print("\n>>> [9/9] Verifying Streamlit App Compilation...")
 import py_compile
 py_compile.compile("app.py")
 print("  ✓ app.py compiled with zero syntax/import errors")
@@ -166,4 +205,5 @@ print("  ✓ app.py compiled with zero syntax/import errors")
 print("\n======================================================")
 print("   🎉 ALL CHECKS PASSED: SYSTEM FULLY OPERATIONAL!    ")
 print("======================================================")
+
 
