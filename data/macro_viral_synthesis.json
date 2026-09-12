@@ -14,8 +14,8 @@
   },
   "master_hook_psychology": "A concise contrast sparks curiosity and forces a decision, tapping into the brain's need for quick categorization and relevance, outperforming longer, vague hooks.",
   "master_caption": {
-    "full_caption": "\ud83d\ude80 Monoliths vs Microservices: Choose Wisely\n\u2022 Why complexity kills junior projects\n\u2022 3 actionable steps to a scalable, maintainable architecture\n\u2022 Save this carousel for your next system design interview\n\ud83d\udd16 Bookmark now and build smarter, faster!",
-    "first_line": "\ud83d\ude80 Monoliths vs Microservices: Choose Wisely",
+    "full_caption": "🚀 Monoliths vs Microservices: Choose Wisely\n\n• Why complexity kills junior developer velocity\n• The hidden dual-write and latency traps of distributed systems\n• 3 actionable steps to build scalable modular monoliths\n• Decision matrix for when to selectively extract microservices\n\n👇 Drop 'BLUEPRINT' below and I'll send you the complete architectural breakdown!\n\n📌 Save this guide for your next system design interview or sprint planning.\n\n#systemdesign #microservices #coding #softwareengineering #backend #architecture #vmatrix #developer",
+    "first_line": "🚀 Monoliths vs Microservices: Choose Wisely",
     "save_triggers": "High-utility developer reference blueprint",
     "comment_prompt": "Comment 'BLUEPRINT' below for the architectural breakdown"
   },

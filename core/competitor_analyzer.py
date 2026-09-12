@@ -805,12 +805,24 @@ OUTPUT STRICTLY VALID JSON WITH:
 
     # Master caption structure
     raw_caption = result.get("master_caption") or ""
-    first_line = raw_caption.split("\n")[0] if raw_caption else topic
+    if isinstance(raw_caption, dict):
+        raw_caption = raw_caption.get("full_caption") or raw_caption.get("caption") or ""
+    
+    first_line = raw_caption.split("\n")[0] if raw_caption else f"⚡ {topic}"
+    comment_prompt = "Comment 'BLUEPRINT' below for the architectural breakdown!"
+    save_triggers = "High-utility developer reference blueprint"
+
+    # Enrich caption if it lacks comment trigger or hashtags
+    if raw_caption and "comment" not in raw_caption.lower():
+        raw_caption = f"{raw_caption.strip()}\n\n👇 {comment_prompt}\n\n📌 Save this guide for your next architecture review!\n\n#systemdesign #microservices #coding #softwareengineering #backend #architecture #vmatrix"
+    elif raw_caption and "#" not in raw_caption:
+        raw_caption = f"{raw_caption.strip()}\n\n#systemdesign #microservices #coding #softwareengineering #backend #architecture #vmatrix"
+
     result["master_caption"] = {
         "full_caption": raw_caption,
         "first_line": first_line,
-        "save_triggers": "High-utility developer reference blueprint",
-        "comment_prompt": "Comment 'BLUEPRINT' below for the architectural breakdown"
+        "save_triggers": save_triggers,
+        "comment_prompt": comment_prompt
     }
 
     # Master blueprint slides
