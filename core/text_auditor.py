@@ -18,7 +18,10 @@ import os
 import re
 import json
 import logging
-import emoji
+try:
+    import emoji
+except ImportError:
+    emoji = None
 from typing import Optional, Dict, Any, Union
 
 from .llm_utils import call_secondary_brain, BRAND_SYSTEM_PROMPT, DISCLAIMER, passes_shadowban_check
@@ -79,7 +82,10 @@ def verify_text_content(topic_or_listicle: Any, caption: str, is_listicle: bool 
         }
 
     # Check 1.3: Emoji Density (Max 4 emojis allowed)
-    emoji_count = len([c for c in caption if emoji.is_emoji(c)])
+    if emoji and hasattr(emoji, "is_emoji"):
+        emoji_count = len([c for c in caption if emoji.is_emoji(c)])
+    else:
+        emoji_count = len(re.findall(r"[\U00010000-\U0010ffff]", caption))
     if emoji_count > 4:
         return {
             "status": "REJECTED",

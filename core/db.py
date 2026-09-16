@@ -152,7 +152,7 @@ class CompetitorDatabase:
         _save_json(COMPETITOR_POSTS_FILE, updated_list)
 
         # Sync to Supabase cloud if connected
-        client = get_supabase_client()
+        client = get_supabase_client(require_admin=True)
         if client:
             try:
                 for post in posts:

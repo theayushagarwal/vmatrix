@@ -12,4 +12,9 @@ pypdf>=4.0.0
 apify-client>=1.7.0
 fastapi>=0.115.0
 uvicorn>=0.30.0
+emoji>=2.10.0
+loguru>=0.7.0
+huggingface-hub>=0.20.0
+PyYAML>=6.0.1
+pydantic>=2.0.0
 

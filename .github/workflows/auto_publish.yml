@@ -102,7 +102,7 @@ jobs:
           BRANDFETCH_API_KEY: ${{ secrets.BRANDFETCH_API_KEY }}
 
           # Supabase Database & Memory
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL || 'https://qqrfboqybpapalghkalc.supabase.co' }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
@@ -152,7 +152,7 @@ jobs:
           python autonomous_publisher.py --audit-insights || true
 
           # 2. Run publishing pipeline
-          python autonomous_publisher.py $FLAGS
+          eval python autonomous_publisher.py $FLAGS
 
       - name: 💾 Commit Updated Post History Memory
         if: success() && github.event.inputs.dry_run != 'true'

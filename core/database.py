@@ -19,18 +19,32 @@ except ImportError:
     Client = Any
 
 
-def get_supabase_client() -> Optional[Client]:
+def get_supabase_client(require_admin: bool = False) -> Optional[Client]:
     """
     Initializes and returns the Supabase client using environment variables.
-    Prefers SUPABASE_SERVICE_ROLE_KEY for server operations, falls back to SUPABASE_ANON_KEY.
+    Prefers SUPABASE_SERVICE_ROLE_KEY for server operations.
+    If require_admin is True, strictly requires SUPABASE_SERVICE_ROLE_KEY to prevent
+    unauthorized write attempts under RLS.
     """
     if create_client is None:
         return None
 
     url = os.environ.get("SUPABASE_URL")
-    key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_ANON_KEY")
+    admin_key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+    anon_key = os.environ.get("SUPABASE_ANON_KEY")
 
-    if not url or not key:
+    if not url:
+        return None
+
+    if require_admin:
+        if not admin_key:
+            logger.warning("Supabase admin client requested but SUPABASE_SERVICE_ROLE_KEY is not set.")
+            return None
+        key = admin_key
+    else:
+        key = admin_key or anon_key
+
+    if not key:
         return None
 
     try:
@@ -55,8 +69,9 @@ def sync_post_to_supabase(
 ) -> bool:
     """
     Saves or updates a published post with complete metadata into Supabase 'posts' table.
+    Requires admin privileges to write under Row-Level Security.
     """
-    client = get_supabase_client()
+    client = get_supabase_client(require_admin=True)
     if not client:
         return False
 
@@ -111,8 +126,9 @@ def update_post_insights_in_supabase(
 ) -> bool:
     """
     Updates the performance metrics and engagement score for a specific post in Supabase.
+    Requires admin privileges to modify records under Row-Level Security.
     """
-    client = get_supabase_client()
+    client = get_supabase_client(require_admin=True)
     if not client:
         return False
 
